@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "survivor-pwa-preview",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", "cd web && COREPACK_ENABLE_DOWNLOAD_PROMPT=0 corepack pnpm@10 preview --host 127.0.0.1"],
+      "port": 5173
+    },
+    {
+      "name": "bridge-simulate",
+      "runtimeExecutable": "sh",
+      "runtimeArgs": ["-c", ".venv/bin/python -m bridge.server --simulate --no-serial"],
+      "port": 8000
+    }
+  ]
+}

@@ -3,6 +3,8 @@
   "base_model": "BAAI/bge-small-en-v1.5",
   "max_length": 128,
   "unknown_margin": 0.0,
+  "red_margin": 0.0075,
+  "status_backstop": true,
   "labels": {
     "priority": [
       "MINOR",
@@ -44,7 +46,5 @@
       "PREGNANCY_INFANT",
       "BURNS"
     ]
-  },
-  "red_margin": 0.005,
-  "status_backstop": true
+  }
 }

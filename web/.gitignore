@@ -1,0 +1,2 @@
+# onnxruntime-web runtime is copied from node_modules by scripts/copy-ort.mjs (pinned version)
+public/ort/ort-wasm-*
