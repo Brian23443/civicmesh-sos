@@ -59,9 +59,11 @@ Order matters: the bridge must be listening before any frame is sent, and openin
    ```bash
    rm -f bridge/incidents.db
    ```
-3. **Start the bridge** from the repo root (serves the dashboard at `/`):
+3. **Start the bridge** from the repo root (serves the dashboard at `/`). Let it **auto-detect** the base station —
+   don't pin `--port`: macOS renames the port when a board is re-plugged (seen in testing: `-4` became `-0001`), and a
+   pinned bridge keeps retrying the old name while every report is lost.
    ```bash
-   .venv/bin/python -m bridge.server --port /dev/cu.usbserial-0001
+   .venv/bin/python -m bridge.server
    ```
    Check: `curl -s localhost:8000/api/health` → `"serial_connected":true`. The base station's screen shows **BASE STATION ready**.
 4. **Dashboard**: open `http://localhost:8000/` full-screen on the projector. Top bar shows WebSocket ● and serial ● connected.

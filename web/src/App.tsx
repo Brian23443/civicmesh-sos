@@ -18,6 +18,7 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
   const [local, setLocal] = useState<Classifier | null>(null);
   const [modelState, setModelState] = useState<'idle'|'loading'|'ready'|'error'>(suppliedClassifier?'idle':'loading');
   const [modelMessage, setModelMessage] = useState('');
+  const [modelError, setModelError] = useState('');
   const classifier = suppliedClassifier ?? local ?? unavailableClassifier;
   const modelActive = !suppliedClassifier && !!local;
   const loadModel = useCallback(async () => {
@@ -25,9 +26,24 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
     try {
       const { loadLocalModel } = await import('./inference/loadModel');
       const model = await loadLocalModel(setModelMessage);
-      setLocal(model.classifier); setModelState('ready'); setModelMessage('');
-    } catch { setModelState('error'); setModelMessage('The on-device model could not start. Retry, or fill in every field manually.'); }
+      loaded.current = model;
+      setLocal(model.classifier); setModelState('ready'); setModelMessage(''); setModelError('');
+    } catch (error) {
+      setModelState('error'); setModelMessage('The on-device model could not start. Retry, or fill in every field manually.');
+      setModelError(error instanceof Error ? `${error.name}: ${error.message}` : String(error));
+    }
   }, []);
+  const loaded = useRef<{ dispose: () => Promise<void> } | null>(null);
+  // iOS keeps a navigated-away page (and its ~35 MB WASM model) alive in the back/forward cache. Each
+  // Send → relay → "Back to CivicMesh" round trip would otherwise stack another model in memory until a
+  // load fails. Release the model when the page is hidden; reload cleanly if iOS restores the page.
+  useEffect(() => {
+    const hide = () => { void loaded.current?.dispose(); loaded.current = null; };
+    const show = (event: PageTransitionEvent) => { if (event.persisted && !suppliedClassifier) window.location.reload(); };
+    window.addEventListener('pagehide', hide);
+    window.addEventListener('pageshow', show);
+    return () => { window.removeEventListener('pagehide', hide); window.removeEventListener('pageshow', show); };
+  }, [suppliedClassifier]);
   useEffect(() => { if (!suppliedClassifier) void loadModel(); }, [suppliedClassifier, loadModel]);
   // §12: ask the browser to keep the offline copy (iOS can otherwise evict it).
   useEffect(() => { try { void navigator.storage?.persist?.().catch(() => {}); } catch { /* unsupported */ } }, []);
@@ -50,7 +66,9 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
       </div>
       {!suppliedClassifier && location.pathname==='/' && (modelMessage || modelState==='error') && <div className="notice">
         {modelMessage && <p role={modelState==='error'?'alert':'status'}>{modelMessage}</p>}
-        {modelState==='error' && <Button onClick={loadModel}>Retry model loading</Button>}
+        {modelState==='error' && modelError && <p className="small">Details: {modelError}</p>}
+        {/* Retry with a fresh page: an in-page retry would load a second model on top of the first. */}
+        {modelState==='error' && <Button onClick={() => window.location.reload()}>Retry model loading</Button>}
       </div>}
       <main id="main" ref={main} tabIndex={-1}>
         <ReportFlow classifier={classifier} store={store} relayNavigate={relayNavigate} onGpsStatus={setGpsLabel} analysisReady={!!suppliedClassifier||modelActive}/>
