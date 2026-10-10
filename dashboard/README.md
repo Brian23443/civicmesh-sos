@@ -18,7 +18,7 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:7000>. Vite proxies `/api` and `/ws` to
+Open <http://localhost:5174>. Vite proxies `/api` and `/ws` to
 `http://localhost:8000`.
 
 ## Verification
@@ -29,8 +29,8 @@ npx playwright install chromium
 npm run test:smoke
 ```
 
-The smoke suite starts the real Vite server on port 7000, supplies a browser-level
-mock bridge, and verifies:
+The smoke suite starts the real Vite server, supplies a browser-level mock bridge,
+and verifies:
 
 - clean rendering with no browser console or page errors;
 - live WebSocket health state;
@@ -52,13 +52,23 @@ mock bridge, and verifies:
 
 ## Map strategy
 
-The current map uses a blank local MapLibre style over the CSS dark grid. It does
-not make a runtime tile or CDN request. Active incidents with GPS fixes are held
-in one GeoJSON source and rendered through data-driven circle layers.
+The map uses MapLibre with OpenStreetMap raster tiles. Active incidents with GPS
+fixes are held in one GeoJSON source and rendered through data-driven circle
+layers. Attribution, scale, zoom, fullscreen, rotation, automatic incident
+framing, and selected-incident accuracy rings are enabled.
 
 Selecting a pin or queue card opens the detail drawer and adds a GeoJSON accuracy
-polygon when `gps_accuracy.meters_max` is available. If MapLibre initialization
-or map loading fails, the interactive CSS grid replaces it automatically.
+polygon when `gps_accuracy.meters_max` is available.
 
-The later offline-basemap phase will add `public/demo.pmtiles` plus local glyph
-and sprite assets. Keep the grid fallback in place when that style is introduced.
+### Offline behavior
+
+`public/offline-sw.js` installs a service worker that caches the application shell
+and up to 240 map tiles that the operator has viewed. After one connected visit,
+the dashboard and the viewed operating area remain available without a network.
+The cache is bounded to avoid uncontrolled device storage growth.
+
+Unvisited map areas cannot be downloaded while offline. If a required tile is not
+cached, the map switches to the interactive coordinate grid while keeping all
+incident pins, selection, and detail workflows available. API requests are never
+stored by the service worker; the existing mock cache continues to cover bridge
+outages without serving stale operational responses.
