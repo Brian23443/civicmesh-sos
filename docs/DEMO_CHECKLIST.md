@@ -10,6 +10,9 @@
 | 2026-10-10 13:32 | Same, continuous RX, identical URL reloaded 10× | 7 heard; browser served cached pages. Fixed with `Cache-Control: no-store` on every field-node response. |
 | 2026-10-10 13:36 | Same, both fixes, 10 reloads | **10/10** relayed and received; one pin, `heard_count` 10; RSSI −16 dBm, SNR +13.25 dB. Hand-typed `/sos` URL → pin in the bridge API (dashboard part of the hour-7 check pending Track 3). |
 | 2026-10-10 13:42 | Field node on a wall USB adapter (not the Mac), 5 reloads | **5/5** received, one pin `heard_count` 5; RSSI −44 dBm, SNR +13.25 dB. Power bank still to be tried once (some banks shut off at low current draw). |
+| 2026-10-10 18:01–18:48 | **iPhone end to end** (Safari, then Home Screen app; Airplane Mode + CivicMesh-SOS Wi-Fi) → field node (wall) → LoRa → base station → bridge → dashboard, live site https://brian23443.github.io/civicmesh-sos-app/ (Stage 1) | Bugs found and fixed along the way: relay "Back" link empty (quoted APP_URL) → re-sends; GPS gave up after 10 s; Home Screen app needs its own online first launch; bridge pinned to a renamed port; model failed after ~4 reports (iOS memory) → relay Back now restores the app page. |
+| 2026-10-10 18:47–18:48 | **§13.5 demo, 5 runs in a row** (seq 5–9, Home Screen app) | **5/5**: each IMMEDIATE · FLOOD · TRAPPED · 2 adults · INSULIN, heard once, GPS M25–M50, ~1 s phone → dashboard, model loaded once for all five. → tagged `demo-freeze`. |
+| _TBD_ | Android (Chrome) end to end, at least once | |
 | _TBD_ | Range at demo distance (SNR > ~0 dB → SF7 OK) | |
 | _TBD_ | Field node on power bank, 100 back-to-back `/sos` requests (free heap stable) | |
 
