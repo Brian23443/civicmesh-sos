@@ -1,0 +1,2858 @@
+[
+ {
+  "text": "4 ppl stuck on the overpass ramp, car battery dead",
+  "adults": 4,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "overpass",
+   "flags": 5120
+  },
+  "status": 2
+ },
+ {
+  "text": "me and my 2 kids are hiding in the closet, wind is insane",
+  "adults": 1,
+  "children": 2,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "two adults and a toddler in the pickup, road is gone",
+  "adults": 2,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "3 of us on the second floor, the stairs washed away",
+  "adults": 3,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "somos cuatro personas en el techo, el agua sigue subiendo",
+  "adults": 4,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 1
+ },
+ {
+  "text": "dos personas y un niño atrapados en el carro",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "just me here, the porch fell on my leg and it's pinned",
+  "adults": 1,
+  "children": 0,
+  "medical": 16,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "my 8yr old son and me in the bathtub, roof is shaking",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "12 workers on the scaffold, the crane tipped over",
+  "adults": 12,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "a couple of people under the awning, hail the size of golf balls",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "both of us soaked and freezing, shivering bad",
+  "adults": 2,
+  "children": 0,
+  "medical": 8,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "twins in the back seat and I can't open the doors",
+  "adults": 1,
+  "children": 2,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "6 of us at the cabin including 2 babies, out of formula",
+  "adults": 4,
+  "children": 2,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "my sister and I are fine but the garage is on fire",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "40 passengers on a stranded bus, driver unconscious",
+  "adults": 15,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "sugar's crashing and he's shaky, no insulin left",
+  "adults": 1,
+  "children": 0,
+  "medical": 1,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "my dad cant breath, his inhaler is gone and there's smoke",
+  "adults": 2,
+  "children": 0,
+  "medical": 2,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "gash on her forehead, blood everywhere, she's dizzy",
+  "adults": 1,
+  "children": 0,
+  "medical": 4,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "kid is shivering and his lips are turning blue",
+  "adults": 1,
+  "children": 1,
+  "medical": 8,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "grandpa uses a wheelchair and the elevator is out",
+  "adults": 2,
+  "children": 0,
+  "medical": 16,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "chest pains for an hour, he had a heart attack last year",
+  "adults": 1,
+  "children": 0,
+  "medical": 32,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "wife is pregnant, contractions are 5 minutes apart",
+  "adults": 2,
+  "children": 0,
+  "medical": 64,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "steam pipe burst, he got scalded and has blisters on his arms",
+  "adults": 1,
+  "children": 0,
+  "medical": 128,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "tiene quemaduras en las manos y está sangrando",
+  "adults": 1,
+  "children": 0,
+  "medical": 132,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "mi esposa está embarazada y no puedo respirar bien",
+  "adults": 2,
+  "children": 0,
+  "medical": 66,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "mi papá es diabético y se le acabó la insulina",
+  "adults": 2,
+  "children": 0,
+  "medical": 1,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "dolor de pecho fuerte, tiene un marcapasos",
+  "adults": 1,
+  "children": 0,
+  "medical": 32,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "we are not bleeding, nobody hurt, just no power",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "got a sunburn waiting in line at the shelter, otherwise ok",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 0
+ },
+ {
+  "text": "lit a burn barrel to stay warm, everyone fine",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "everyone fine here, no injuries, need drinking water tomorrow",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "no one is trapped, the water stopped at the curb",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "help at 742 Evergreen Terrace, old man collapsed",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 3,
+   "text": "742 Evergreen Terrace",
+   "flags": 6144
+  },
+  "status": null
+ },
+ {
+  "text": "my aunt called, she's at 18 Cedar Hill Rd. and can't get up",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 3,
+   "text": "18 Cedar Hill Rd",
+   "flags": 6144
+  },
+  "status": null
+ },
+ {
+  "text": "grandma fell at 9 Birch Ln, she lives alone",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 3,
+   "text": "9 Birch Ln",
+   "flags": 6144
+  },
+  "status": null
+ },
+ {
+  "text": "smoke pouring out behind the Costco on the frontage road",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "Costco",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "roof gone at the middle school gym, kids inside",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "middle school",
+   "flags": 5120
+  },
+  "status": 0
+ },
+ {
+  "text": "flooding down the street from the library, cars floating",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "library (down the street)",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "fire 4 blocks north of here, ash falling on us",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 1,
+   "text": "4 blocks north",
+   "flags": 4608
+  },
+  "status": null
+ },
+ {
+  "text": "a tree fell on a car nearby, someone is inside",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 1,
+   "text": "nearby",
+   "flags": 4608
+  },
+  "status": 0
+ },
+ {
+  "text": "crash across the street, the driver isn't moving",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 1,
+   "text": "across the street",
+   "flags": 4608
+  },
+  "status": null
+ },
+ {
+  "text": "21 Pine Ct, 3 blocks north of the hospital, gas smell",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 3,
+   "text": "21 Pine Ct (3 blocks north)",
+   "flags": 6144
+  },
+  "status": null
+ },
+ {
+  "text": "3 people on the way to the shelter, water knee deep",
+  "adults": 3,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "stuck on the 2nd floor of the parking garage",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "AYUDA water in the house my abuela cant walk",
+  "adults": 2,
+  "children": 0,
+  "medical": 16,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 0
+ },
+ {
+  "text": "PLEASE HURRY MY HUSBAND IS PINNED UNDER THE BEAM",
+  "adults": 2,
+  "children": 0,
+  "medical": 16,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "pls send someone asap 5 ppl here 1 is bleeding rn",
+  "adults": 5,
+  "children": 0,
+  "medical": 4,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "neighbor found unresponsive in the yard, no pulse, cold",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "landslide hit the back of the house two miles away from town",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 1,
+   "text": "two miles away",
+   "flags": 4608
+  },
+  "status": null
+ },
+ {
+  "text": "the hospital generator failed, oxygen patients on battery",
+  "adults": 1,
+  "children": 0,
+  "medical": 2,
+  "location": {
+   "type": 2,
+   "text": "hospital",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "4 ppl stuck on the overpass ramp",
+  "adults": 4,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "overpass",
+   "flags": 5120
+  },
+  "status": 2
+ },
+ {
+  "text": "1 kid with me, we're cold",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "ayuda, mi bebé tiene fiebre",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "me and my 2 kids are in the closet",
+  "adults": 1,
+  "children": 2,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "3 of us hiding in the pantry",
+  "adults": 3,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "two adults and a toddler in the truck",
+  "adults": 2,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 1
+ },
+ {
+  "text": "seven people waiting on the porch",
+  "adults": 7,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "12 workers on the scaffold",
+  "adults": 12,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "tres adultos en el techo",
+  "adults": 3,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 1
+ },
+ {
+  "text": "somos cuatro personas",
+  "adults": 4,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "dos personas y un niño atrapados",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "a couple of people under the awning",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "both of us are soaked",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "twins in the back seat, I'm driving",
+  "adults": 1,
+  "children": 2,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "5 people including 2 kids",
+  "adults": 3,
+  "children": 2,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "six of us, one is a baby",
+  "adults": 5,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "me and my husband on the balcony",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "my sister and I can't get the door open",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "just me here, the stairs are gone",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "I'm alone in the cellar",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "water coming under the door",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "my daughter is with me",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "my 8yr old son and me",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "grabbed my 3 year old daughter",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "2 small kids and their grandma",
+  "adults": 2,
+  "children": 2,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "2 adults and toddler",
+  "adults": 2,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "stuck in the basement with my mom",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "roofing crew member fainted, the worker is not sweating",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "the driver is slumped over the wheel",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "my cousin texted me, her landlord is hurt",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "mi abuela y mi tía están conmigo",
+  "adults": 3,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "help us the water keeps rising",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "we are hiding with the baby",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "family of 5 waiting on the overpass",
+  "adults": 5,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "overpass",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "two elderly sisters stuck in a sedan",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "three guys burned by the blast",
+  "adults": 3,
+  "children": 0,
+  "medical": 128,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "40 passengers on the stranded bus",
+  "adults": 15,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "20 children at the daycare",
+  "adults": 1,
+  "children": 15,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "sugar's crashing and he's shaky",
+  "adults": 1,
+  "children": 0,
+  "medical": 1,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "she is type 1 and out of pens",
+  "adults": 1,
+  "children": 0,
+  "medical": 1,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "mi papá es diabético",
+  "adults": 2,
+  "children": 0,
+  "medical": 1,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "my dad cant breath, his inhaler is gone",
+  "adults": 2,
+  "children": 0,
+  "medical": 2,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "cannot breathe, smoke in the stairwell",
+  "adults": 1,
+  "children": 0,
+  "medical": 2,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "no puedo respirar",
+  "adults": 1,
+  "children": 0,
+  "medical": 2,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "gash on his arm, blood everywhere",
+  "adults": 1,
+  "children": 0,
+  "medical": 4,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "tourniquet on her thigh",
+  "adults": 1,
+  "children": 0,
+  "medical": 4,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "está sangrando mucho",
+  "adults": 1,
+  "children": 0,
+  "medical": 4,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "kid shivering and lips turning blue",
+  "adults": 1,
+  "children": 1,
+  "medical": 8,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "signs of hypothermia, been in the creek",
+  "adults": 1,
+  "children": 0,
+  "medical": 8,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "my grandpa is in a wheelchair",
+  "adults": 2,
+  "children": 0,
+  "medical": 16,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "leg pinned under the shelf",
+  "adults": 1,
+  "children": 0,
+  "medical": 16,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "broken hip, she can't walk",
+  "adults": 1,
+  "children": 0,
+  "medical": 16,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "chest pains for an hour",
+  "adults": 1,
+  "children": 0,
+  "medical": 32,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "he has a pacemaker",
+  "adults": 1,
+  "children": 0,
+  "medical": 32,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "dolor de pecho fuerte",
+  "adults": 1,
+  "children": 0,
+  "medical": 32,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "wife is pregnant, contractions 5 min apart",
+  "adults": 2,
+  "children": 0,
+  "medical": 64,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "newborn needs formula",
+  "adults": 1,
+  "children": 1,
+  "medical": 64,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "hands burned pulling him out",
+  "adults": 1,
+  "children": 0,
+  "medical": 128,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "steam scalded his back, blisters",
+  "adults": 1,
+  "children": 0,
+  "medical": 128,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "tiene quemaduras y está sangrando",
+  "adults": 1,
+  "children": 0,
+  "medical": 132,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "pregnant and diabetic, contractions started",
+  "adults": 1,
+  "children": 0,
+  "medical": 65,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "got a sunburn at the shelter",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 0
+ },
+ {
+  "text": "lit a burn barrel to stay warm",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "we are not bleeding, nobody hurt",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "not burned, just scared",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "everyone fine, no injuries",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "help at 742 Evergreen Terrace",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 3,
+   "text": "742 Evergreen Terrace",
+   "flags": 6144
+  },
+  "status": null
+ },
+ {
+  "text": "my aunt lives at 18 Cedar Hill Rd.",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 3,
+   "text": "18 Cedar Hill Rd",
+   "flags": 6144
+  },
+  "status": null
+ },
+ {
+  "text": "grandpa fell at 9 Birch Ln",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 3,
+   "text": "9 Birch Ln",
+   "flags": 6144
+  },
+  "status": null
+ },
+ {
+  "text": "smoke behind the Costco",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "Costco",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "roof gone at the middle school gym",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "middle school",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "flooding down the street from the library",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "library (down the street)",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "fire 4 blocks north of here",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 1,
+   "text": "4 blocks north",
+   "flags": 4608
+  },
+  "status": null
+ },
+ {
+  "text": "tree fell nearby",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 1,
+   "text": "nearby",
+   "flags": 4608
+  },
+  "status": null
+ },
+ {
+  "text": "crash across the street",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 1,
+   "text": "across the street",
+   "flags": 4608
+  },
+  "status": null
+ },
+ {
+  "text": "21 Pine Ct, 3 blocks north of the hospital",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 3,
+   "text": "21 Pine Ct (3 blocks north)",
+   "flags": 6144
+  },
+  "status": null
+ },
+ {
+  "text": "3 people on the way",
+  "adults": 3,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "we are 2 adults at home",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 0
+ },
+ {
+  "text": "stuck on the 2nd floor",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "pinned under the shelf in the garage",
+  "adults": 1,
+  "children": 0,
+  "medical": 16,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "the door is jammed and smoke is coming in",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "stuck inside the elevator between floors",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "atrapados en el sótano",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 2
+ },
+ {
+  "text": "standing on the roof waving a towel",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 1
+ },
+ {
+  "text": "sitting in the car outside the clinic",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "clinic",
+   "flags": 5120
+  },
+  "status": 1
+ },
+ {
+  "text": "en la calle sin zapatos",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 1
+ },
+ {
+  "text": "we are safe at home with candles",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 0
+ },
+ {
+  "text": "we are NOT trapped, safe inside",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 0
+ },
+ {
+  "text": "estamos en casa, todo bien",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": 0
+ },
+ {
+  "text": "smoke everywhere, please hurry",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "4 ppl",
+  "adults": 4,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "1 kid",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "mi bebé",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "me and my 2 kids",
+  "adults": 1,
+  "children": 2,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "3 of us",
+  "adults": 3,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "two adults and a toddler",
+  "adults": 2,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "me and my wife",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "me and my grandma",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "alone",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "just me",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "a couple",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "both of us",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "twins",
+  "adults": 1,
+  "children": 2,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "una niña",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "dos adultos y tres hijos",
+  "adults": 2,
+  "children": 3,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "99 children and twenty adults",
+  "adults": 15,
+  "children": 15,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "0 adults and 0 children",
+  "adults": 0,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "7 people including 2 kids",
+  "adults": 5,
+  "children": 2,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "three kids among ten passengers",
+  "adults": 10,
+  "children": 3,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "twenty people including nineteen kids",
+  "adults": 1,
+  "children": 15,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "six men and two girls",
+  "adults": 6,
+  "children": 2,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "seis personas y dos bebés",
+  "adults": 4,
+  "children": 2,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "AN INFANT",
+  "adults": 1,
+  "children": 1,
+  "medical": 64,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "a newborn",
+  "adults": 1,
+  "children": 1,
+  "medical": 64,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "nineteen teenagers",
+  "adults": 1,
+  "children": 15,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "two students",
+  "adults": 2,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "one person",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "a couple kids",
+  "adults": 1,
+  "children": 2,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "a couple people and one child",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "two adults, two adults",
+  "adults": 4,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "kidney problem",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "a childlike drawing",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "someone has a son",
+  "adults": 1,
+  "children": 1,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "THREE\nOF US",
+  "adults": 3,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "INSULIN",
+  "adults": 1,
+  "children": 0,
+  "medical": 1,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "diabetic",
+  "adults": 1,
+  "children": 0,
+  "medical": 1,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "blood sugar",
+  "adults": 1,
+  "children": 0,
+  "medical": 1,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "sugar's low",
+  "adults": 1,
+  "children": 0,
+  "medical": 1,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "sugar’s low",
+  "adults": 1,
+  "children": 0,
+  "medical": 1,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "type 2",
+  "adults": 1,
+  "children": 0,
+  "medical": 1,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "insulina",
+  "adults": 1,
+  "children": 0,
+  "medical": 1,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "diabética",
+  "adults": 1,
+  "children": 0,
+  "medical": 1,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "cant breath",
+  "adults": 1,
+  "children": 0,
+  "medical": 2,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "can't breathe",
+  "adults": 1,
+  "children": 0,
+  "medical": 2,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "cannot breath",
+  "adults": 1,
+  "children": 0,
+  "medical": 2,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "choking on smoke",
+  "adults": 1,
+  "children": 0,
+  "medical": 2,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "inhaler",
+  "adults": 1,
+  "children": 0,
+  "medical": 2,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "bleeding",
+  "adults": 1,
+  "children": 0,
+  "medical": 4,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "hemorrhaging",
+  "adults": 1,
+  "children": 0,
+  "medical": 4,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "sangrando",
+  "adults": 1,
+  "children": 0,
+  "medical": 4,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "tourniquet",
+  "adults": 1,
+  "children": 0,
+  "medical": 4,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "deep cut",
+  "adults": 1,
+  "children": 0,
+  "medical": 4,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "hypothermic",
+  "adults": 1,
+  "children": 0,
+  "medical": 8,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "blue lips",
+  "adults": 1,
+  "children": 0,
+  "medical": 8,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "hipotermia",
+  "adults": 1,
+  "children": 0,
+  "medical": 8,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "shivering",
+  "adults": 1,
+  "children": 0,
+  "medical": 8,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "silla de ruedas",
+  "adults": 1,
+  "children": 0,
+  "medical": 16,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "paralyzed",
+  "adults": 1,
+  "children": 0,
+  "medical": 16,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "broken pelvis",
+  "adults": 1,
+  "children": 0,
+  "medical": 16,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "cannot walk",
+  "adults": 1,
+  "children": 0,
+  "medical": 16,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "pacemaker",
+  "adults": 1,
+  "children": 0,
+  "medical": 32,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "dolor de pecho",
+  "adults": 1,
+  "children": 0,
+  "medical": 32,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "infarto",
+  "adults": 1,
+  "children": 0,
+  "medical": 32,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "heart condition",
+  "adults": 1,
+  "children": 0,
+  "medical": 32,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "embarazada",
+  "adults": 1,
+  "children": 0,
+  "medical": 64,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "water broke",
+  "adults": 1,
+  "children": 0,
+  "medical": 64,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "in labor",
+  "adults": 1,
+  "children": 0,
+  "medical": 64,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "newborn",
+  "adults": 1,
+  "children": 1,
+  "medical": 64,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "burned",
+  "adults": 1,
+  "children": 0,
+  "medical": 128,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "burns",
+  "adults": 1,
+  "children": 0,
+  "medical": 128,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "burnt",
+  "adults": 1,
+  "children": 0,
+  "medical": 128,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "scalded",
+  "adults": 1,
+  "children": 0,
+  "medical": 128,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "blisters",
+  "adults": 1,
+  "children": 0,
+  "medical": 128,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "quemaduras",
+  "adults": 1,
+  "children": 0,
+  "medical": 128,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "Waiting here",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "At 84 Willow Lane",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 3,
+   "text": "84 Willow Lane",
+   "flags": 6144
+  },
+  "status": null
+ },
+ {
+  "text": "Go to 908 North Pine Rd.",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 3,
+   "text": "908 North Pine Rd",
+   "flags": 6144
+  },
+  "status": null
+ },
+ {
+  "text": "44 Oak St by the hospital",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 3,
+   "text": "44 Oak St",
+   "flags": 6144
+  },
+  "status": null
+ },
+ {
+  "text": "Around the corner from 44 Oak St",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 3,
+   "text": "44 Oak St (Around the corner)",
+   "flags": 6144
+  },
+  "status": null
+ },
+ {
+  "text": "Meet at HOME DEPOT",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "HOME DEPOT",
+   "flags": 5120
+  },
+  "status": 0
+ },
+ {
+  "text": "At the middle school",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "middle school",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "Near the hospital, a few blocks away",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "hospital (a few blocks away)",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "Down the street",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 1,
+   "text": "Down the street",
+   "flags": 4608
+  },
+  "status": null
+ },
+ {
+  "text": "Somewhere nearby",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 1,
+   "text": "nearby",
+   "flags": 4608
+  },
+  "status": null
+ },
+ {
+  "text": "Costco",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "Costco",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "HEB",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "HEB",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "City Hall",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "City Hall",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "The fire station",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "fire station",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "The police station",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "police station",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "hospitality and targetable malls",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "123456 Oak St",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "An overpass",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 2,
+   "text": "overpass",
+   "flags": 5120
+  },
+  "status": null
+ },
+ {
+  "text": "Ln",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "Please help",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "sunburn",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "burn barrel",
+  "adults": 1,
+  "children": 0,
+  "medical": 0,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ },
+ {
+  "text": "oxygen and insulin",
+  "adults": 1,
+  "children": 0,
+  "medical": 3,
+  "location": {
+   "type": 0,
+   "text": null,
+   "flags": 0
+  },
+  "status": null
+ }
+]

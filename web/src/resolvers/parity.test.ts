@@ -67,16 +67,8 @@ function checkRows(rows: ParityRow[]) {
   });
 }
 
-describe('Hand-authored mock resolver checks — NOT Python parity', () => {
-  const mockPath = fileURLToPath(new URL('./fixtures/mock_sentences.json', import.meta.url));
-  const values: unknown = JSON.parse(readFileSync(mockPath, 'utf8'));
-  if (!Array.isArray(values)) throw new Error('Mock fixtures must be an array');
-  const rows: ParityRow[] = [];
-  values.forEach((value, index) => { validate(value, index + 1); rows.push(value); });
-  checkRows(rows);
-});
-
 describe('T1 K5 resolver parity', () => {
+  // The shared fixture is on main; a missing file is a real failure, not a skip.
+  it('fixture is present', () => { expect(present).toBe(true); });
   if (present) checkRows(loadReferenceRows(fixturePath));
-  else it.skip('requires the missing T1 Python reference fixture', () => {});
 });

@@ -1,42 +1,69 @@
+/** §5.4 location resolver — port of resolve_location in src/models/resolvers.py. */
 import { LocationConfidenceType, MedicalFlags } from '../protocol/enums';
 import type { LocationConfidenceType as LocationType } from '../protocol/enums';
+import { NUMBER } from './headcount';
+import { WB_END, WB_START, finditer, longestFirst, rx, rxAll, words } from './common';
 
 export interface LocationResult { type: LocationType; text: string | null; flags: number }
-const LEFT = '(?<![\\p{L}\\p{N}])';
-const RIGHT = '(?![\\p{L}\\p{N}])';
-const streetType = '(?:Lane|Ln|Street|St|Road|Rd|Avenue|Ave|Boulevard|Blvd|Drive|Dr|Court|Ct|Way|Highway|Hwy|Terrace|Place|Pl)';
-const nameWord = "[\\p{L}\\p{N}][\\p{L}\\p{N}'’.-]*";
-const address = new RegExp(`${LEFT}[0-9]{1,5}\\s+(?:${nameWord}\\s+){1,6}?${streetType}${RIGHT}\\.?`, 'iu');
-// Longer multi-word names precede their contained shorter names.
-const landmarks = ['home depot', 'high school', 'middle school', 'elementary school', 'city hall',
-  'fire station', 'police station', 'walmart', 'target', 'costco', 'kroger', 'heb', 'safeway',
-  'walgreens', 'cvs', 'school', 'hospital', 'clinic', 'church', 'stadium', 'mall', 'library',
-  'airport', 'bridge', 'overpass'];
-const offsets = ['a few blocks away', 'down the street', 'across the street', 'nearby',
-  'around the corner', 'blocks north', 'blocks south', 'miles away'];
-const phrasePattern = (phrases: string[]) => new RegExp(`${LEFT}(?:${phrases.map(p => p.replaceAll(' ', '\\s+')).join('|')})${RIGHT}`, 'iu');
-const landmark = phrasePattern(landmarks);
-const offset = phrasePattern(offsets);
 
-/** §5.4: address > landmark > offset; preserve the survivor's matched text. */
+const STREET_TYPES = ['lane', 'ln', 'street', 'st', 'road', 'rd', 'avenue', 'ave', 'boulevard', 'blvd', 'drive', 'dr',
+  'court', 'ct', 'way', 'highway', 'hwy', 'terrace', 'place', 'pl'];
+// Words that can't be part of a street name — stops "3 people on the way" being an address.
+const STREET_STOPWORDS = new Set(['the', 'a', 'an', 'and', 'or', 'of', 'us', 'on', 'in', 'at', 'to', 'my', 'our', 'we',
+  'are', 'is', 'was', 'people', 'ppl', 'adults', 'adult', 'kids', 'kid', 'children', 'persons',
+  'minutes', 'mins', 'hours', 'hrs', 'feet', 'ft', 'miles', 'blocks', 'floors', 'floor',
+  'their', 'his', 'her', 'your', 'this', 'that', 'way', 'no', 'not', 'all', 'just']);
+const ADDRESS_RX = rxAll(
+  `${WB_START}([0-9]{1,5})\\s+((?:[a-z0-9.'-]+\\s+){1,4}?)(${STREET_TYPES.join('|')})\\.?${WB_END}`);
+
+const LANDMARKS = ['walmart', 'target', 'costco', 'home depot', 'kroger', 'heb', 'h-e-b', 'safeway', 'walgreens', 'cvs',
+  'high school', 'middle school', 'elementary school', 'school', 'hospital', 'clinic', 'church',
+  'stadium', 'mall', 'library', 'city hall', 'airport', 'fire station', 'police station', 'bridge', 'overpass'];
+const LANDMARK_RX = rx(words(longestFirst(LANDMARKS)));
+
+const OFFSETS = ['a few blocks away', 'down the street', 'across the street', 'nearby', 'around the corner',
+  'blocks north', 'blocks south', 'blocks east', 'blocks west', 'blocks away', 'miles away'];
+const OFFSET_COUNT = `(?:(?:${NUMBER}|a few|few|several)\\s+)?`;
+const OFFSET_RX = rx(`${WB_START}(?:${OFFSET_COUNT}(?:blocks|miles)\\s+(?:north|south|east|west|away)`
+  + `|${longestFirst(OFFSETS).join('|')})${WB_END}`);
+
+export const LOCATION_FLAGS: Record<LocationType, number> = {
+  [LocationConfidenceType.DIRECT_ON_SCENE]: 0,
+  [LocationConfidenceType.PROXIMATE_OFFSET]: MedicalFlags.LOC_PROXIMATE | MedicalFlags.LOCATION_DISCREPANCY_ALERT,
+  [LocationConfidenceType.LANDMARK_POI]: MedicalFlags.LOC_LANDMARK | MedicalFlags.LOCATION_DISCREPANCY_ALERT,
+  [LocationConfidenceType.EXPLICIT_ADDRESS]: MedicalFlags.LOC_EXPLICIT_ADDRESS | MedicalFlags.LOCATION_DISCREPANCY_ALERT,
+} as Record<LocationType, number>;
+
+/** Python str.strip(".,"). */
+const stripDotsCommas = (w: string) => w.replace(/^[.,]+|[.,]+$/g, '');
+
+function findAddress(text: string): string | null {
+  for (const m of finditer(ADDRESS_RX, text)) {
+    const nameWords = m[2].split(/\s+/).filter(Boolean);
+    if (nameWords.some(w => STREET_STOPWORDS.has(stripDotsCommas(w).toLowerCase()))) continue;
+    return text.slice(m.index, m.index + m[0].length).replace(/\.+$/, '');
+  }
+  return null;
+}
+
+/** §5.4 rules 1–3. location text keeps the message's spelling; an offset is appended in parentheses. */
 export function resolveLocation(message: string): LocationResult {
-  const addressText = address.exec(message)?.[0];
-  const landmarkText = landmark.exec(message)?.[0];
-  const offsetText = offset.exec(message)?.[0];
+  // Matching runs on the original text (patterns are case-insensitive) so spans map back 1:1.
+  const src = message.replace(/’/g, "'").replace(/‘/g, "'");
   let type: LocationType = LocationConfidenceType.DIRECT_ON_SCENE;
   let text: string | null = null;
-  let flags = 0;
-  if (addressText) {
-    type = LocationConfidenceType.EXPLICIT_ADDRESS; text = addressText;
-    flags = MedicalFlags.LOC_EXPLICIT_ADDRESS;
-  } else if (landmarkText) {
-    type = LocationConfidenceType.LANDMARK_POI; text = landmarkText;
-    flags = MedicalFlags.LOC_LANDMARK;
-  } else if (offsetText) {
-    type = LocationConfidenceType.PROXIMATE_OFFSET; text = offsetText;
-    flags = MedicalFlags.LOC_PROXIMATE;
+
+  const address = findAddress(src);
+  if (address) {
+    type = LocationConfidenceType.EXPLICIT_ADDRESS; text = address;
+  } else {
+    const m = LANDMARK_RX.exec(src);
+    if (m) { type = LocationConfidenceType.LANDMARK_POI; text = m[0]; }
   }
-  if (offsetText && type !== LocationConfidenceType.PROXIMATE_OFFSET) text = `${text} (${offsetText})`;
-  if (flags) flags |= MedicalFlags.LOCATION_DISCREPANCY_ALERT;
-  return { type, text, flags };
+  const m = OFFSET_RX.exec(src);
+  if (m) {
+    if (text === null) { type = LocationConfidenceType.PROXIMATE_OFFSET; text = m[0]; }
+    else text = `${text} (${m[0]})`;
+  }
+  return { type, text, flags: LOCATION_FLAGS[type] };
 }
