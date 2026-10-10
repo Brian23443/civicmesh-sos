@@ -1,10 +1,19 @@
 {
-  "kind": "prototype",
-  "base_model": "BAAI/bge-small-en-v1.5",
+  "kind": "classifier",
+  "base_model": "sentence-transformers/all-MiniLM-L6-v2",
   "max_length": 128,
-  "unknown_margin": 0.0,
-  "red_margin": 0.0075,
-  "status_backstop": true,
+  "red_threshold": 0.5,
+  "medical_thresholds": [
+    0.7,
+    0.6,
+    0.75,
+    0.75,
+    0.55,
+    0.7,
+    0.7,
+    0.75
+  ],
+  "third_party_threshold": 0.65,
   "labels": {
     "priority": [
       "MINOR",
