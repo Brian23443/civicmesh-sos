@@ -18,7 +18,7 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:5174>. Vite proxies `/api` and `/ws` to
+Open <http://localhost:7000>. Vite proxies `/api` and `/ws` to
 `http://localhost:8000`.
 
 ## Verification
@@ -29,8 +29,8 @@ npx playwright install chromium
 npm run test:smoke
 ```
 
-The smoke suite starts the real Vite server, supplies a browser-level mock bridge,
-and verifies:
+The smoke suite starts the real Vite server on port 7000, supplies a browser-level
+mock bridge, and verifies:
 
 - clean rendering with no browser console or page errors;
 - live WebSocket health state;

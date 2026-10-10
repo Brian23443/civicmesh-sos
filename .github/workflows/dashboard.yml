@@ -53,14 +53,14 @@ jobs:
       - name: Render dashboard and check browser console
         run: npm run test:smoke
 
-      - name: Start dev server and verify port 5174
+      - name: Start dev server and verify port 7000
         shell: bash
         run: |
           npm run dev -- --host 127.0.0.1 > /tmp/civicmesh-dashboard.log 2>&1 &
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for attempt in {1..30}; do
-            if curl --fail --silent http://127.0.0.1:5174/ > /dev/null; then
+            if curl --fail --silent http://127.0.0.1:7000/ > /dev/null; then
               cat /tmp/civicmesh-dashboard.log
               exit 0
             fi
