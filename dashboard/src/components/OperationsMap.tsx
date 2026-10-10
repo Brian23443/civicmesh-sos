@@ -37,6 +37,32 @@ type IncidentProperties = {
 };
 
 const CENTER: [number, number] = [-97.7431, 30.2672];
+const BASEMAP_STYLE: maplibregl.StyleSpecification = {
+  version: 8,
+  sources: {
+    "openstreetmap-tiles": {
+      type: "raster",
+      tiles: ["https://tile.openstreetmap.org/{z}/{x}/{y}.png"],
+      tileSize: 256,
+      attribution:
+        '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxzoom: 19,
+    },
+  },
+  layers: [
+    {
+      id: "openstreetmap-basemap",
+      type: "raster",
+      source: "openstreetmap-tiles",
+      paint: {
+        "raster-saturation": -0.22,
+        "raster-contrast": 0.08,
+        "raster-brightness-min": 0.08,
+        "raster-brightness-max": 0.72,
+      },
+    },
+  ],
+};
 
 export const TRIAGE_COLORS: Record<PriorityColor, string> = {
   red: "#FF4D5E",
@@ -177,6 +203,7 @@ export function OperationsMap({
   );
   const pulseRef = useRef(pulseIncidentId);
   const [mode, setMode] = useState<MapMode>("loading");
+  const [online, setOnline] = useState(() => navigator.onLine);
 
   const points = useMemo(() => incidents.filter(mappable), [incidents]);
   const active = useMemo(
@@ -199,8 +226,33 @@ export function OperationsMap({
     : "—";
 
   const recenterMap = () => {
-    mapRef.current?.easeTo({ center: CENTER, zoom: 12.2, duration: 500 });
+    const bounds = new maplibregl.LngLatBounds();
+    points.forEach((incident) => bounds.extend([incident.lon, incident.lat]));
+    if (!mapRef.current) return;
+    if (points.length > 1) {
+      mapRef.current.fitBounds(bounds, {
+        padding: { top: 110, right: 70, bottom: 140, left: 70 },
+        maxZoom: 14.5,
+        duration: 650,
+      });
+      return;
+    }
+    mapRef.current.easeTo({ center: CENTER, zoom: 12.2, duration: 500 });
   };
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setOnline(true);
+      if (mapRef.current?.loaded()) setMode("ready");
+    };
+    const handleOffline = () => setOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   useEffect(() => {
     incidentsRef.current = incidents;
@@ -249,24 +301,40 @@ export function OperationsMap({
 
     let map: maplibregl.Map;
     let animationFrame = 0;
+    let styleReady = false;
+    const fallbackTimer = window.setTimeout(() => {
+      if (!styleReady) setMode("fallback");
+    }, 10_000);
     try {
       map = new maplibregl.Map({
         container: containerRef.current,
         center: CENTER,
         zoom: 12.2,
         attributionControl: false,
-        style: { version: 8, sources: {}, layers: [] },
+        style: BASEMAP_STYLE,
+        pitch: 24,
+        bearing: -8,
+        maxPitch: 60,
       });
     } catch {
+      window.clearTimeout(fallbackTimer);
       setMode("fallback");
       return;
     }
 
     mapRef.current = map;
-    const handleError = () => setMode("fallback");
+    const handleError = () => {
+      if (!styleReady) setMode("fallback");
+    };
 
     map.on("error", handleError);
+    map.on("style.load", () => {
+      styleReady = true;
+      window.clearTimeout(fallbackTimer);
+    });
     map.on("load", () => {
+      styleReady = true;
+      window.clearTimeout(fallbackTimer);
       map.addSource("incidents", {
         type: "geojson",
         data: dataRef.current,
@@ -406,15 +474,39 @@ export function OperationsMap({
       }
 
       setMode("ready");
+
+      if (points.length > 1) {
+        const bounds = new maplibregl.LngLatBounds();
+        points.forEach((incident) => bounds.extend([incident.lon, incident.lat]));
+        map.fitBounds(bounds, {
+          padding: { top: 110, right: 70, bottom: 140, left: 70 },
+          maxZoom: 14.5,
+          duration: 0,
+        });
+      }
     });
 
     map.addControl(
-      new maplibregl.NavigationControl({ showCompass: false }),
+      new maplibregl.NavigationControl({
+        showCompass: true,
+        showZoom: true,
+        visualizePitch: true,
+      }),
       "bottom-right",
+    );
+    map.addControl(new maplibregl.FullscreenControl(), "bottom-right");
+    map.addControl(
+      new maplibregl.AttributionControl({ compact: true }),
+      "bottom-left",
+    );
+    map.addControl(
+      new maplibregl.ScaleControl({ maxWidth: 110, unit: "imperial" }),
+      "bottom-left",
     );
 
     return () => {
       window.cancelAnimationFrame(animationFrame);
+      window.clearTimeout(fallbackTimer);
       map.off("error", handleError);
       map.remove();
       mapRef.current = null;
@@ -434,8 +526,10 @@ export function OperationsMap({
             {mode === "fallback"
               ? "Grid fallback"
               : mode === "ready"
-                ? "Offline canvas"
-                : "Initializing"}
+                ? online
+                  ? "Street basemap"
+                  : "Cached street map"
+                : "Loading streets"}
           </span>
           <span className="map-coordinate">
             <Crosshair size={14} aria-hidden="true" />
@@ -477,7 +571,7 @@ export function OperationsMap({
         {mode === "loading" && (
           <div className="map-loading">
             <MapPinned size={24} aria-hidden="true" />
-            Initializing offline map
+            Loading street map
           </div>
         )}
         <div className="map-legend" aria-label="Triage legend">
@@ -512,4 +606,3 @@ export function OperationsMap({
     </section>
   );
 }
-
