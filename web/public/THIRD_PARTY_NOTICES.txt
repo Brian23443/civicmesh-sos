@@ -1,0 +1,16 @@
+CivicMesh-SOS survivor website — third-party components
+
+Model weights (one is served, depending on web/public/model/model.json):
+- BAAI/bge-small-en-v1.5 (Stage 1 embedder) — MIT License, Beijing Academy of Artificial Intelligence.
+  https://huggingface.co/BAAI/bge-small-en-v1.5
+- sentence-transformers/all-MiniLM-L6-v2 (base of the Stage 2 classifier; fine-tuned and quantized for
+  CivicMesh-SOS) — Apache License 2.0. https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2
+  Licensed under the Apache License, Version 2.0: https://www.apache.org/licenses/LICENSE-2.0
+  The fine-tuned weights are a modified version of the original model.
+
+Runtime:
+- onnxruntime-web 1.22.0 — MIT License, Microsoft Corporation. https://github.com/microsoft/onnxruntime
+
+Fonts and icons:
+- Inter (@fontsource/inter) — SIL Open Font License 1.1.
+- Lucide icons (lucide-react) — ISC License.
