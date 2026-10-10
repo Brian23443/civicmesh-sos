@@ -148,13 +148,39 @@ def soft_ce(logits: torch.Tensor, target: torch.Tensor, class_weights: torch.Ten
     return -(target * w * logp).sum(dim=-1).mean()
 
 
+BALANCED_CLAMP = (0.25, 4.0)
+
+
+def balanced_weights(labels: np.ndarray, n_classes: int) -> list[float]:
+    """Inverse-frequency class weights, mean 1 over the training rows, clamped to 0.25–4×.
+
+    Team variant (not §9): with ~56% Immediate and ~3% Deceased in the kept data, the §9
+    weights [1, 1, 2, 1] let the model over-call Immediate. Red recall is still protected
+    by the red_threshold tuned on validation (≥ 0.95).
+    """
+    counts = np.bincount(labels, minlength=n_classes).astype(np.float64)
+    w = len(labels) / (n_classes * np.maximum(counts, 1))
+    w = w / (w * counts).sum() * counts.sum()  # mean weight over rows = 1
+    return [float(x) for x in np.clip(w, *BALANCED_CLAMP)]
+
+
+def class_weights(rows: list[dict], mode: str) -> dict[str, list[float] | None]:
+    if mode == "spec":
+        return {"priority": HYPERPARAMS["priority_class_weights"], "status": None}
+    labels = hard_labels(rows)
+    return {"priority": balanced_weights(labels["priority"], 4), "status": balanced_weights(labels["status"], 4)}
+
+
 def total_loss(logits: dict[str, torch.Tensor], tgt: dict[str, torch.Tensor], pw_med: torch.Tensor,
-               pw_tp: torch.Tensor) -> tuple[torch.Tensor, dict[str, float]]:
-    cw = torch.tensor(HYPERPARAMS["priority_class_weights"], device=logits["priority"].device)
+               pw_tp: torch.Tensor, cw: dict[str, list[float] | None] | None = None) -> tuple[torch.Tensor, dict[str, float]]:
+    dev = logits["priority"].device
+    cw = cw or {"priority": HYPERPARAMS["priority_class_weights"], "status": None}
+    w_pri = torch.tensor(cw["priority"], device=dev)
+    w_sta = torch.tensor(cw["status"], device=dev) if cw.get("status") else None
     parts = {
-        "priority": soft_ce(logits["priority"], tgt["priority"], cw),
+        "priority": soft_ce(logits["priority"], tgt["priority"], w_pri),
         "hazard": soft_ce(logits["hazard"], tgt["hazard"]),
-        "status": soft_ce(logits["status"], tgt["status"]),
+        "status": soft_ce(logits["status"], tgt["status"], w_sta),
         "medical": F.binary_cross_entropy_with_logits(logits["medical"], tgt["medical"], pos_weight=pw_med),
         "third_party": F.binary_cross_entropy_with_logits(logits["third_party"], tgt["third_party"],
                                                           pos_weight=pw_tp),
@@ -269,6 +295,9 @@ def train(args: argparse.Namespace) -> Path:
     tokenizer = AutoTokenizer.from_pretrained(args.base_model)
     model = TriageClassifier(args.base_model, dropout=HYPERPARAMS["dropout"]).to(device)
     pw_med, pw_tp = (t.to(device) for t in pos_weights(train_rows))
+    cw = class_weights(train_rows, args.class_weights)
+    print(f"class weights ({args.class_weights}): priority {[round(x, 2) for x in cw['priority']]}"
+          + (f", status {[round(x, 2) for x in cw['status']]}" if cw["status"] else ""))
 
     head_params = [p for n, p in model.named_parameters() if n.startswith("heads.")]
     enc_params = [p for n, p in model.named_parameters() if not n.startswith("heads.")]
@@ -291,7 +320,7 @@ def train(args: argparse.Namespace) -> Path:
         t0, running = time.time(), 0.0
         for i in range(0, len(order), bs):
             ids, mask, tgt = collate(order[i:i + bs], tokenizer, device)
-            loss, _ = total_loss(model(ids, mask), tgt, pw_med, pw_tp)
+            loss, _ = total_loss(model(ids, mask), tgt, pw_med, pw_tp, cw)
             opt.zero_grad()
             loss.backward()
             nn.utils.clip_grad_norm_(model.parameters(), HYPERPARAMS["grad_clip"])
@@ -335,7 +364,8 @@ def train(args: argparse.Namespace) -> Path:
         "val_rows": len(val_rows),
         "best_epoch": best["epoch"],
         "hyperparams": {**HYPERPARAMS, "epochs": epochs, "device": device, "val_writer": args.val_writer,
-                        "unverified": args.unverified},
+                        "unverified": args.unverified, "class_weights": args.class_weights,
+                        "class_weights_used": cw},
         "val_metrics": {}, "test_metrics": {},
     }
     (out / "config.json").write_text(json.dumps(cfg, indent=2) + "\n")
@@ -378,6 +408,9 @@ def main() -> None:
     parser.add_argument("--scored", type=Path, default=SCORED_PATH)
     parser.add_argument("--epochs", type=int, help="default: 4 for ≥1,000 rows, 15 for fewer")
     parser.add_argument("--device", choices=["mps", "cuda", "cpu"])
+    parser.add_argument("--class-weights", choices=["spec", "balanced"], default="spec",
+                        help="spec = §9 priority weights [1,1,2,1]; balanced = inverse frequency for priority and "
+                             "status, clamped 0.25-4x (team variant)")
     train(parser.parse_args())
 
 
