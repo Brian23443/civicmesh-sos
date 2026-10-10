@@ -53,9 +53,11 @@ def onnx_embed_fn(model_dir: Path, onnx_path: Path | None = None) -> EmbedFn:
     tokenizer = AutoTokenizer.from_pretrained(str(model_dir))
 
     def embed(texts: list[str]) -> np.ndarray:
+        # One message at a time, exactly like the phone: dynamic INT8 quantization picks its
+        # activation scale from the whole input tensor, so padded batches change the result.
         out = []
-        for i in range(0, len(texts), 32):
-            enc = tokenizer(texts[i:i + 32], truncation=True, max_length=128, padding=True, return_tensors="np")
+        for text in texts:
+            enc = tokenizer([text], truncation=True, max_length=128, return_tensors="np")
             feeds = {"input_ids": enc["input_ids"].astype(np.int64),
                      "attention_mask": enc["attention_mask"].astype(np.int64)}
             out.append(session.run(["embedding"], feeds)[0])
