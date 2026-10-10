@@ -167,7 +167,9 @@ Folder `web/public/model/`:
     "kind": "prototype",
     "base_model": "BAAI/bge-small-en-v1.5",
     "max_length": 128,
-    "unknown_margin": 0.02,
+    "unknown_margin": 0.0,
+    "red_margin": 0.005,
+    "status_backstop": true,
     "labels": {
       "priority": ["MINOR", "DELAYED", "IMMEDIATE", "DECEASED"],
       "hazard": ["NONE", "FLOOD", "FIRE_SMOKE", "STRUCTURAL_COLLAPSE", "HAZMAT_GAS", "ELECTRICAL_POWER", "EXTREME_WEATHER", "MEDICAL_CRISIS", "ACTIVE_VIOLENCE", "TSUNAMI_SURGE", "LANDSLIDE", "HYPOTHERMIA_FREEZE", "HEAT_STROKE", "SINKHOLE_SUBSIDENCE", "CONTAMINATED_WATER", "OTHER"],
@@ -176,7 +178,11 @@ Folder `web/public/model/`:
     }
   }
   ```
-  (`unknown_margin` is whatever T1 tuned on the chatbot rows. Stage 2 adds `"kind": "classifier"`, `red_threshold`, `medical_thresholds` [8], `third_party_threshold` — §11.2.)
+  All three settings were tuned by T1 on the chatbot rows (`python3 -m stage1.tune_stage1`, evidence in `artifacts/stage1_tuning.json`). Stage 1 decoding, in this order:
+  1. **priority** = argmax of the 4 prototype scores; then if `score[IMMEDIATE] >= score[priority] - red_margin`, priority = IMMEDIATE (Red bias, mirrors Stage 2's `red_threshold`).
+  2. **status** = UNKNOWN if `top1 - top2 < unknown_margin` (0.0 → never), else argmax. Then, if `status_backstop` is true, `resolve_status(text)` (port of `src/models/resolvers.py`) overrides it **when it returns a value** — test `!= null` / use `??`, never `||`: SHELTERED is 0.
+  3. **hazard** = argmax of the 15 hazard prototypes.
+  Stage 2 adds `"kind": "classifier"`, `red_threshold`, `medical_thresholds` [8], `third_party_threshold` — §11.2.
 - `embedder.onnx.gz` — gzip of the INT8 ONNX graph. Inputs `input_ids` and `attention_mask`, both **int64** `[batch, seq]`. Output `embedding`, float32 `[batch, 384]`, already mean-pooled and L2-normalized inside the graph.
 - `tokenizer.json` — the Hugging Face fast-tokenizer file for the base model (plus `tokenizer_config.json`, `special_tokens_map.json`, `vocab.txt` if transformers.js needs them; T1 copies all of them).
 - `prototypes.json`
@@ -211,7 +217,7 @@ Until K4 arrives, T4 builds against a `MockClassifier` with the same signature, 
   ```json
   {"text": "...", "headcount": [adults, children], "medical_mask": 5, "location": {"type": "EXPLICIT_ADDRESS", "text": "12 Oak St", "flags": 6144}, "stage1": {"priority": 2, "hazard": 1, "status": 2, "scores": {...}}}
   ```
-  `stage1` is added once the embedder exists (hour 5). JS must match `headcount`, `medical_mask` and `location` exactly, and `stage1` decoded fields on ≥ 98% of fields (INT8 vs PyTorch noise).
+  Each row also has `status_keyword` (the `resolve_status` result or null), `input_ids` (the Python tokenizer's ids, for checking a fallback WordPiece tokenizer) and `stage1_summary` (the full confirmation line: model + every resolver). JS must match `headcount`, `medical_mask`, `location`, `status_keyword` and `input_ids` exactly, and `stage1` decoded fields on ≥ 98% of fields (both sides use the same INT8 graph, so this should be ~100%).
 
 Vitest reads them from `../tests/fixtures/` relative to `web/`.
 
