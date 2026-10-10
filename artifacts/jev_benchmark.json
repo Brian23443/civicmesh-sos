@@ -1,0 +1,45 @@
+{
+  "n": 54,
+  "priority_acc": 0.9814814814814815,
+  "red_recall": 1.0,
+  "hazard_acc": 0.7592592592592593,
+  "status_acc": 0.7037037037037037,
+  "adults_acc": 0.8888888888888888,
+  "children_acc": 0.9629629629629629,
+  "third_party_acc": 0.9629629629629629,
+  "medical_f1": 0.8285714285714286,
+  "priority_confusion": {
+    "labels": [
+      "Minor",
+      "Delayed",
+      "Immediate",
+      "Deceased"
+    ],
+    "rows_gold_cols_pred": [
+      [
+        12,
+        0,
+        1,
+        0
+      ],
+      [
+        0,
+        10,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        28,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        3
+      ]
+    ]
+  }
+}
