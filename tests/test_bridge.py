@@ -176,3 +176,40 @@ def test_simulator_frames_decode():
         assert 0 <= d["adults"] <= 15 and 0 <= d["children"] <= 15
         if d["gps_accuracy"]["name"] != "NO_FIX":
             assert abs(d["lat"] - 30.2672) < 0.05 and abs(d["lon"] + 97.7431) < 0.05
+
+
+def test_real_server_accepts_websocket_connections(tmp_path):
+    """Regression: TestClient fakes the socket, so it can't catch a server without a WebSocket
+    library (plain `uvicorn` refuses every /ws upgrade). Start a real server and connect."""
+    import json as _json
+    import socket
+    import threading
+    import time
+
+    import uvicorn
+    from websockets.sync.client import connect
+
+    with socket.socket() as s:
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+    app = create_app(tmp_path / "ws.db", use_serial=False, dashboard_dist=None)
+    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=port, log_level="error"))
+    thread = threading.Thread(target=server.run, daemon=True)
+    thread.start()
+    try:
+        for _ in range(100):
+            if server.started:
+                break
+            time.sleep(0.05)
+        with connect(f"ws://127.0.0.1:{port}/ws", open_timeout=5) as ws:
+            assert _json.loads(ws.recv(timeout=5))["type"] == "health"
+            import urllib.request
+            req = urllib.request.Request(f"http://127.0.0.1:{port}/api/debug/frame", method="POST",
+                                         data=_json.dumps({"hex": VECTOR_1}).encode(),
+                                         headers={"content-type": "application/json"})
+            urllib.request.urlopen(req, timeout=5).read()
+            msg = _json.loads(ws.recv(timeout=5))
+            assert msg["type"] == "incident.new" and msg["incident"]["frame_hex"] == VECTOR_1
+    finally:
+        server.should_exit = True
+        thread.join(timeout=5)

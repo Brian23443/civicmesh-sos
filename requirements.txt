@@ -11,6 +11,6 @@ numpy
 pytest
 pyserial
 fastapi
-uvicorn
+uvicorn[standard]  # [standard] includes `websockets` — without it every /ws upgrade is refused
 # not in §14, needed by FastAPI's TestClient for bridge tests
 httpx

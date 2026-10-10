@@ -21,12 +21,10 @@ CLI="/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/
 "$CLI" monitor -p /dev/cu.usbserial-0001 -c baudrate=115200
 ```
 
-Set the hosted website URL for the field node's "Back to CivicMesh" link without editing the sketch:
-
-```bash
-"$CLI" compile --fqbn esp32:esp32:heltec_wifi_lora_32_V3 \
-  --build-property 'build.extra_flags=-DAPP_URL="\"https://your-app.example\""' firmware/field_node
-```
+The hosted website URL for the field node's "Back to CivicMesh" link is the `APP_URL` `#define` at the top of
+`field_node/field_node.ino` (currently https://brian23443.github.io/civicmesh-sos-app/). Edit it there — **don't** pass
+it as a `-D` compile flag: arduino-cli's quoting leaves literal quote marks in the string, the link's `href` becomes
+empty, and tapping it reloads `/sos` (a `static_assert` now rejects that).
 
 If an upload hangs at "Connecting…": hold PRG, tap RST, release PRG. If the board misbehaves after Meshtastic/factory firmware: Tools → Erase All Flash Before Sketch Upload → Enabled.
 

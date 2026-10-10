@@ -18,7 +18,11 @@ export interface LoadDeps {
   ort: () => Promise<Ort>;
   wasmPaths: string;
 }
-export interface LoadedModel { classifier: Classifier; config: ModelConfig; downloadBytes: number; loadMs: number }
+export interface LoadedModel {
+  classifier: Classifier; config: ModelConfig; downloadBytes: number; loadMs: number;
+  /** Frees the ONNX session's WASM memory. */
+  dispose: () => Promise<void>;
+}
 
 const MODEL_DIR = 'model/';
 const browserDeps = (): LoadDeps => ({
@@ -75,12 +79,14 @@ export async function loadLocalModel(progress: (message: string) => void = () =>
   ort.env.wasm.proxy = false;
 
   const file = config.kind === 'prototype' ? 'embedder.onnx.gz' : 'classifier.onnx.gz';
-  const bytes = await readModelBytes(await deps.fetchAsset(MODEL_DIR + file), (loaded, total) => {
+  let bytes: Uint8Array | null = await readModelBytes(await deps.fetchAsset(MODEL_DIR + file), (loaded, total) => {
     progress(total ? `Preparing emergency mode… ${Math.round((100 * loaded) / total)}%`
       : `Preparing emergency mode… ${(loaded / 1e6).toFixed(1)} MB`);
   });
   progress('Starting the on-device model…');
   const session: InferenceSession = await ort.InferenceSession.create(bytes, { executionProviders: ['wasm'] });
+  const modelBytes = bytes.byteLength;
+  bytes = null;  // ORT has its own copy in WASM memory; let the ~30 MB JS buffer be collected now
 
   let classifier: Classifier;
   if (config.kind === 'prototype') {
@@ -102,6 +108,13 @@ export async function loadLocalModel(progress: (message: string) => void = () =>
     classifier = createModelClassifier(config, { logitProvider });
   }
   progress('Checking the on-device model…');
-  await classifier.classify('A person needs assistance.');
-  return { classifier, config, downloadBytes: bytes.byteLength, loadMs: performance.now() - started };
+  let released = false;
+  const dispose = async () => { if (!released) { released = true; await session.release(); } };
+  try {
+    await classifier.classify('A person needs assistance.');
+  } catch (error) {
+    await dispose();
+    throw error;
+  }
+  return { classifier, config, downloadBytes: modelBytes, loadMs: performance.now() - started, dispose };
 }

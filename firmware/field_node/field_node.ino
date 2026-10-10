@@ -15,19 +15,26 @@
 
 #include "civicmesh_common.h"
 
-// Hosted survivor website (docs/INTEGRATION.md, filled in by Track 4).
-#ifndef APP_URL
-#define APP_URL "https://REPLACE-WITH-APP-URL.example"
-#endif
+// Hosted survivor website (docs/INTEGRATION.md). Set it here, not with a -D compile flag:
+// shell quoting through arduino-cli leaves literal quote marks in the string, which makes the
+// "Back to CivicMesh" href empty — a tap then reloads /sos and re-transmits the report.
+#define APP_URL "https://brian23443.github.io/civicmesh-sos-app/"
+static_assert(APP_URL[0] == 'h', "APP_URL must be a bare URL string, without embedded quote marks");
 
 #define AP_SSID "CivicMesh-SOS"
 #define TX_RETRY_DELAY_MS 100
+// A request for the exact frame relayed within this window is not transmitted again (browser
+// back/restore/prefetch of /sos). A deliberate re-send from the app has a new seq, so a new frame.
+#define REPEAT_WINDOW_MS (10UL * 60UL * 1000UL)
 
 SSD1306Wire display(CM_OLED_ADDR, CM_OLED_SDA, CM_OLED_SCL);
 SX1262 radio = new Module(CM_LORA_NSS, CM_LORA_DIO1, CM_LORA_RST, CM_LORA_BUSY, SPI);
 WebServer server(80);
 
 uint32_t sentCount = 0;
+uint8_t lastFrame[CM_FRAME_LEN];
+uint32_t lastFrameAt = 0;
+bool haveLastFrame = false;
 
 // ---------------------------------------------------------------------------
 // HTML (self-contained, inline CSS, no external fonts). Colors are placeholders
@@ -67,8 +74,14 @@ static String page(const String& body) {
   return html;
 }
 
+// Goes *back* to the app when we came from it: iOS restores the app page from its back/forward cache
+// with the on-device model still loaded. Opening APP_URL instead would reload the app and load the
+// ~35 MB model again; iOS doesn't free that memory between reloads, so after a few reports the model
+// could no longer start. Without history (page opened directly) the link opens APP_URL as before.
 static String backLink() {
-  return String("<a class=\"btn\" href=\"") + APP_URL + "\" aria-label=\"Back to CivicMesh\">Back to CivicMesh</a>";
+  return String("<a class=\"btn\" href=\"") + APP_URL +
+         "\" onclick=\"if(history.length>1){history.back();return false;}\" aria-label=\"Back to CivicMesh\">"
+         "Back to CivicMesh</a>";
 }
 
 // ---------------------------------------------------------------------------
@@ -96,6 +109,11 @@ static void sendError(int code, const String& title, const String& detail) {
   sendNoCache(code, "text/html; charset=utf-8", page(body));
 }
 
+static void redirectToSent(const uint8_t* frame) {
+  server.sendHeader("Location", "/sent?seq=" + String(cmFrameSeq(frame)));
+  sendNoCache(303, "text/plain; charset=utf-8", "Sent");
+}
+
 static void handleSos() {
   String hex = server.arg("d");
   uint8_t frame[CM_FRAME_LEN];
@@ -105,6 +123,12 @@ static void handleSos() {
     sendError(400, "Report not recognised",
               parsed == 2 ? "This report was made by a different app version. Open CivicMesh and try again."
                           : "The report link is incomplete. Go back to CivicMesh and tap Send again.");
+    return;
+  }
+
+  if (haveLastFrame && memcmp(frame, lastFrame, CM_FRAME_LEN) == 0 && millis() - lastFrameAt < REPEAT_WINDOW_MS) {
+    Serial.printf("Repeat request for seq %u — already relayed, not re-sent\n", cmFrameSeq(frame));
+    redirectToSent(frame);
     return;
   }
 
@@ -121,6 +145,9 @@ static void handleSos() {
   }
 
   sentCount++;
+  memcpy(lastFrame, frame, CM_FRAME_LEN);
+  lastFrameAt = millis();
+  haveLastFrame = true;
   char hexUpper[2 * CM_FRAME_LEN + 1];
   cmToHex(frame, CM_FRAME_LEN, hexUpper);
   uint8_t people = cmFrameAdults(frame) + cmFrameChildren(frame);
@@ -130,10 +157,17 @@ static void handleSos() {
   cmOledShow(display, "SENT · " + String(word), String(people) + " ppl · seq " + String(cmFrameSeq(frame)),
              "", "READY · " + String(sentCount) + " sent");
 
+  // Post/redirect/get: the "Sent ✓" page lives at /sent, so reloading or restoring it never
+  // requests /sos (and never transmits) again.
+  redirectToSent(frame);
+}
+
+static void handleSent() {
+  long seq = server.hasArg("seq") ? server.arg("seq").toInt() : -1;
   String body = String("<div class=\"icon ok\" aria-hidden=\"true\">&#10003;</div>") +
                 "<h1>Sent &#10003;</h1>" +
                 "<p>Your report is on the rescue network. Stay where you are if it is safe.</p>" + backLink() +
-                "<div class=\"meta\">seq " + String(cmFrameSeq(frame)) + "</div>";
+                (seq >= 0 && seq <= 255 ? "<div class=\"meta\">seq " + String(seq) + "</div>" : String(""));
   sendNoCache(200, "text/html; charset=utf-8", page(body));
 }
 
@@ -162,6 +196,7 @@ void setup() {
   WiFi.softAP(AP_SSID);  // open network, no password
 
   server.on("/sos", HTTP_GET, handleSos);
+  server.on("/sent", HTTP_GET, handleSent);
   server.on("/", HTTP_GET, handleRoot);
   server.onNotFound(handleNotFound);
   server.begin();

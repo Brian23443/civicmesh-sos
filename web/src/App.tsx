@@ -18,6 +18,7 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
   const [local, setLocal] = useState<Classifier | null>(null);
   const [modelState, setModelState] = useState<'idle'|'loading'|'ready'|'error'>(suppliedClassifier?'idle':'loading');
   const [modelMessage, setModelMessage] = useState('');
+  const [modelError, setModelError] = useState('');
   const classifier = suppliedClassifier ?? local ?? unavailableClassifier;
   const modelActive = !suppliedClassifier && !!local;
   const loadModel = useCallback(async () => {
@@ -25,10 +26,21 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
     try {
       const { loadLocalModel } = await import('./inference/loadModel');
       const model = await loadLocalModel(setModelMessage);
-      setLocal(model.classifier); setModelState('ready'); setModelMessage('');
-    } catch { setModelState('error'); setModelMessage('The on-device model could not start. Retry, or fill in every field manually.'); }
+      loaded.current = model;
+      setLocal(model.classifier); setModelState('ready'); setModelMessage(''); setModelError('');
+    } catch (error) {
+      setModelState('error'); setModelMessage('The on-device model could not start — the phone may be low on memory. Close CivicMesh from the app switcher and reopen it, or fill in every field manually.');
+      setModelError(error instanceof Error ? `${error.name}: ${error.message}` : String(error));
+    }
   }, []);
+  const loaded = useRef<{ dispose: () => Promise<void> } | null>(null);
+  // Keep the model alive across Send → relay → back. iOS doesn't return a WASM model's memory when the
+  // page reloads (the Home Screen app is one long-lived process), so every reload costs ~35 MB until a
+  // load fails. The relay's "Back to CivicMesh" goes *back* (history), and iOS restores this page from
+  // its back/forward cache with the model still loaded — so nothing is released on pagehide.
   useEffect(() => { if (!suppliedClassifier) void loadModel(); }, [suppliedClassifier, loadModel]);
+  // §12: ask the browser to keep the offline copy (iOS can otherwise evict it).
+  useEffect(() => { try { void navigator.storage?.persist?.().catch(() => {}); } catch { /* unsupported */ } }, []);
   const offline=useOfflineStatus();
   useEffect(() => {
     const titles: Record<string,string> = { '/':'Report', '/analyze':'Analyze', '/review':'Review', '/send':'Send', '/reports':'My reports' };
@@ -48,7 +60,9 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
       </div>
       {!suppliedClassifier && location.pathname==='/' && (modelMessage || modelState==='error') && <div className="notice">
         {modelMessage && <p role={modelState==='error'?'alert':'status'}>{modelMessage}</p>}
-        {modelState==='error' && <Button onClick={loadModel}>Retry model loading</Button>}
+        {modelState==='error' && modelError && <p className="small">Details: {modelError}</p>}
+        {/* Retry with a fresh page: an in-page retry would load a second model on top of the first. */}
+        {modelState==='error' && <Button onClick={() => window.location.reload()}>Retry model loading</Button>}
       </div>}
       <main id="main" ref={main} tabIndex={-1}>
         <ReportFlow classifier={classifier} store={store} relayNavigate={relayNavigate} onGpsStatus={setGpsLabel} analysisReady={!!suppliedClassifier||modelActive}/>
@@ -57,6 +71,6 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
       <footer className="flex items-center justify-between gap-3 mt-8"><span>On your device. In your control.</span><Button aria-label="Open CivicMesh information" onClick={() => setHelp(true)}><HelpCircle aria-hidden="true" size={22}/></Button></footer>
       <nav aria-label="Main navigation" className="bottom-nav"><NavLink to="/" end><Shield aria-hidden="true" size={20}/>Report</NavLink><NavLink to="/reports"><FileText aria-hidden="true" size={20}/>My reports</NavLink></nav>
     </div>
-    <Sheet open={help} onClose={() => setHelp(false)} title="About CivicMesh"><p>CivicMesh sends structured emergency reports through a nearby relay.</p><p>Your message is analyzed on this phone by a small triage model; the text itself is never sent — only an 18-byte summary you confirm. Check every suggested field before sending. The relay reply confirms radio handoff; this app does not confirm rescue delivery.</p><p>For Airplane Mode, load the website once while online and wait for “Ready offline ✓”. Manual reports remain available if the model cannot start.</p>{offline.missingInference.length>0&&<p>Some model files are missing from this build; manual reports still work.</p>}<p>On iPhone, Add to Home Screen can help retain the app. Offline readiness depends on the browser keeping its cached data.</p><Button className="primary mt-6" onClick={() => setHelp(false)}>Got it</Button></Sheet>
+    <Sheet open={help} onClose={() => setHelp(false)} title="About CivicMesh"><p>CivicMesh sends structured emergency reports through a nearby relay.</p><p>Your message is analyzed on this phone by a small triage model; the text itself is never sent — only an 18-byte summary you confirm. Check every suggested field before sending. The relay reply confirms radio handoff; this app does not confirm rescue delivery.</p><p>For Airplane Mode, load the website once while online and wait for “Ready offline ✓”. Manual reports remain available if the model cannot start.</p>{offline.missingInference.length>0&&<p>Some model files are missing from this build; manual reports still work.</p>}<p>On iPhone, Add to Home Screen helps iOS keep the app. <strong>The Home Screen app keeps its own separate copy:</strong> open it from the Home Screen once while online and wait for “Ready offline ✓” before relying on it offline.</p><Button className="primary mt-6" onClick={() => setHelp(false)}>Got it</Button></Sheet>
   </>;
 }
