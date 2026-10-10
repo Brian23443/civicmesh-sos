@@ -209,9 +209,9 @@ function App() {
       <footer className="app-footer">
         <span>
           {connectionState === "connected" ? "Live bridge" : "Mock cache"}
-          {" · "}Contract K3
+          {" · "}Encrypted mesh telemetry · Contract K3
         </span>
-        <code>{incidents.length} frames loaded</code>
+        <code>{incidents.length} frames · 18 bytes each</code>
       </footer>
 
       <DetailDrawer
@@ -229,3 +229,4 @@ function App() {
 }
 
 export default App;
+

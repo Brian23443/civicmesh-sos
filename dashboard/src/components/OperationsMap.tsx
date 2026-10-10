@@ -4,7 +4,15 @@ import type {
   Point,
   Polygon,
 } from "geojson";
-import { Crosshair, Layers3, MapPinned } from "lucide-react";
+import {
+  AlertTriangle,
+  Crosshair,
+  Layers3,
+  LocateFixed,
+  MapPinned,
+  RadioTower,
+  Users,
+} from "lucide-react";
 import maplibregl from "maplibre-gl";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -141,7 +149,7 @@ function FallbackGrid({
         >
           {incident.location_discrepancy && (
             <span className="pin-warning" aria-label="Location discrepancy">
-              ⚠
+              <AlertTriangle size={10} aria-hidden="true" />
             </span>
           )}
         </button>
@@ -171,6 +179,28 @@ export function OperationsMap({
   const [mode, setMode] = useState<MapMode>("loading");
 
   const points = useMemo(() => incidents.filter(mappable), [incidents]);
+  const active = useMemo(
+    () => incidents.filter((incident) => incident.state === "active"),
+    [incidents],
+  );
+  const immediateCount = active.filter(
+    (incident) => incident.priority.color === "red",
+  ).length;
+  const peopleCount = active.reduce(
+    (total, incident) => total + incident.adults + incident.children,
+    0,
+  );
+  const averageRssi = active.filter((incident) => incident.rssi !== null);
+  const signalLabel = averageRssi.length
+    ? `${Math.round(
+        averageRssi.reduce((total, incident) => total + (incident.rssi ?? 0), 0) /
+          averageRssi.length,
+      )} dBm`
+    : "—";
+
+  const recenterMap = () => {
+    mapRef.current?.easeTo({ center: CENTER, zoom: 12.2, duration: 500 });
+  };
 
   useEffect(() => {
     incidentsRef.current = incidents;
@@ -414,6 +444,23 @@ export function OperationsMap({
         </div>
       </div>
 
+      <div className="map-command-strip" aria-label="Map controls">
+        <button
+          disabled={mode !== "ready"}
+          onClick={recenterMap}
+          title={mode === "ready" ? "Recenter map" : "Map is initializing"}
+          type="button"
+        >
+          <LocateFixed size={15} aria-hidden="true" />
+          Recenter
+        </button>
+        <span aria-hidden="true" />
+        <div>
+          <i className="live-indicator" />
+          Live telemetry
+        </div>
+      </div>
+
       <div className="map-stage">
         <div
           className={mode === "fallback" ? "map-canvas is-hidden" : "map-canvas"}
@@ -443,7 +490,26 @@ export function OperationsMap({
             ),
           )}
         </div>
+        <div className="map-summary-dock" aria-label="Operational summary">
+          <div>
+            <span>Located incidents</span>
+            <strong><MapPinned size={16} aria-hidden="true" />{points.length}</strong>
+          </div>
+          <div className="summary-critical">
+            <span>Immediate</span>
+            <strong>{immediateCount}</strong>
+          </div>
+          <div>
+            <span>People reported</span>
+            <strong><Users size={16} aria-hidden="true" />{peopleCount}</strong>
+          </div>
+          <div>
+            <span>Average signal</span>
+            <strong><RadioTower size={16} aria-hidden="true" />{signalLabel}</strong>
+          </div>
+        </div>
       </div>
     </section>
   );
 }
+

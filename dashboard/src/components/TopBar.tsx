@@ -2,6 +2,7 @@ import {
   Clock3,
   Radio,
   RotateCw,
+  ShieldCheck,
   Volume2,
   VolumeX,
   Wifi,
@@ -53,10 +54,10 @@ export function TopBar({
     <header className="topbar">
       <div className="brand">
         <span className="brand-mark" aria-hidden="true">
-          CM
+          <ShieldCheck size={20} strokeWidth={1.8} />
         </span>
         <div>
-          <p className="eyebrow">Offline incident command</p>
+          <p className="eyebrow">Resilient incident command</p>
           <h1>CivicMesh-SOS Operator Dashboard</h1>
         </div>
       </div>
@@ -123,3 +124,4 @@ export function TopBar({
     </header>
   );
 }
+
