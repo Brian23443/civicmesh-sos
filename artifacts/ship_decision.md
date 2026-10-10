@@ -7,7 +7,6 @@ Rule (§15): ship Stage 2 only if it beats Stage 1 on Red recall **and** whole-s
 | Model | gz MB | INT8 parity | Appendix A (test) Red recall | Appendix A (test) whole-summary | chatbot validation Red recall | chatbot validation whole-summary |
 |---|---|---|---|---|---|---|
 | **Stage 1 (shipped)** | — | — | 89.3% | 14.8% | 98.1% | 4.5% |
-| triage-bge-small | 27.6 | 96.6% | 89.3% | 20.4% | 98.1% | 15.9% |
 | triage-minilm ← winner | 17.9 | 96.4% | 100.0% | 27.8% | 99.0% | 12.3% |
 
 ## Decision
