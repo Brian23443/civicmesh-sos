@@ -22,6 +22,7 @@ void setup() {
   SPI.begin(CM_LORA_SCK, CM_LORA_MISO, CM_LORA_MOSI, CM_LORA_NSS);
 
   int16_t state = cmRadioInit(radio);
+  if (state == RADIOLIB_ERR_NONE) state = cmStartListening(radio);
   if (state != RADIOLIB_ERR_NONE) cmHaltOnRadioError(display, state);
 
   Serial.printf("BASE STATION ready (SF%d)\n", LORA_SF);
@@ -29,30 +30,32 @@ void setup() {
 }
 
 void loop() {
-  uint8_t frame[CM_FRAME_LEN];
-  int16_t state = radio.receive(frame, CM_FRAME_LEN);
+  uint8_t buf[256];
+  CmRxResult rx;
+  if (!cmPollPacket(radio, buf, rx)) return;
 
-  if (state == RADIOLIB_ERR_NONE) {
-    if (radio.getPacketLength() != CM_FRAME_LEN || cmFrameVersion(frame) != CM_FRAME_VERSION) {
-      Serial.println("Unknown frame version, ignored");
-      return;
-    }
-    float rssi = radio.getRSSI();
-    float snr = radio.getSNR();
-    char hex[2 * CM_FRAME_LEN + 1];
-    cmToHex(frame, CM_FRAME_LEN, hex);
-    Serial.printf("FRAME %s %.1f %.2f\n", hex, rssi, snr);
-    framesHeard++;
-
-    uint8_t people = cmFrameAdults(frame) + cmFrameChildren(frame);
-    cmOledShow(display,
-               String(cmPriorityWord(cmFramePriority(frame))) + " · " + String(people) + " ppl",
-               String(cmFrameAdults(frame)) + " adults + " + String(cmFrameChildren(frame)) + " children",
-               "seq " + String(cmFrameSeq(frame)) + "  dev " + String(cmFrameDeviceId(frame), HEX),
-               "RSSI " + String(rssi, 0) + "  SNR " + String(snr, 1) + "  #" + String(framesHeard));
-  } else if (state == RADIOLIB_ERR_CRC_MISMATCH) {
+  if (rx.state == RADIOLIB_ERR_CRC_MISMATCH) {
     Serial.println("CRC error, packet dropped");
-  } else if (state != RADIOLIB_ERR_RX_TIMEOUT) {
-    Serial.printf("Receive error %d\n", state);
+    return;
   }
+  if (rx.state != RADIOLIB_ERR_NONE) {
+    Serial.printf("Receive error %d\n", rx.state);
+    return;
+  }
+  if (rx.len != CM_FRAME_LEN || cmFrameVersion(buf) != CM_FRAME_VERSION) {
+    Serial.println("Unknown frame version, ignored");
+    return;
+  }
+
+  char hex[2 * CM_FRAME_LEN + 1];
+  cmToHex(buf, CM_FRAME_LEN, hex);
+  Serial.printf("FRAME %s %.1f %.2f\n", hex, rx.rssi, rx.snr);
+  framesHeard++;
+
+  uint8_t people = cmFrameAdults(buf) + cmFrameChildren(buf);
+  cmOledShow(display,
+             String(cmPriorityWord(cmFramePriority(buf))) + " · " + String(people) + " ppl",
+             String(cmFrameAdults(buf)) + " adults + " + String(cmFrameChildren(buf)) + " children",
+             "seq " + String(cmFrameSeq(buf)) + "  dev " + String(cmFrameDeviceId(buf), HEX),
+             "RSSI " + String(rx.rssi, 0) + "  SNR " + String(rx.snr, 1) + "  #" + String(framesHeard));
 }
