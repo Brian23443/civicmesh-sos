@@ -66,7 +66,12 @@ def quantize(fp32: Path, int8: Path, per_channel: bool) -> None:
 
 
 def gzip_file(src: Path, dst: Path) -> None:
-    with src.open("rb") as f_in, gzip.open(dst, "wb", compresslevel=9) as f_out:
+    """gzip -9 with no name/timestamp in the header, so an unchanged model gives identical bytes
+    (otherwise every re-export adds another ~27 MB file to git history)."""
+    if dst.exists() and gzip.decompress(dst.read_bytes()) == src.read_bytes():
+        return
+    with src.open("rb") as f_in, dst.open("wb") as raw, \
+            gzip.GzipFile(filename="", mode="wb", compresslevel=9, fileobj=raw, mtime=0) as f_out:
         shutil.copyfileobj(f_in, f_out)
 
 

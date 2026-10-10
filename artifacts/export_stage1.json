@@ -1,15 +1,15 @@
 {
-  "parity_source": "FALLBACK: 50 parity sentences \u2014 chatbot rows not imported yet; rerun after Track 3 imports",
-  "n": 50,
+  "parity_source": "chatbot rows (309)",
+  "n": 309,
   "fp32_mb": 133.08,
   "int8_mb": 34.02,
   "int8_gz_mb": 27.42,
-  "mean_cosine": 0.9968011975288391,
-  "min_cosine": 0.9930888414382935,
-  "decoded_field_match": 0.9666666666666667,
+  "mean_cosine": 0.9964220523834229,
+  "min_cosine": 0.9915048480033875,
+  "decoded_field_match": 0.9622437971952535,
   "per_channel": true,
-  "cpu_latency_ms_per_message_1_thread": 4.2,
-  "red_recall_pytorch": null,
-  "red_recall_int8": null,
+  "cpu_latency_ms_per_message_1_thread": 9.7,
+  "red_recall_pytorch": 0.9523809523809523,
+  "red_recall_int8": 0.9428571428571428,
   "passed": false
 }

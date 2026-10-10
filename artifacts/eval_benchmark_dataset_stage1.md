@@ -11,7 +11,7 @@
 | **Whole-summary accuracy** | **14.8%** |
 | Priority accuracy | 81.5% |
 | Hazard accuracy | 70.4% |
-| Status accuracy | 38.9% |
+| Status accuracy | 50.0% |
 | Exact headcounts (adults and children) | 75.9% |
 | Exact adults / exact children | 79.6% / 94.4% |
 | Exact medical set | 72.2% |
@@ -31,9 +31,9 @@
 
 | gold \ predicted | Sheltered | Exposed | Trapped | Unknown |
 |---|---|---|---|---|
-| **Sheltered** | 7 | 16 | 0 | 3 |
+| **Sheltered** | 10 | 16 | 0 | 0 |
 | **Exposed** | 0 | 6 | 1 | 0 |
-| **Trapped** | 0 | 5 | 8 | 7 |
+| **Trapped** | 0 | 9 | 11 | 0 |
 | **Unknown** | 0 | 0 | 1 | 0 |
 
 ## Medical flags
@@ -98,33 +98,33 @@
 - `tricky_09` gold **FIRE_SMOKE**, predicted **STRUCTURAL_COLLAPSE** — MY MOM CANNOT BREATH. ASH EVERYWHERE. WE ARE 3 ADULTS TRAPPED IN BASEMENT DOOR JAMMED.
 - `tricky_10` gold **ELECTRICAL_POWER**, predicted **HYPOTHERMIA_FREEZE** — Just 1 elderly person here, power is out. I have my insulin in a cooler with ice, so I am good for 48 hours. No assistance needed yet.
 
-### status (33 wrong)
+### status (27 wrong)
 
 - `flood_02` gold **Trapped**, predicted **Exposed** — roof caved in water up to our chests 3 people here hypothermia setting in cant swim help us please
-- `flood_04` gold **Trapped**, predicted **Unknown** — stuck on second floor water reached 1st floor ceiling. Just me here, power out, oxygen concentrator battery dying fast 15% left
 - `fire_01` gold **Trapped**, predicted **Exposed** — Flames surrounding driveway, car won't start. 2 people, severe 3rd degree burns on hands and face.
-- `fire_02` gold **Trapped**, predicted **Unknown** — Heavy black smoke filling apartment, coughing blood. Elderly grandmother unable to walk without wheelchair.
+- `fire_02` gold **Trapped**, predicted **Exposed** — Heavy black smoke filling apartment, coughing blood. Elderly grandmother unable to walk without wheelchair.
 - `yellow_01` gold **Sheltered**, predicted **Exposed** — Roof sustained minor leak. My father slipped and dislocated shoulder, cannot move arm. We have food and dry shelter for 3 people.
 - `yellow_02` gold **Sheltered**, predicted **Exposed** — Road is washed out by river. We are 5 adults stranded at camp cabin. Stable, but out of prescription cardiac medication since yesterday.
 - `yellow_03` gold **Sheltered**, predicted **Exposed** — Tree fell across front porch blocking door. We can climb out back window if needed. 1 broken wrist on teenager, 2 adults. Safe from storm for now.
 - `yellow_04` gold **Sheltered**, predicted **Exposed** — Car broke down in blizzard off highway 80. Engine running low on fuel. 2 adults and infant. Warm clothes but need towing before dark.
-- `green_03` gold **Sheltered**, predicted **Unknown** — Water in yard but house dry. Family of 3 with baby, we have 4 days food. Inquiring about evacuation shelter status.
 - `black_01` gold **Exposed**, predicted **Trapped** — One body found under collapsed masonry, no pulse for over 2 hours, unresponsive. Survivor 1 adult uninjured nearby.
 - `tricky_02` gold **Sheltered**, predicted **Exposed** — There are zero injuries here. Power line sparking on street outside. 1 person alone inside looking out window.
 - `tricky_05` gold **Sheltered**, predicted **Exposed** — Active shooter reported down street, barricaded in classroom with 14 students and 1 teacher. Nobody wounded yet.
-- `flood_05` gold **Trapped**, predicted **Unknown** — Flash flood carried truck into ditch. Water up to dashboard and rising. 2 adults 1 baby trapped inside cab!
+- `flood_05` gold **Trapped**, predicted **Exposed** — Flash flood carried truck into ditch. Water up to dashboard and rising. 2 adults 1 baby trapped inside cab!
 - `collapse_04` gold **Trapped**, predicted **Exposed** — Tornado hit neighborhood. Our roof collapsed into hallway, 1 adult pinned under ceiling joist with broken pelvis and severe arterial bleeding.
-- `fire_03` gold **Trapped**, predicted **Unknown** — Wildfire jumped ridge line, house caught fire! 3 of us trapped in swimming pool with wet towels, extreme smoke inhalation cannot breath.
+- `fire_03` gold **Trapped**, predicted **Exposed** — Wildfire jumped ridge line, house caught fire! 3 of us trapped in swimming pool with wet towels, extreme smoke inhalation cannot breath.
 - `med_01` gold **Sheltered**, predicted **Exposed** — 72-year-old grandfather in severe diabetic ketoacidosis, unconscious, insulin was destroyed in flood. 2 adults here.
 - `med_02` gold **Sheltered**, predicted **Exposed** — Chainsaw accident while clearing storm debris, deep laceration to thigh, spurting blood, tourniquet applied. 1 victim.
 - `freeze_01` gold **Sheltered**, predicted **Exposed** — Furnace failed in -20F blizzard. 2 adults and 3 children under blankets, 1 baby showing signs of severe hypothermia lips turning blue.
 - `power_01` gold **Trapped**, predicted **Exposed** — High voltage power line fell onto our occupied SUV in rain. 2 adults inside. Tires smoking, afraid to step out.
 - `yellow_05` gold **Sheltered**, predicted **Exposed** — Basement flooded with 2 feet of water. Furnaces off. 3 adults stranded on main floor. Cold but dry, need evacuation assist tomorrow.
-- `yellow_06` gold **Trapped**, predicted **Unknown** — Earthquake cracked our walls, door is stuck shut but structure seems stable. 2 adults, 1 has sprained ankle. Food supplies good.
 - `yellow_07` gold **Sheltered**, predicted **Exposed** — Bridge washed out behind our subdivision. 8 adults cut off from main road. Everyone uninjured, seeking supplies.
 - `yellow_09` gold **Sheltered**, predicted **Exposed** — Chimney collapsed into yard. 4 adults, one cuts on arm cleaned and dressed. Road impassable due to fallen oak tree.
-- `green_04` gold **Sheltered**, predicted **Unknown** — Cell service down. 2 adults and 2 kids at home, completely safe, house intact, checking when grid power will be restored.
 - `green_05` gold **Sheltered**, predicted **Exposed** — Water main broke down street, no tap water. 1 person alone in apartment. Plenty of canned food, just requesting drinking water.
+- `green_06` gold **Sheltered**, predicted **Exposed** — Hail broke skylight, water on rug. Cleaned up, plastic tarp placed. 2 adults doing fine.
+- `black_02` gold **Sheltered**, predicted **Exposed** — Elderly neighbor passed away overnight from hypothermia, cold and stiff, no breathing or pulse. 1 survivor adult here.
+- `tricky_07` gold **Sheltered**, predicted **Exposed** — We are NOT out of food or water, no bleeding, no injuries. Tree fell in back yard. 2 adults.
+- `tricky_08` gold **Trapped**, predicted **Exposed** — Overturned tour bus on highway overpass with 25 adults and children injured, multiple people trapped in wreckage.
 
 ### adults (11 wrong)
 
@@ -180,12 +180,12 @@
 | `flood_01` | Red · FLOOD · Trapped · 2 adults + 1 child · INSULIN | Red · FLOOD · Trapped · 2 adults + 1 child · INSULIN | ✓ |
 | `flood_02` | Red · FLOOD · Trapped · 3 adults · HYPOTHERMIA | Red · HYPOTHERMIA_FREEZE · Exposed · 3 adults · HYPOTHERMIA | ✗ |
 | `flood_03` | Red · FLOOD · Exposed · 2 adults + 2 children · PREGNANCY_INFANT | Red · FLOOD · Exposed · 1 adult + 2 children | ✗ |
-| `flood_04` | Red · FLOOD · Trapped · 1 adult · OXYGEN | Red · CONTAMINATED_WATER · Unknown · 1 adult · OXYGEN | ✗ |
+| `flood_04` | Red · FLOOD · Trapped · 1 adult · OXYGEN | Red · CONTAMINATED_WATER · Trapped · 1 adult · OXYGEN | ✗ |
 | `collapse_01` | Red · STRUCTURAL_COLLAPSE · Trapped · 2 adults · BLEEDING, MOBILITY_IMPAIRED | Red · STRUCTURAL_COLLAPSE · Trapped · 2 adults · BLEEDING, MOBILITY_IMPAIRED | ✓ |
 | `collapse_02` | Red · STRUCTURAL_COLLAPSE · Trapped · 4 adults · PREGNANCY_INFANT | Red · STRUCTURAL_COLLAPSE · Trapped · 4 adults · PREGNANCY_INFANT | ✓ |
 | `collapse_03` | Red · STRUCTURAL_COLLAPSE · Trapped · 1 adult + 1 child · OXYGEN | Red · STRUCTURAL_COLLAPSE · Trapped · 1 adult + 1 child · OXYGEN | ✓ |
 | `fire_01` | Red · FIRE_SMOKE · Trapped · 2 adults · BURNS | Red · FIRE_SMOKE · Exposed · 2 adults · BURNS | ✗ |
-| `fire_02` | Red · FIRE_SMOKE · Trapped · 2 adults · OXYGEN, MOBILITY_IMPAIRED | Red · FIRE_SMOKE · Unknown · 1 adult | ✗ |
+| `fire_02` | Red · FIRE_SMOKE · Trapped · 2 adults · OXYGEN, MOBILITY_IMPAIRED | Red · FIRE_SMOKE · Exposed · 1 adult | ✗ |
 | `yellow_01` | Yellow · EXTREME_WEATHER · Sheltered · 3 adults · MOBILITY_IMPAIRED | Yellow · STRUCTURAL_COLLAPSE · Exposed · 3 adults | ✗ |
 | `yellow_02` | Yellow · FLOOD · Sheltered · 5 adults · CARDIAC | Yellow · FLOOD · Exposed · 5 adults · CARDIAC | ✗ |
 | `yellow_03` | Yellow · STRUCTURAL_COLLAPSE · Sheltered · 2 adults + 1 child · MOBILITY_IMPAIRED | Green · EXTREME_WEATHER · Exposed · 2 adults + 1 child | ✗ |

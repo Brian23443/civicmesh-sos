@@ -2,7 +2,7 @@
   "kind": "prototype",
   "base_model": "BAAI/bge-small-en-v1.5",
   "max_length": 128,
-  "unknown_margin": 0.02,
+  "unknown_margin": 0.0,
   "labels": {
     "priority": [
       "MINOR",
