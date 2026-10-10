@@ -1,0 +1,7 @@
+# Normalise line endings to LF in the repo (a CRLF conversion once made a ~400-line PR show as ~3,500 lines).
+* text=auto eol=lf
+*.png binary
+*.gz binary
+*.onnx binary
+*.wasm binary
+*.pmtiles binary
