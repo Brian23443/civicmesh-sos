@@ -177,18 +177,68 @@ def export_stage1(args: argparse.Namespace) -> None:
     print(f"  → {ARTIFACTS_DIR / 'export_stage1.json'}")
 
 
+def export_stage2(args: argparse.Namespace) -> None:
+    """§11.2: TriageClassifier → 5 logit outputs → INT8 → gzip; parity over 200 validation rows."""
+    from src.models.triage_classifier import HEAD_ORDER, ExportWrapper, FinetunedTriageExtractor  # noqa: PLC0415
+
+    model_dir: Path = args.model_dir
+    if model_dir is None or not (model_dir / "model.pt").exists():
+        raise SystemExit("--model-dir must point at a trained models/triage-<name>/ directory")
+    out_dir: Path = args.out if args.out != WEB_MODEL_DIR else model_dir / "web"
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    ref = FinetunedTriageExtractor(model_dir)
+    module = ExportWrapper(ref.model).eval()
+    with tempfile.TemporaryDirectory() as tmp:
+        fp32, int8 = Path(tmp) / "classifier.fp32.onnx", Path(tmp) / "classifier.int8.onnx"
+        export_graph(module, fp32, HEAD_ORDER, ref.tokenizer)
+        quantize(fp32, int8, args.per_channel)
+        gz = out_dir / "classifier.onnx.gz"
+        gzip_file(int8, gz)
+        size_mb = gz.stat().st_size / 1e6
+        print(f"fp32 {fp32.stat().st_size / 1e6:.1f} MB → int8 {int8.stat().st_size / 1e6:.1f} MB "
+              f"→ gzip {size_mb:.1f} MB (budget {SIZE_BUDGET_MB} MB)")
+
+    ref.tokenizer.save_pretrained(str(out_dir))
+    cfg = ref.cfg
+    model_json = {"kind": "classifier", "base_model": cfg["base_model"], "max_length": MAX_LENGTH,
+                  "red_threshold": cfg["red_threshold"], "medical_thresholds": cfg["medical_thresholds"],
+                  "third_party_threshold": cfg["third_party_threshold"], "labels": labels()}
+    (out_dir / "model.json").write_text(json.dumps(model_json, indent=2) + "\n")
+
+    rows, source = parity_texts()
+    texts = [r["text"] for r in rows][:200]
+    q = FinetunedTriageExtractor(model_dir, onnx_path=gz)
+    p_t, p_q = ref.classify_many(texts), q.classify_many(texts)
+    fields = ("priority", "hazard", "status")
+    match = sum(a[k] == b[k] for a, b in zip(p_t, p_q) for k in fields)
+    match += sum((np.array(a["medicalProbs"]) >= cfg["medical_thresholds"]).tolist()
+                 == (np.array(b["medicalProbs"]) >= cfg["medical_thresholds"]).tolist() for a, b in zip(p_t, p_q))
+    match += sum((a["thirdPartyProb"] >= cfg["third_party_threshold"]) == (b["thirdPartyProb"] >= cfg["third_party_threshold"])
+                 for a, b in zip(p_t, p_q))
+    match /= len(texts) * (len(fields) + 2)
+    report = {"model_dir": str(model_dir), "parity_source": source, "n": len(texts), "int8_gz_mb": round(size_mb, 2),
+              "decoded_field_match": match, "per_channel": args.per_channel,
+              "passed": match >= 0.98 and size_mb <= SIZE_BUDGET_MB}
+    (out_dir / "export_report.json").write_text(json.dumps(report, indent=2) + "\n")
+    print(f"parity on {source} (first {len(texts)}): decoded fields match {100 * match:.1f}% "
+          f"{'PASS' if match >= 0.98 else 'FAIL'} (≥ 98%); size {'PASS' if size_mb <= SIZE_BUDGET_MB else 'FAIL'}")
+    print(f"  → {out_dir} (classifier.onnx.gz, model.json, tokenizer). Swap in with benchmark.ship_decision --apply")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Export models to the browser (§11)")
     parser.add_argument("--stage", type=int, choices=[1, 2], required=True)
     parser.add_argument("--base-model", default=BASE_MODEL)
     parser.add_argument("--model-dir", type=Path, help="Stage 2 model directory")
-    parser.add_argument("--out", type=Path, default=WEB_MODEL_DIR)
+    parser.add_argument("--out", type=Path, default=WEB_MODEL_DIR,
+                        help="Stage 1: web/public/model (default). Stage 2: defaults to <model-dir>/web")
     parser.add_argument("--per-channel", action="store_true", help="per-channel INT8 quantization")
     args = parser.parse_args()
     if args.stage == 1:
         export_stage1(args)
     else:
-        raise SystemExit("Stage 2 export (§11.2) is Phase B — implemented with training/train.py")
+        export_stage2(args)
 
 
 if __name__ == "__main__":
