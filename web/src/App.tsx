@@ -29,21 +29,15 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
       loaded.current = model;
       setLocal(model.classifier); setModelState('ready'); setModelMessage(''); setModelError('');
     } catch (error) {
-      setModelState('error'); setModelMessage('The on-device model could not start. Retry, or fill in every field manually.');
+      setModelState('error'); setModelMessage('The on-device model could not start — the phone may be low on memory. Close CivicMesh from the app switcher and reopen it, or fill in every field manually.');
       setModelError(error instanceof Error ? `${error.name}: ${error.message}` : String(error));
     }
   }, []);
   const loaded = useRef<{ dispose: () => Promise<void> } | null>(null);
-  // iOS keeps a navigated-away page (and its ~35 MB WASM model) alive in the back/forward cache. Each
-  // Send → relay → "Back to CivicMesh" round trip would otherwise stack another model in memory until a
-  // load fails. Release the model when the page is hidden; reload cleanly if iOS restores the page.
-  useEffect(() => {
-    const hide = () => { void loaded.current?.dispose(); loaded.current = null; };
-    const show = (event: PageTransitionEvent) => { if (event.persisted && !suppliedClassifier) window.location.reload(); };
-    window.addEventListener('pagehide', hide);
-    window.addEventListener('pageshow', show);
-    return () => { window.removeEventListener('pagehide', hide); window.removeEventListener('pageshow', show); };
-  }, [suppliedClassifier]);
+  // Keep the model alive across Send → relay → back. iOS doesn't return a WASM model's memory when the
+  // page reloads (the Home Screen app is one long-lived process), so every reload costs ~35 MB until a
+  // load fails. The relay's "Back to CivicMesh" goes *back* (history), and iOS restores this page from
+  // its back/forward cache with the model still loaded — so nothing is released on pagehide.
   useEffect(() => { if (!suppliedClassifier) void loadModel(); }, [suppliedClassifier, loadModel]);
   // §12: ask the browser to keep the offline copy (iOS can otherwise evict it).
   useEffect(() => { try { void navigator.storage?.persist?.().catch(() => {}); } catch { /* unsupported */ } }, []);

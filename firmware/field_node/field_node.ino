@@ -74,8 +74,14 @@ static String page(const String& body) {
   return html;
 }
 
+// Goes *back* to the app when we came from it: iOS restores the app page from its back/forward cache
+// with the on-device model still loaded. Opening APP_URL instead would reload the app and load the
+// ~35 MB model again; iOS doesn't free that memory between reloads, so after a few reports the model
+// could no longer start. Without history (page opened directly) the link opens APP_URL as before.
 static String backLink() {
-  return String("<a class=\"btn\" href=\"") + APP_URL + "\" aria-label=\"Back to CivicMesh\">Back to CivicMesh</a>";
+  return String("<a class=\"btn\" href=\"") + APP_URL +
+         "\" onclick=\"if(history.length>1){history.back();return false;}\" aria-label=\"Back to CivicMesh\">"
+         "Back to CivicMesh</a>";
 }
 
 // ---------------------------------------------------------------------------
