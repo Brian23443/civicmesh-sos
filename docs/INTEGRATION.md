@@ -13,6 +13,6 @@ Update a row when its value changes, and announce it in team chat.
 | LoRa spreading factor | T2 | 7 | both boards |
 | Demo map center (lat, lon) | T3 | _TBD — venue_; simulator default `30.2672, -97.7431` | T2 `--simulate --center`, T3 map |
 | Demo map bbox (minLon,minLat,maxLon,maxLat) | T3 | _TBD_ | PMTiles extract |
-| Model in `web/public/model/` | T1 | _none yet_ → `prototype` (Stage 1) | T4 |
+| Model in `web/public/model/` | T1 | `prototype` (Stage 1): bge-small INT8 per-channel, 27.4 MB gzipped; see `artifacts/export_stage1.json` | T4 |
 | `unknown_margin` | T1 | 0.02 (start value; tuned on chatbot rows) | `model.json` |
 | Triage colors (hex, dark/light) | T3 + T4 | _TBD by hour 1 — same in both apps_ | dashboard, PWA, field node page |
