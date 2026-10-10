@@ -226,11 +226,35 @@ def load_env(path: str | Path = ROOT / ".env") -> None:
         os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
-def openrouter_post(path: str, payload: dict[str, Any], timeout: float = 120) -> dict[str, Any]:
+def _post_with_deadline(url: str, payload: dict, headers: dict, deadline_s: float,
+                        read_timeout_s: float) -> tuple[int, bytes]:
+    """POST, reading the body in chunks so a total deadline applies. Returns (status, body).
+
+    `requests`' timeout is per socket read, and OpenRouter keeps slow requests alive by
+    trickling whitespace — so a stalled upstream can otherwise hang a thread forever
+    (seen on a 5,000-row run: 3 requests stuck for 16+ minutes).
+    """
+    import requests  # noqa: PLC0415
+
+    start = time.monotonic()
+    resp = requests.post(url, json=payload, headers=headers, timeout=(15, read_timeout_s), stream=True)
+    try:
+        chunks = []
+        for chunk in resp.iter_content(chunk_size=8192):
+            chunks.append(chunk)
+            if time.monotonic() - start > deadline_s:
+                raise requests.Timeout(f"no complete response within {deadline_s:.0f}s")
+        return resp.status_code, b"".join(chunks)
+    finally:
+        resp.close()
+
+
+def openrouter_post(path: str, payload: dict[str, Any], timeout: float = 180) -> dict[str, Any]:
     """POSTs to OpenRouter with the §6 retry policy.
 
     Up to 5 attempts with backoff min(30, 2^attempt + rand) on network errors and on
     HTTP 408, 429, 500, 502, 503, 524, 529. Any other error status raises immediately.
+    `timeout` is a total deadline per attempt (a stalled attempt counts as a network error).
     """
     import requests  # noqa: PLC0415 — only needed for API calls
 
@@ -244,15 +268,16 @@ def openrouter_post(path: str, payload: dict[str, Any], timeout: float = 120) ->
     last_error: Exception | None = None
     for attempt in range(MAX_ATTEMPTS):
         try:
-            resp = requests.post(url, json=payload, headers=headers, timeout=timeout)
-        except (requests.ConnectionError, requests.Timeout) as exc:
+            status, body = _post_with_deadline(url, payload, headers, deadline_s=timeout, read_timeout_s=60)
+        except (requests.ConnectionError, requests.Timeout, requests.exceptions.ChunkedEncodingError) as exc:
             last_error = exc
         else:
-            if resp.status_code < 400:
-                return resp.json()
-            if resp.status_code not in RETRY_STATUSES:
-                raise OpenRouterError(resp.status_code, resp.text)
-            last_error = OpenRouterError(resp.status_code, resp.text)
+            if status < 400:
+                return json.loads(body)
+            text = body.decode("utf-8", errors="replace")
+            if status not in RETRY_STATUSES:
+                raise OpenRouterError(status, text)
+            last_error = OpenRouterError(status, text)
         if attempt < MAX_ATTEMPTS - 1:
             time.sleep(min(30, 2 ** attempt + random.random()))
     assert last_error is not None

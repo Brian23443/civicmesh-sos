@@ -209,3 +209,54 @@ def test_rows_record_the_prompt_version(monkeypatch):
     spec = G.sample_spec(random.Random(3))
     row = G.rows_from([spec], {spec["id"]: "water rising"}, "w")[0]
     assert row["prompt_version"] == "v2"
+
+
+# --- OpenRouter client: total deadline -------------------------------------------------------
+
+
+def test_trickling_response_hits_the_total_deadline(monkeypatch):
+    """A response that keeps sending keep-alive bytes must still time out (and be retried)."""
+    import time as _time
+
+    import requests
+
+    from training import common as C
+
+    class Trickle:
+        status_code = 200
+
+        def iter_content(self, chunk_size):
+            while True:
+                _time.sleep(0.01)
+                yield b" "
+
+        def close(self):
+            pass
+
+    calls = []
+    monkeypatch.setattr(requests, "post", lambda *a, **k: calls.append(1) or Trickle())
+    monkeypatch.setattr(C.time, "sleep", lambda s: None)  # skip retry backoff
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test")
+    with pytest.raises(requests.Timeout):
+        C.openrouter_post("chat/completions", {}, timeout=0.05)
+    assert len(calls) == C.MAX_ATTEMPTS  # each stalled attempt was retried
+
+
+def test_normal_response_is_parsed(monkeypatch):
+    import requests
+
+    from training import common as C
+
+    class Ok:
+        status_code = 200
+
+        def iter_content(self, chunk_size):
+            yield b'{"ok": '
+            yield b"true}"
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(requests, "post", lambda *a, **k: Ok())
+    monkeypatch.setenv("OPENROUTER_API_KEY", "test")
+    assert C.openrouter_post("x", {}) == {"ok": True}
