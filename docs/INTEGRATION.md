@@ -4,7 +4,7 @@ Update a row when its value changes, and announce it in team chat.
 
 | Value | Owner | Current value | Used by |
 |---|---|---|---|
-| `APP_URL` (hosted survivor website, HTTPS) | T4 | _TBD by hour 3_ | T2 field node `#define APP_URL` |
+| `APP_URL` (hosted survivor website, HTTPS) | T4 | **https://brian23443.github.io/civicmesh-sos-app/** — built files only, public repo `Brian23443/civicmesh-sos-app` (GitHub Pages); currently the Stage 1 build | T2 field node `#define APP_URL` |
 | Bridge URL | T2 | `http://localhost:8000` | T3 dashboard (Vite proxy) |
 | Dashboard dev server | T3 | `http://localhost:5174` | — |
 | Survivor PWA dev server | T4 | `http://localhost:5173` | — |
