@@ -4,7 +4,15 @@ import type {
   Point,
   Polygon,
 } from "geojson";
-import { Crosshair, Layers3, MapPinned } from "lucide-react";
+import {
+  AlertTriangle,
+  Crosshair,
+  Layers3,
+  LocateFixed,
+  MapPinned,
+  RadioTower,
+  Users,
+} from "lucide-react";
 import maplibregl from "maplibre-gl";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -41,15 +49,45 @@ function mappable(incident: Incident): boolean {
   return incident.state === "active" && incident.gps_accuracy.name !== "NO_FIX";
 }
 
-function fallbackPosition(incident: Incident) {
-  const longitudeSpan = 0.06;
-  const latitudeSpan = 0.045;
-  const left = 50 + ((incident.lon - CENTER[0]) / longitudeSpan) * 50;
-  const top = 50 - ((incident.lat - CENTER[1]) / latitudeSpan) * 50;
+interface Frame { center: [number, number]; lonSpan: number; latSpan: number }
+
+/** Frames the located incidents (default: the configured centre) for the no-WebGL grid. */
+function fallbackFrame(incidents: Incident[]): Frame {
+  const points = incidents.filter(mappable);
+  if (!points.length) return { center: CENTER, lonSpan: 0.06, latSpan: 0.045 };
+  const lons = points.map((p) => p.lon);
+  const lats = points.map((p) => p.lat);
+  const [minLon, maxLon, minLat, maxLat] = [Math.min(...lons), Math.max(...lons), Math.min(...lats), Math.max(...lats)];
+  return {
+    center: [(minLon + maxLon) / 2, (minLat + maxLat) / 2],
+    lonSpan: Math.max(0.01, (maxLon - minLon) * 0.65),
+    latSpan: Math.max(0.0075, (maxLat - minLat) * 0.65),
+  };
+}
+
+function fallbackPosition(incident: Incident, frame: Frame) {
+  const left = 50 + ((incident.lon - frame.center[0]) / frame.lonSpan) * 50;
+  const top = 50 - ((incident.lat - frame.center[1]) / frame.latSpan) * 50;
   return {
     left: `${Math.min(96, Math.max(4, left))}%`,
     top: `${Math.min(94, Math.max(6, top))}%`,
   };
+}
+
+/** Frames all located incidents (or the configured centre when there are none). */
+function fitToIncidents(map: maplibregl.Map, incidents: Incident[], duration: number) {
+  const points = incidents.filter(mappable);
+  if (!points.length) {
+    map.easeTo({ center: CENTER, zoom: 12.2, duration });
+    return;
+  }
+  if (points.length === 1) {
+    map.easeTo({ center: [points[0].lon, points[0].lat], zoom: 15, duration });
+    return;
+  }
+  const bounds = new maplibregl.LngLatBounds([points[0].lon, points[0].lat], [points[0].lon, points[0].lat]);
+  for (const p of points) bounds.extend([p.lon, p.lat]);
+  map.fitBounds(bounds, { padding: 90, maxZoom: 15, duration });
 }
 
 function incidentCollection(
@@ -122,7 +160,7 @@ function FallbackGrid({
     <div className="fallback-grid" role="img" aria-label="Dark grid incident map">
       <span className="fallback-axis horizontal" aria-hidden="true" />
       <span className="fallback-axis vertical" aria-hidden="true" />
-      {incidents.filter(mappable).map((incident) => (
+      {incidents.filter(mappable).map((incident, _i, located) => (
         <button
           className={[
             "fallback-pin",
@@ -134,14 +172,14 @@ function FallbackGrid({
           data-priority={incident.priority.color}
           key={incident.id}
           onClick={() => onSelect(incident)}
-          style={fallbackPosition(incident)}
+          style={fallbackPosition(incident, fallbackFrame(located))}
           type="button"
           title={`${incident.priority.name} · ${incident.hazard.name.replaceAll("_", " ")}`}
           aria-label={`${incident.priority.name} ${incident.hazard.name.replaceAll("_", " ")}`}
         >
           {incident.location_discrepancy && (
             <span className="pin-warning" aria-label="Location discrepancy">
-              ⚠
+              <AlertTriangle size={10} aria-hidden="true" />
             </span>
           )}
         </button>
@@ -168,9 +206,32 @@ export function OperationsMap({
     accuracyCollection(incidents.find((item) => item.id === selectedId)),
   );
   const pulseRef = useRef(pulseIncidentId);
+  const locatedIdsRef = useRef<Set<string>>(new Set());
   const [mode, setMode] = useState<MapMode>("loading");
 
   const points = useMemo(() => incidents.filter(mappable), [incidents]);
+  const active = useMemo(
+    () => incidents.filter((incident) => incident.state === "active"),
+    [incidents],
+  );
+  const immediateCount = active.filter(
+    (incident) => incident.priority.color === "red",
+  ).length;
+  const peopleCount = active.reduce(
+    (total, incident) => total + incident.adults + incident.children,
+    0,
+  );
+  const averageRssi = active.filter((incident) => incident.rssi !== null);
+  const signalLabel = averageRssi.length
+    ? `${Math.round(
+        averageRssi.reduce((total, incident) => total + (incident.rssi ?? 0), 0) /
+          averageRssi.length,
+      )} dBm`
+    : "—";
+
+  const recenterMap = () => {
+    if (mapRef.current) fitToIncidents(mapRef.current, incidentsRef.current, 500);
+  };
 
   useEffect(() => {
     incidentsRef.current = incidents;
@@ -186,7 +247,9 @@ export function OperationsMap({
     pulseRef.current = pulseIncidentId;
 
     const map = mapRef.current;
-    if (!map?.loaded()) return;
+    // Not map.loaded(): the Red-pin pulse repaints every frame, so loaded() is almost always false
+    // and the map stayed on its initial (mock) data while the sidebar showed live incidents.
+    if (!map || !map.getSource("incidents")) return;
 
     (map.getSource("incidents") as maplibregl.GeoJSONSource | undefined)?.setData(
       dataRef.current,
@@ -200,6 +263,22 @@ export function OperationsMap({
         ["get", "id"],
         pulseIncidentId ?? "",
       ]);
+    }
+
+    // Bulk changes to the located set (initial bridge load replacing the mock set, reconnect) re-frame
+    // the map; a single new pin only pans when it lands outside the view, so a zoomed-in operator
+    // isn't thrown around.
+    const located = new Set(incidents.filter(mappable).map((item) => item.id));
+    const previous = locatedIdsRef.current;
+    let changed = 0;
+    for (const id of located) if (!previous.has(id)) changed++;
+    for (const id of previous) if (!located.has(id)) changed++;
+    locatedIdsRef.current = located;
+    const arriving = incidents.find((item) => item.id === pulseIncidentId && mappable(item));
+    if (!selectedId && changed > 1) {
+      fitToIncidents(map, incidents, 600);
+    } else if (!selectedId && arriving && !map.getBounds().contains([arriving.lon, arriving.lat])) {
+      fitToIncidents(map, incidents, 600);
     }
 
     const selected = incidents.find(
@@ -376,6 +455,8 @@ export function OperationsMap({
       }
 
       setMode("ready");
+      fitToIncidents(map, incidentsRef.current, 0);
+      locatedIdsRef.current = new Set(incidentsRef.current.filter(mappable).map((item) => item.id));
     });
 
     map.addControl(
@@ -414,6 +495,23 @@ export function OperationsMap({
         </div>
       </div>
 
+      <div className="map-command-strip" aria-label="Map controls">
+        <button
+          disabled={mode !== "ready"}
+          onClick={recenterMap}
+          title={mode === "ready" ? "Recenter map" : "Map is initializing"}
+          type="button"
+        >
+          <LocateFixed size={15} aria-hidden="true" />
+          Recenter
+        </button>
+        <span aria-hidden="true" />
+        <div>
+          <i className="live-indicator" />
+          Live telemetry
+        </div>
+      </div>
+
       <div className="map-stage">
         <div
           className={mode === "fallback" ? "map-canvas is-hidden" : "map-canvas"}
@@ -443,7 +541,26 @@ export function OperationsMap({
             ),
           )}
         </div>
+        <div className="map-summary-dock" aria-label="Operational summary">
+          <div>
+            <span>Located incidents</span>
+            <strong><MapPinned size={16} aria-hidden="true" />{points.length}</strong>
+          </div>
+          <div className="summary-critical">
+            <span>Immediate</span>
+            <strong>{immediateCount}</strong>
+          </div>
+          <div>
+            <span>People reported</span>
+            <strong><Users size={16} aria-hidden="true" />{peopleCount}</strong>
+          </div>
+          <div>
+            <span>Average signal</span>
+            <strong><RadioTower size={16} aria-hidden="true" />{signalLabel}</strong>
+          </div>
+        </div>
       </div>
     </section>
   );
 }
+
