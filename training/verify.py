@@ -17,6 +17,7 @@ import os
 import threading
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 from typing import Any
 
 from training.common import (
@@ -243,11 +244,11 @@ def benchmark(workers: int) -> None:
     print(f"  → {ARTIFACTS_DIR / 'jev_benchmark.json'}")
 
 
-def verify(workers: int) -> None:
+def verify(workers: int, raw_path=RAW_PATH, scored_path=SCORED_PATH) -> None:
     from tqdm import tqdm  # noqa: PLC0415
 
-    done = {r["id"] for r in iter_jsonl(SCORED_PATH)}
-    todo = [r for r in iter_jsonl(RAW_PATH) if r["id"] not in done]
+    done = {r["id"] for r in iter_jsonl(scored_path)}
+    todo = [r for r in iter_jsonl(raw_path) if r["id"] not in done]
     print(f"{len(done)} rows already scored; scoring {len(todo)} more with {workers} workers")
     lock, failed = threading.Lock(), 0
     with ThreadPoolExecutor(max_workers=workers) as pool:
@@ -260,10 +261,10 @@ def verify(workers: int) -> None:
                 tqdm.write(f"{futures[f]} failed: {str(exc)[:200]}")
                 continue
             with lock:
-                append_jsonl(SCORED_PATH, [row])
+                append_jsonl(scored_path, [row])
     if failed:
         print(f"{failed} rows failed; rerun to retry them (resumable)")
-    report(list(iter_jsonl(SCORED_PATH)))
+    report(list(iter_jsonl(scored_path)))
 
 
 def refilter() -> None:
@@ -291,6 +292,8 @@ def main() -> None:
     mode.add_argument("--benchmark", action="store_true", help="score Jev on Appendix A")
     mode.add_argument("--refilter", action="store_true", help="re-apply thresholds without API calls")
     parser.add_argument("--workers", type=int, default=16)
+    parser.add_argument("--input", type=Path, default=RAW_PATH, help="rows to score (default raw.jsonl)")
+    parser.add_argument("--output", type=Path, default=SCORED_PATH, help="scored rows (default scored.jsonl)")
     args = parser.parse_args()
     if args.probe:
         probe()
@@ -299,7 +302,7 @@ def main() -> None:
     elif args.refilter:
         refilter()
     else:
-        verify(args.workers)
+        verify(args.workers, args.input, args.output)
 
 
 if __name__ == "__main__":
