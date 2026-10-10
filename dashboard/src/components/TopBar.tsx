@@ -1,28 +1,54 @@
-import { Clock3, Radio, Volume2, VolumeX, Wifi } from "lucide-react";
+import {
+  Clock3,
+  Radio,
+  RotateCw,
+  Volume2,
+  VolumeX,
+  Wifi,
+} from "lucide-react";
 
+import type { BridgeConnectionState } from "../hooks/useBridgeSocket";
+import type { BridgeHealth } from "../services/api";
 import type { PriorityColor } from "../types/incident";
 
 interface TopBarProps {
   counts: Record<PriorityColor, number>;
+  health: BridgeHealth | null;
+  connectionState: BridgeConnectionState;
+  retryCount: number;
   soundEnabled: boolean;
   onToggleSound: () => void;
 }
 
-const priorities: Array<{
-  color: PriorityColor;
-  label: string;
-}> = [
+const priorities: Array<{ color: PriorityColor; label: string }> = [
   { color: "red", label: "Red" },
   { color: "yellow", label: "Yellow" },
   { color: "green", label: "Green" },
   { color: "black", label: "Black" },
 ];
 
+function frameAge(timestamp: number | null | undefined): string {
+  if (timestamp == null) return "No frames";
+  const seconds = Math.max(0, Math.floor(Date.now() / 1000 - timestamp));
+  if (seconds < 60) return `Last frame ${seconds}s ago`;
+  return `Last frame ${Math.floor(seconds / 60)}m ago`;
+}
+
 export function TopBar({
   counts,
+  health,
+  connectionState,
+  retryCount,
   soundEnabled,
   onToggleSound,
 }: TopBarProps) {
+  const connected = connectionState === "connected";
+  const websocketLabel = connected
+    ? "WS connected"
+    : connectionState === "reconnecting"
+      ? `Reconnecting…${retryCount > 0 ? ` (${retryCount})` : ""}`
+      : "WS connecting";
+
   return (
     <header className="topbar">
       <div className="brand">
@@ -37,18 +63,36 @@ export function TopBar({
 
       <div className="system-status" aria-label="System status">
         <span className="status-pill">
-          <Wifi size={14} aria-hidden="true" />
-          <i className="status-dot status-dot--online" />
-          WS mock
+          {connected ? (
+            <Wifi size={14} aria-hidden="true" />
+          ) : (
+            <RotateCw className="spin-icon" size={14} aria-hidden="true" />
+          )}
+          <i
+            className={
+              connected
+                ? "status-dot status-dot--online"
+                : "status-dot status-dot--reconnecting"
+            }
+          />
+          {websocketLabel}
         </span>
         <span className="status-pill">
           <Radio size={14} aria-hidden="true" />
-          <i className="status-dot status-dot--online" />
-          Serial sim
+          <i
+            className={
+              health?.serial_connected
+                ? "status-dot status-dot--online"
+                : "status-dot status-dot--standby"
+            }
+          />
+          {health?.serial_connected
+            ? `Serial ${health.port ?? "connected"}`
+            : "Serial unavailable"}
         </span>
         <span className="status-pill status-pill--muted">
           <Clock3 size={14} aria-hidden="true" />
-          Last frame 4s ago
+          {frameAge(health?.last_frame_at)}
         </span>
       </div>
 
