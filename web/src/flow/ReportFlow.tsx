@@ -3,6 +3,7 @@ import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-r
 import { ArrowLeft, ArrowRight, ChevronRight, FileText, LoaderCircle, MapPin, Minus, Plus, Radio, Wifi, Plane } from 'lucide-react';
 import type { Classifier } from '../inference/types';
 import { resolveReport } from '../resolvers';
+import { finalizeReport } from '../inference/finalize';
 import { gpsBucket, GpsAccuracy } from '../protocol/enums';
 import type { FrameFields } from '../protocol/types';
 import { pack, unpackFrame } from '../protocol/packer';
@@ -11,12 +12,12 @@ import { Button, Sheet, Status } from '../components/ui';
 import { hazardIcons, hazardLabels, locationLabels, medicalLabels, medicalIcons, priorityLabels, statusLabels } from '../lib/presentation';
 import { RELAY_URL, type ReportStore, type SentReport } from '../lib/reports';
 
-type Draft = Pick<FrameFields,'priority'|'hazard'|'status'|'adults'|'children'|'medicalFlags'|'thirdParty'|'locationType'> & { locationText: string | null; mode:'mock'|'manual'|'experimental' };
+type Draft = Pick<FrameFields,'priority'|'hazard'|'status'|'adults'|'children'|'medicalFlags'|'thirdParty'|'locationType'> & { locationText: string | null; mode:'model'|'manual' };
 type Gps = { lat:number; lon:number; accuracy:number | null; bucket:FrameFields['gpsAccuracy']; state:'idle'|'loading'|'ready'|'failed' };
 const NO_GPS: Gps = { lat:0,lon:0,accuracy:null,bucket:GpsAccuracy.NO_FIX,state:'idle' };
-const MANUAL: Draft = { priority:1,hazard:0,status:3,adults:0,children:0,medicalFlags:0,thirdParty:false,locationType:0,locationText:null,mode:'manual' };
+const MANUAL: Draft = { priority:1,hazard:0,status:3,adults:1,children:0,medicalFlags:0,thirdParty:false,locationType:0,locationText:null,mode:'manual' };
 type Editor = 'priority'|'hazard'|'status'|'people'|'medical'|'location'|null;
-interface Props { classifier:Classifier; store:ReportStore; relayNavigate:(hex:string)=>void; onGpsStatus:(status:string)=>void; experimental?:boolean; analysisReady?:boolean }
+interface Props { classifier:Classifier; store:ReportStore; relayNavigate:(hex:string)=>void; onGpsStatus:(status:string)=>void; analysisReady?:boolean }
 
 function Stepper({ label, value, onChange }: {label:string;value:number;onChange:(n:number)=>void}) {
   return <div className="stepper"><span>{label}</span><div className="flex items-center gap-3">
@@ -35,7 +36,7 @@ function Field({ label, value, open, icon, onEdit }: {label:string;value:string;
     </Button>;
   }
 
-export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, experimental=false, analysisReady=true }: Props) {
+export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, analysisReady=true }: Props) {
   const navigate=useNavigate(); const route=useLocation();
   const [message,setMessage]=useState(''); const [draft,setDraft]=useState<Draft|null>(null);
   const [gps,setGps]=useState<Gps>(NO_GPS); const [busy,setBusy]=useState(false); const [error,setError]=useState('');
@@ -69,10 +70,8 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, expe
     try {
       const result=await classifier.classify(text);
       if(!mounted.current||run!==analyzeRun.current) return;
-      const fields=resolveReport(text);
-      setDraft({priority:result.priority,hazard:result.hazard,status:result.status,
-        adults:fields.adults,children:fields.children,medicalFlags:fields.medicalFlags,
-        thirdParty:fields.suggestedThirdParty,locationType:fields.location.type,locationText:fields.location.text,mode:experimental?'experimental':'mock'});
+      // Model + §5.4 resolvers, combined exactly like Python's to_slots (finalize.ts).
+      setDraft({...finalizeReport(result,resolveReport(text),classifier.settings),mode:'model'});
       navigate('/review');
     } catch {if(mounted.current && run===analyzeRun.current) setError('Analysis is unavailable. You can fill in every field manually.');}
     finally {if(mounted.current && run===analyzeRun.current) setBusy(false);}
@@ -108,7 +107,6 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, expe
   return <>
     <Routes>
       <Route path="/" element={<section><p className="eyebrow">HELP STARTS HERE</p><h1>What’s happening?</h1><p>Tell us who needs help. You can check and change every field before sending.</p>
-        <div className="notice">{experimental?'Experimental local MiniLM analysis — verify all fields.':'Mock analysis · Experimental model is not active.'}</div>
         <form className="card mt-6" onSubmit={e=>{e.preventDefault();void analyze();}}>
           <label htmlFor="message">What’s happening? Who needs help?</label>
           <textarea id="message" value={message} onChange={e=>setMessage(e.target.value)} disabled={busy} rows={6} placeholder="For example: Three people need help near the library."/>
@@ -122,12 +120,12 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, expe
       </section>}/>
       <Route path="/analyze" element={busy||error?<section aria-busy={busy}>
         <p className="eyebrow">ANALYZE</p><h1>{busy?'Analyzing your report':'Analysis unavailable'}</h1>
-        {busy?<div className="card mt-6" role="status" aria-live="polite"><LoaderCircle className="spinner" aria-hidden="true" size={32}/><h2>Processing your message…</h2><p>{experimental?'Using the experimental model on this device.':'Using the development mock on this device. No model is installed yet.'}</p><p>You’ll be able to correct every suggestion on the next screen.</p></div>:<p role="alert" className="notice">{error}</p>}
+        {busy?<div className="card mt-6" role="status" aria-live="polite"><LoaderCircle className="spinner" aria-hidden="true" size={32}/><h2>Processing your message…</h2><p>Analyzing on this device — nothing is sent yet.</p><p>You’ll be able to correct every suggestion on the next screen.</p></div>:<p role="alert" className="notice">{error}</p>}
         <Button className="full-width mt-6" onClick={manual}>Fill in manually</Button>
         <Link to="/" className="text-link"><ArrowLeft aria-hidden="true" size={18}/>Back to report</Link>
       </section>:<Navigate to={draft?'/review':'/'} replace/>}/>
       <Route path="/review" element={draft?<section><p className="eyebrow">CHECK BEFORE SENDING</p><h1>Review your report</h1>
-        <p>{draft.mode==='mock'?'Mock suggestions — check every field.':draft.mode==='experimental'?'Experimental model suggestions — check every field.':'Manual report — choose every field.'}</p>
+        <p>{draft.mode==='model'?'Suggested from your message — check every field.':'Manual report — choose every field.'}</p>
         <Button className={`triage triage-${draft.priority}`} aria-label="Edit priority" onClick={()=>setEditor('priority')}><span>{priorityLabels[draft.priority]}</span><ChevronRight aria-hidden="true"/></Button>
         <div className="review-fields mt-6"><Field onEdit={setEditor} label="Hazard" value={hazardLabels[draft.hazard]} open="hazard" icon={<HazardIcon aria-hidden="true" size={24}/>}/>
           <Field onEdit={setEditor} label="Rescue status" value={statusLabels[draft.status]} open="status"/>

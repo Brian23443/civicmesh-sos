@@ -157,7 +157,7 @@ it('retains corrections to rescue status, children, medical needs, and location 
   expect(screen.getByRole('button',{name:'Edit location confidence'})).toHaveTextContent('Street address');
   await user.click(screen.getByRole('button',{name:/Continue to send/}));
   await user.click(screen.getByRole('button',{name:'Send'}));
-  expect(unpackFrame(fromHex(relay.mock.calls[0][0]))).toMatchObject({status:1,adults:0,children:1,
+  expect(unpackFrame(fromHex(relay.mock.calls[0][0]))).toMatchObject({status:1,adults:1,children:1,
     medicalFlags:0x1901,thirdParty:true,locationType:3});
 });
 
@@ -182,9 +182,9 @@ it('shows collapsed 18-byte sections and uppercase hex on Review and Send',async
   expect(sendHex).toMatch(/^[0-9A-F]{36}$/);expect(fromHex(sendHex)).toHaveLength(18);
 });
 
-it('starts an empty manual report with zero adults and children',async()=>{
+it('starts an empty manual report with one adult (the writer, §5.4 rule 5) and no children',async()=>{
   const {user}=setup();
   await user.click(screen.getByRole('button',{name:'Fill in manually'}));
-  expect(screen.getByRole('button',{name:'Edit adults'})).toHaveTextContent('0');
+  expect(screen.getByRole('button',{name:'Edit adults'})).toHaveTextContent('1');
   expect(screen.getByRole('button',{name:'Edit children'})).toHaveTextContent('0');
 });

@@ -6,7 +6,7 @@ import { App } from './App';
 import { MockClassifier } from './inference/mockClassifier';
 import { ThemeProvider } from './components/ThemeProvider';
 const loadModel=vi.hoisted(()=>vi.fn());
-vi.mock('./inference/experimentalClassifier',()=>({loadExperimentalClassifier:loadModel}));
+vi.mock('./inference/loadModel',()=>({loadLocalModel:loadModel}));
 vi.mock('virtual:pwa-register/react', () => ({ useRegisterSW: () => ({ offlineReady: [false, vi.fn()] }) }));
 beforeAll(() => {
   HTMLDialogElement.prototype.showModal = function() { this.setAttribute('open', ''); };
@@ -27,21 +27,21 @@ it('navigates, moves focus, changes theme, and restores focus after the sheet cl
   await waitFor(() => expect(opener).toHaveFocus());
 });
 
-it('automatically activates Stage1 through the local provider after readiness',async()=>{
+it('automatically loads the local model and analyzes with it',async()=>{
   const classify=vi.fn(async()=>({priority:1,hazard:2,status:2,medicalProbs:null,thirdPartyProb:null,scores:{priority:[0,1,0,0],hazard:new Array(16).fill(null),status:[0,0,1,null]}}));
-  loadModel.mockResolvedValueOnce({classify});
+  loadModel.mockResolvedValueOnce({classifier:{classify},config:{kind:'prototype'},downloadBytes:0,loadMs:0});
   const user=userEvent.setup();render(<MemoryRouter><ThemeProvider><App/></ThemeProvider></MemoryRouter>);
-  expect(await screen.findByText('Experimental MiniLM ready')).toBeInTheDocument();
+  expect(await screen.findByText('Model ready')).toBeInTheDocument();
   await user.type(screen.getByLabelText('What’s happening? Who needs help?'),'Example smoke report');
   await user.click(screen.getByRole('button',{name:'Analyze'}));
-  expect(await screen.findByText('Experimental model suggestions — check every field.')).toBeInTheDocument();
+  expect(await screen.findByText('Suggested from your message — check every field.')).toBeInTheDocument();
   expect(classify).toHaveBeenCalledWith('Example smoke report');
   expect(loadModel).toHaveBeenCalled();
 });
 it('keeps manual entry available after model failure and allows retry',async()=>{
   loadModel.mockRejectedValueOnce(Error('Missing local model'));
   const user=userEvent.setup();render(<MemoryRouter><ThemeProvider><App/></ThemeProvider></MemoryRouter>);
-  expect(await screen.findByRole('alert')).toHaveTextContent('Model loading failed');
+  expect(await screen.findByRole('alert')).toHaveTextContent('could not start');
   expect(screen.getByRole('button',{name:'Retry model loading'})).toBeEnabled();
   await user.click(screen.getByRole('button',{name:'Fill in manually'}));
   expect(await screen.findByText('Manual report — choose every field.')).toBeInTheDocument();

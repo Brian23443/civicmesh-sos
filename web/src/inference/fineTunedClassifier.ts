@@ -1,5 +1,5 @@
 import { TriagePriority } from '../protocol/enums';
-import type { Classifier, HazardScores, NullableScores4, Scores4, TriageResult } from './types';
+import type { Classifier, FinalizeSettings, HazardScores, NullableScores4, Scores4, TriageResult } from './types';
 
 /** Five ONNX outputs, flattened from batch size 1, in protocol enum order. */
 export interface TriageLogits {
@@ -7,7 +7,10 @@ export interface TriageLogits {
   medical: ArrayLike<number>; thirdParty: ArrayLike<number>;
 }
 export interface LogitProvider { predict(text: string): Promise<TriageLogits> }
-export interface FineTunedClassifierOptions { logitProvider: LogitProvider; redThreshold: number }
+export interface FineTunedClassifierOptions {
+  logitProvider: LogitProvider; redThreshold: number;
+  medicalThresholds?: number[]; thirdPartyThreshold?: number;
+}
 function validate(values: ArrayLike<number>, size: number, name: string): number[] {
   if (!values || values.length !== size) throw Error(`${name} must contain ${size} logits`);
   return Array.from(values, value => {
@@ -34,9 +37,15 @@ export class FineTunedClassifier implements Classifier {
   readonly kind = 'classifier' as const;
   private readonly provider: LogitProvider;
   private readonly redThreshold: number;
-  constructor({logitProvider,redThreshold}: FineTunedClassifierOptions) {
-    if(!Number.isFinite(redThreshold)||redThreshold<0||redThreshold>1) throw Error('redThreshold must be between 0 and 1');
+  readonly settings: FinalizeSettings;
+  constructor({logitProvider,redThreshold,medicalThresholds=Array(8).fill(0.5),thirdPartyThreshold=0.5}: FineTunedClassifierOptions) {
+    const prob=(v:number)=>Number.isFinite(v)&&v>=0&&v<=1;
+    if(!prob(redThreshold)) throw Error('redThreshold must be between 0 and 1');
+    if(medicalThresholds.length!==8||!medicalThresholds.every(prob)) throw Error('medicalThresholds must be 8 probabilities');
+    if(!prob(thirdPartyThreshold)) throw Error('thirdPartyThreshold must be between 0 and 1');
     this.provider=logitProvider;this.redThreshold=redThreshold;
+    // §5.3: medical = thresholds OR keyword backstop; third-party from the model only.
+    this.settings={statusBackstop:false,medicalThresholds:[...medicalThresholds],thirdPartyThreshold};
   }
   async classify(text: string): Promise<TriageResult> {
     const logits=await this.provider.predict(text);

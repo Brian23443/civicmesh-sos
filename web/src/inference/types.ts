@@ -17,8 +17,15 @@ export interface TriageResult {
   thirdPartyProb: number | null;
   scores: { priority: Scores4; hazard: HazardScores; status: NullableScores4 };
 }
+/** How the model's output is combined with the resolvers (see finalize.ts). */
+export interface FinalizeSettings {
+  statusBackstop: boolean;                 // Stage 1: resolveStatus overrides the prototype status
+  medicalThresholds: number[] | null;      // Stage 2: per-flag thresholds (8), OR'd with the keyword backstop
+  thirdPartyThreshold: number | null;      // Stage 2: third-party from the model only
+}
 export interface Classifier {
   classify(text: string): Promise<TriageResult>;
+  readonly settings?: FinalizeSettings;
 }
 
 /** Compatibility name for existing K4 consumers. */
@@ -44,4 +51,6 @@ export interface Stage1ClassifierOptions {
   embeddingProvider: EmbeddingProvider;
   prototypes: PrototypeData;
   unknownMargin?: number;
+  redMargin?: number;
+  statusBackstop?: boolean;
 }
