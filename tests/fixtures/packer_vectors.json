@@ -1,0 +1,92 @@
+{
+  "vectors": [
+    {
+      "name": "vector 1",
+      "hex": "861200012B0BF3BA7E6A68E77800BEEF0050",
+      "fields": {
+        "priority": 2,
+        "hazard": 1,
+        "status": 2,
+        "adults": 2,
+        "children": 1,
+        "medical": 1,
+        "third_party": false,
+        "location_type": 0,
+        "lat": 30.2672,
+        "lon": -97.7431,
+        "timestamp": 1760000000,
+        "device_id": 48879,
+        "seq": 0,
+        "gps_accuracy": 2
+      }
+    },
+    {
+      "name": "vector 2 (third-party + address, flags 0x1900)",
+      "hex": "9E0119002B0BF3BA7E6A68E7780000000040",
+      "fields": {
+        "priority": 2,
+        "hazard": 7,
+        "status": 2,
+        "adults": 1,
+        "children": 0,
+        "medical": 0,
+        "third_party": true,
+        "location_type": 3,
+        "lat": 30.2672,
+        "lon": -97.7431,
+        "timestamp": 1760000000,
+        "device_id": 0,
+        "seq": 0,
+        "gps_accuracy": 0
+      }
+    }
+  ],
+  "round_trip_points": [
+    [
+      90,
+      180
+    ],
+    [
+      -90,
+      -180
+    ],
+    [
+      0,
+      0
+    ],
+    [
+      -33.8688,
+      151.2093
+    ],
+    [
+      64.1466,
+      -21.9426
+    ]
+  ],
+  "round_trip_tolerance": {
+    "lat": 1.1e-05,
+    "lon": 2.2e-05
+  },
+  "gps_buckets": [
+    [
+      null,
+      0
+    ],
+    [
+      3.2,
+      1
+    ],
+    [
+      10,
+      2
+    ],
+    [
+      480,
+      6
+    ],
+    [
+      2000,
+      7
+    ]
+  ]
+}
