@@ -1,0 +1,846 @@
+# CivicMesh-SOS — Track 4 of 4: Survivor Website (PWA)
+
+> **How to use:** give this entire document to your AI assistant at the start of the hackathon. It is your complete brief: your scope, your deadlines, the contracts other tracks depend on, and — in Part 3 — every section of `MASTER_PROMPT.md` you need, copied **verbatim**. `MASTER_PROMPT.md` in the repo root is the single source of truth for the whole project; if a spec number here ever disagrees with it, the master wins. Every number is decided; do not substitute your own values. Items marked **OPEN** must be verified before relying on them.
+
+---
+
+## Part 1 — Your role and scope
+
+You are the engineering partner of the **Track 4 owner** on a four-person, 24-hour hackathon team building **CivicMesh-SOS**, an offline disaster-triage pipeline (phone → on-device model → 18-byte frame → Wi-Fi → LoRa → laptop dashboard; overview in §0 below).
+
+**Track 4 owns the survivor's experience end to end — the website a judge holds in their hand:**
+
+1. **Hours 0–2: design first.** Dribbble references and design tokens in `design/REFERENCES.md` (§12.2), then the Vite + React + TS + Tailwind skeleton with offline precaching (§12.1).
+2. **Hours 2–3: hosting.** Deploy the skeleton to a static HTTPS host and put the URL in `docs/INTEGRATION.md` as `APP_URL` — Track 2 compiles it into the field node.
+3. **Hours 2–5: the TypeScript core** in `web/src/lib/` — ports of T1's packer (§3), resolvers (§5.4) and decoding (§5.0/§5.3) — with Vitest parity against T1's fixtures (contract K5). Plus the screens, built against a `MockClassifier` until the real model lands.
+4. **Hours 5–12: real on-device inference** with `onnxruntime-web` and the files T1 drops into `web/public/model/` (contract K4); all six screens (§12.3); manual mode; **Airplane Mode on a real iPhone and a real Android phone.**
+5. **Hours 12–15:** end-to-end rehearsals until the demo freeze. **Phase B/C:** swap-in test of the Stage 2 classifier if T1 ships it, polish, latency numbers for the slides.
+
+You do **not** build the model or its export (T1 — you load its files), the field node's HTML reply page (T2 — but give them your design tokens), or the dashboard (T3).
+
+### Ground rules that bind you most (from §0, §12 and §16)
+
+- **This is a website, not a native app.** No App Store, Swift or Xcode. One codebase for iOS Safari and Android Chrome.
+- **Offline means no CDNs**: no Google Fonts, unpkg, cdnjs or remote model hubs at runtime. Bundle fonts, `.wasm` files, the tokenizer and the model.
+- **vite-plugin-pwa skips large files by default** — raise `maximumFileSizeToCacheInBytes` to 40 MB or the model isn't cached and the app breaks in Airplane Mode.
+- **The app must always be able to send a report**, even if the model fails to load (manual mode).
+- **Triage colors are reserved for triage only.** Never use red for errors or buttons.
+- **Coordinates in JS use double precision** (`Number` is fine; never `Float32Array` for lat/lon).
+- **Original message text is never transmitted** — only the 18 bytes.
+- Budget: inference ≤ 50 ms per message on a phone (measure it; report it).
+- Node.js 20+; macOS + zsh.
+
+---
+
+## Part 2 — Your timeline, tasks and "done when" checks
+
+Push to `main` at every ★.
+
+| Hours | Task | Done when |
+|---|---|---|
+| 0–1 | **Dribbble first** (§12.2): searches "emergency app", "SOS app", "disaster relief app", "crisis report mobile", "medical emergency app", "safety app onboarding". Record 3–5 shots in `design/REFERENCES.md` under **Survivor PWA** (link, description, what to borrow). Write the design tokens there: colors (dark default + light), the four triage colors (agree the exact hex values with T3 so both apps match; Black = near-black with an outline in dark mode), radii, spacing, type scale (body ≥ 17 px), tap targets ≥ 48 px. Send T2 the subset they need for the field node's reply page (background, surface, text, accent, radius, system font stack). | References + tokens committed ★ |
+| 1–2 | Skeleton: `npm create vite@latest web -- --template react-ts` (into the existing `web/`, keeping `web/public/model/`), Tailwind with your tokens, `lucide-react`, Inter bundled via `@fontsource/inter`, `vite-plugin-pwa` (Workbox `generateSW`, precache the app **and** `public/model/**`, `maximumFileSizeToCacheInBytes: 40 * 1024 * 1024`, `registerType: 'autoUpdate'`), web app manifest + icons. Dev server on **port 5173**. | `npm run build && npm run preview` → reload with DevTools "Offline" still loads |
+| 2–3 | **Hosting** (GitHub Pages via a GitHub Action on `main`, or Netlify/Vercel — pick the fastest for your team; set Vite `base` correctly for GitHub Pages sub-paths). Put the URL in `docs/INTEGRATION.md` as `APP_URL` and tell T2. | Site loads over HTTPS on a phone ★ (hour 3 sync point) |
+| 2–4 | `web/src/lib/packer.ts`: `packFrame(fields) -> Uint8Array`, `toHex()`, `unpackFrame()` (§3, double precision, big-endian via `DataView`, version check). `web/src/lib/schema.ts`: the §2 enums/labels as `const` objects in the exact order/values. `gpsBucket(meters)` per §2. Vitest: both §3 vectors + the round-trip points + GPS bucketing (read `../tests/fixtures/packer_vectors.json` once T1 pushes it — until then, inline the two vectors from §3). | Vitest packer tests green ★ |
+| 3–5 | `web/src/lib/resolvers.ts`: line-by-line port of T1's `src/models/resolvers.py` (headcount, medical backstop, location). Vitest: matches `../tests/fixtures/parity_sentences.jsonl` (`headcount`, `medical_mask`, `location`) on all 50 sentences. Mismatches → work them out with T1 (don't "fix" Python behaviour in JS alone). | Resolver parity 50/50 ★ |
+| 3–6 | Screens 1–4 and 6 (§12.3) against a `MockClassifier` (same signature as K4 `classify()`, returns something plausible after 300 ms) so the whole flow works today: loading → report → review (bottom sheets for every field, steppers, chips, the "Are you at the emergency?" toggle pre-filled from the location resolver, the collapsible **"What gets sent (18 bytes)"** hex + explanation) → send (3 steps, top-level navigation to `http://192.168.4.1/sos?d=<HEX>`, then `seq++`) → My reports (localStorage, every access in try/catch). Identity: random uint16 `device_id` created on first run; `seq` uint8 wraps at 255. GPS per §12.3 (`enableHighAccuracy: true, timeout: 10000`; failure → NO_FIX, lat/lon 0, "No GPS fix"). | Full flow works in a desktop browser with the mock |
+| 5–8 | **Real inference** (`web/src/lib/model.ts`): fetch `model/model.json`; for `"prototype"`: fetch `embedder.onnx.gz`, decompress with `DecompressionStream('gzip')` (stream it so you can drive the progress bar from bytes received), create the `onnxruntime-web` session (WASM backend, `ort.env.wasm.wasmPaths` → locally served `.wasm` files copied into `public/ort/` at build time, `ort.env.wasm.numThreads = 1`); tokenizer via `@huggingface/transformers` `AutoTokenizer` from the local `model/` folder with `env.allowRemoteModels = false`, `env.localModelPath` set; `max_length` 128, truncation. Decoding per §5.0 (cosine = dot product, prototypes are unit length; UNKNOWN when top1 − top2 < `unknown_margin`). Combine with resolvers into the review state. Keep a `"classifier"` branch for §5.3 so the Stage 2 swap is only a file replacement. Vitest: `stage1` decoded fields match the fixture on ≥ 98% of fields (run the ONNX model in Node with `onnxruntime-node` or `onnxruntime-web`'s Node build for the test). | The §13.5 sentence yields **Red · Flood · Trapped · 2 adults · Insulin** in the browser ★ |
+| 6–8 | **OPEN — verify early:** does transformers.js `AutoTokenizer` load fully offline on **iOS Safari** (no network requests at all, check the Network tab via Safari Web Inspector)? If not, or if it is too heavy, implement the §12.1 fallback: BERT WordPiece directly from `tokenizer.json` (lowercase, basic punctuation split, greedy longest-match with `##` continuations, `[CLS]`/`[SEP]`, max 128) and parity-test its token ids against the Python tokenizer on the 50 fixture sentences (ask T1 to add `input_ids` to the fixtures). | Tokenizer works offline on iOS Safari |
+| 8–11 | **Real phones, Airplane Mode** — iPhone (Safari) and Android (Chrome): open once online → "Ready offline ✓" → Airplane Mode → reload → analyze → review → send to the field node (with T2). Measure inference time (log `performance.now()` deltas; show them in a hidden debug panel) and memory. Fix iOS issues: storage eviction (`navigator.storage.persist()`, "Add to Home Screen" hint), WASM memory, the HTTPS → `http://192.168.4.1` top-level navigation, the return link from the relay page. Manual mode when the model fails (simulate by renaming the model file). | Works in Airplane Mode after one visit on both phones ★ (hour 12 sync point) |
+| 11–12 | Accessibility + polish: aria labels everywhere, `prefers-reduced-motion`, 320 px width, dark + light themes, focus states, one-tap priority editing (Stage 1 over-calls Red — make correcting it effortless). | — |
+| 12–15 | End-to-end rehearsal with the team (§13.5) ×5. | `demo-freeze` tagged |
+| **Phase B/C** | | |
+| 15–21 | Prepare the Stage 2 path: test the `"classifier"` branch with T1's exported files on branch `phaseb/stage2-model` as soon as they exist; verify size, load time and inference time on both phones. Merge only after T1's ship decision **and** a 5/5 demo run. | Swap tested (or explicitly not shipped) |
+| 21–24 | Numbers for slides (load time, inference ms on each phone, model size), screenshots of each screen, polish, rehearsal. | — |
+
+### Implementation notes (decisions you can rely on)
+
+- **Frame from the review state:** `priority`, `hazard`, `status`, `adults`, `children` (clamped 0–15), medical flags (bits 0–7 from the chips), then the packer adds bits 8–12 per §3's packer rule from `thirdParty` (the "Are you at the emergency?" answer) and `locationType` (from the location resolver). `timestamp = Math.floor(Date.now()/1000)`, `device_id`, `seq`, `gps_accuracy` bucket. Hex is **uppercase**.
+- **int24 in JS:** `let v = Math.round(lat / 90 * 8388607); v = Math.max(-8388607, Math.min(8388607, v)); const u = v & 0xFFFFFF;` then three bytes big-endian. Use `DataView.setUint32(…, false)` for the timestamp and `setUint16` for flags/device id.
+- **Third-party pre-fill:** if the location resolver finds a landmark or address (or a proximate offset), pre-select "No, I'm reporting for someone else" **as a suggestion** and show the "You mentioned '…' — GPS shows where you are, not necessarily the emergency." note. The user's answer always wins.
+- **Send flow:** save the report to My reports with status "handed to relay" **before** navigating; then `location.href = "http://192.168.4.1/sos?d=" + hex`; increment and persist `seq` before navigating too (navigation may kill the page).
+- **Storage:** wrap every `localStorage` access in try/catch (Safari private mode throws). If storage is unavailable, keep state in memory and still allow sending.
+- **Service worker update:** `autoUpdate` is fine; never show a blocking "update available" prompt during an emergency.
+- **Bottom sheets:** build a small accessible sheet component (focus trap, Esc to close, swipe-down optional); don't pull a heavy UI library.
+- **Hazard icons:** share the hazard → lucide icon mapping with T3 so both screens match.
+- **Model swap:** the app reads `model/model.json` `kind` and branches; nothing else in the app knows which stage is loaded (§5.0).
+
+## Team structure (all four tracks)
+
+There are four people, each running their own AI assistant with their own track file. The tracks are designed so nobody waits on anybody for more than a few minutes: every cross-track dependency has a **contract** (below) that you can build against with a stub *before* the other track delivers.
+
+| Track | Owner focus | Owns (only this track edits these paths) |
+|---|---|---|
+| **T1 — Core & Model** | Python core, resolvers, Stage 1 model, evaluation, ONNX export; Phase B training | `src/`, `stage1/`, `training/common.py`, `training/export_onnx.py`, `training/train.py`, `benchmark/`, `tests/test_packer.py`, `tests/test_resolvers.py`, `tests/test_prototype*.py`, `tests/fixtures/`, `web/public/model/`, `models/`, `artifacts/eval_*` |
+| **T2 — Hardware & Bridge** | Radio link test, field node, base station, FastAPI bridge, end-to-end integration lead; Phase B ACK + demo/slides | `firmware/`, `bridge/`, `tests/test_bridge*.py`, `docs/DEMO_CHECKLIST.md` |
+| **T3 — Dashboard & Data** | Chatbot data collection + importer, operator dashboard; Phase B data generation + label checking | `dashboard/`, `training/import_chatbot.py`, `training/generate.py`, `training/verify.py`, `training/chatbot_prompt_*.md`, `data/chat*.txt`, `data/synthetic/`, `tests/test_importer.py`, `artifacts/jev_benchmark.json` |
+| **T4 — Survivor PWA** | The survivor website: design, UI, offline, JS ports of packer/resolvers/decoding, real-phone testing, hosting | `web/` (except `web/public/model/`, which T1 fills) |
+
+**Shared files** (edit only your own section, keep edits small, pull before you edit): `README.md`, `requirements.txt`, `design/REFERENCES.md` (T4 owns "Survivor PWA", T3 owns "Operator dashboard"), `docs/INTEGRATION.md` (the live-values table). `data/benchmark_dataset.jsonl` (Appendix A) is already saved verbatim by the orchestrator — **nobody edits it, nobody trains or tunes on it.**
+
+If you need a change in a path another track owns, **ask that track** (or open a PR against their branch). Do not edit it yourself — that is how merge conflicts eat hours at a hackathon.
+
+The repo root is the spec's `civicmesh-sos/` directory (§14). All paths below are relative to the repo root.
+
+---
+
+## Integration contracts (decided — build against these exactly)
+
+These pin down the interfaces between tracks that MASTER_PROMPT.md leaves implicit. They are consistent with the spec; where the spec gives a value, the spec value is repeated here.
+
+### K1 — Python schema and packer API (T1 provides by **hour 1**; T2 and T3 consume)
+
+```python
+# src/schema.py  — §2, exact names and values
+class TriagePriority(IntEnum): MINOR=0; DELAYED=1; IMMEDIATE=2; DECEASED=3
+class HazardClass(IntEnum):    NONE=0 ... OTHER=15          # §2 order
+class RescueStatus(IntEnum):   SHELTERED=0; EXPOSED=1; TRAPPED=2; UNKNOWN=3
+class MedicalFlags(IntFlag):   INSULIN=0x0001 ... LOCATION_DISCREPANCY_ALERT=0x1000
+class LocationConfidenceType(IntEnum): DIRECT_ON_SCENE=0; PROXIMATE_OFFSET=1; LANDMARK_POI=2; EXPLICIT_ADDRESS=3
+class GpsAccuracy(IntEnum):    NO_FIX=0; M5=1; M10=2; M25=3; M50=4; M100=5; M500=6; COARSE=7
+    @classmethod
+    def from_meters(cls, m: float | None) -> "GpsAccuracy": ...
+class TriageSlotResult(BaseModel): ...   # §2 "Models"
+class EmergencyPacket(BaseModel): ...    # §2 "Models"
+
+# src/serialization/bit_packer.py — §3
+FRAME_LEN = 18
+FRAME_VERSION = 1
+def pack_binary_frame(packet: EmergencyPacket) -> bytes: ...
+def unpack_binary_frame(data: bytes) -> EmergencyPacket: ...   # ValueError on len != 18 or version != 1
+def frame_to_hex(data: bytes) -> str: ...                      # 36 UPPERCASE hex chars
+def hex_to_frame(s: str) -> bytes: ...                         # accepts upper/lower case
+```
+
+Until T1 pushes K1, T2 may stub `unpack_binary_frame` locally (never commit the stub under `src/`).
+
+### K2 — Frame transport strings (T4 → T2 → T2 → T3)
+
+- Phone → field node: top-level navigation to `http://192.168.4.1/sos?d=<36 UPPERCASE hex>` (§12.3). The field node must also accept lowercase.
+- Base station → laptop serial, 115200 baud, one line per frame: `FRAME <36 UPPERCASE hex> <rssi> <snr>` (e.g. `FRAME 861200012B0BF3BA7E6A68E77800BEEF0050 -41.0 9.75`). Other lines (`CRC error, packet dropped`, `Unknown frame version, ignored`, boot logs) are ignored by the bridge, but logged.
+
+### K3 — Bridge HTTP/WebSocket API (T2 provides; T3 consumes)
+
+- Bridge: `python3 -m bridge.server [--port /dev/cu.xxx] [--simulate] [--center LAT,LON] [--db bridge/incidents.db]`, listening on **http://localhost:8000**. It serves `dashboard/dist/` at `/` when that folder exists.
+- Dashboard dev server runs on **port 5174** and proxies `/api` and `/ws` to `localhost:8000` (Vite `server.proxy`, with `ws: true` for `/ws`). The survivor PWA dev server uses **port 5173**.
+- `GET /api/incidents?state=active|removed|all` → a JSON **array** of Incident objects (default `active`).
+- `POST /api/incidents/{id}/remove` and `POST /api/incidents/{id}/restore` → the updated Incident object; 404 if unknown.
+- `GET /api/health` → `{"serial_connected": bool, "port": str|null, "last_frame_at": number|null, "active_count": int}`.
+- `POST /api/debug/frame` body `{"hex": "<36 hex>", "rssi"?: number, "snr"?: number}` → `{"incident": Incident, "duplicate": bool}`; 400 on a bad frame.
+- `WS /ws` messages: `{"type": "incident.new"|"incident.updated"|"incident.removed"|"incident.restored", "incident": Incident}` and `{"type": "health", "health": <same object as /api/health>}` (health pushed on connect and every 5 s).
+- All times are **POSIX seconds (numbers)**. `sent_at` is the frame timestamp (int); `received_at`, `last_heard_at`, `removed_at` are server time (float).
+
+**Incident object** (exact keys; the example is test vector 1):
+
+```json
+{
+  "id": "3f7b2c1e-9a4d-4c55-8a0e-0b8f6f1d2a11",
+  "frame_hex": "861200012B0BF3BA7E6A68E77800BEEF0050",
+  "device_id": 48879, "seq": 0,
+  "rssi": -41.0, "snr": 9.75, "heard_count": 1,
+  "priority": {"value": 2, "name": "IMMEDIATE", "color": "red"},
+  "hazard": {"value": 1, "name": "FLOOD"},
+  "status": {"value": 2, "name": "TRAPPED"},
+  "adults": 2, "children": 1,
+  "medical": ["INSULIN"],
+  "third_party": false,
+  "location_type": "DIRECT_ON_SCENE",
+  "location_discrepancy": false,
+  "lat": 30.2672, "lon": -97.7431,
+  "gps_accuracy": {"value": 2, "name": "M10", "meters_max": 10},
+  "sent_at": 1760000000,
+  "received_at": 1760000001.42, "last_heard_at": 1760000001.42,
+  "state": "active", "removed_at": null
+}
+```
+
+- `priority.color` is one of `"green" | "yellow" | "red" | "black"` (MINOR, DELAYED, IMMEDIATE, DECEASED).
+- `medical` lists only the 8 medical names (bits 0–7), in bit order.
+- `lat`/`lon` are the decoded values rounded to 6 decimals. When `gps_accuracy.name == "NO_FIX"`, the dashboard does not place a pin ("No location" list).
+- `gps_accuracy.meters_max`: NO_FIX → `null`, M5 → 5, M10 → 10, M25 → 25, M50 → 50, M100 → 100, M500 → 500, COARSE → `null`.
+- `rssi`/`snr` are `null` for frames injected through `/api/debug/frame` without them.
+
+### K4 — Browser model files (T1 provides by **hour 5**; T4 consumes)
+
+Folder `web/public/model/`:
+
+- `model.json`
+  ```json
+  {
+    "kind": "prototype",
+    "base_model": "BAAI/bge-small-en-v1.5",
+    "max_length": 128,
+    "unknown_margin": 0.02,
+    "labels": {
+      "priority": ["MINOR", "DELAYED", "IMMEDIATE", "DECEASED"],
+      "hazard": ["NONE", "FLOOD", "FIRE_SMOKE", "STRUCTURAL_COLLAPSE", "HAZMAT_GAS", "ELECTRICAL_POWER", "EXTREME_WEATHER", "MEDICAL_CRISIS", "ACTIVE_VIOLENCE", "TSUNAMI_SURGE", "LANDSLIDE", "HYPOTHERMIA_FREEZE", "HEAT_STROKE", "SINKHOLE_SUBSIDENCE", "CONTAMINATED_WATER", "OTHER"],
+      "status": ["SHELTERED", "EXPOSED", "TRAPPED", "UNKNOWN"],
+      "medical": ["INSULIN", "OXYGEN", "BLEEDING", "HYPOTHERMIA", "MOBILITY_IMPAIRED", "CARDIAC", "PREGNANCY_INFANT", "BURNS"]
+    }
+  }
+  ```
+  (`unknown_margin` is whatever T1 tuned on the chatbot rows. Stage 2 adds `"kind": "classifier"`, `red_threshold`, `medical_thresholds` [8], `third_party_threshold` — §11.2.)
+- `embedder.onnx.gz` — gzip of the INT8 ONNX graph. Inputs `input_ids` and `attention_mask`, both **int64** `[batch, seq]`. Output `embedding`, float32 `[batch, 384]`, already mean-pooled and L2-normalized inside the graph.
+- `tokenizer.json` — the Hugging Face fast-tokenizer file for the base model (plus `tokenizer_config.json`, `special_tokens_map.json`, `vocab.txt` if transformers.js needs them; T1 copies all of them).
+- `prototypes.json`
+  ```json
+  {"dim": 384,
+   "priority": {"MINOR": [384 floats], "DELAYED": [...], "IMMEDIATE": [...], "DECEASED": [...]},
+   "hazard":   {"NONE": [...], "FLOOD": [...], ..., "CONTAMINATED_WATER": [...]},
+   "status":   {"SHELTERED": [...], "EXPOSED": [...], "TRAPPED": [...]}}
+  ```
+  Keys appear in §2 enum order. **No OTHER hazard prototype and no UNKNOWN status prototype** (§5.0). Each prototype is the mean of the normalized example-sentence embeddings, **then re-normalized to unit length**, so cosine similarity = dot product.
+- Stage 2 (Phase B only): `classifier.onnx.gz` with the same two inputs and five outputs named `priority` [b,4], `hazard` [b,16], `status` [b,4], `medical` [b,8], `third_party` [b,1] (logits).
+
+**`classify(text)` result** — identical shape in Python (`src/models/prototype_classifier.py`) and JS (`web/src/lib/`):
+
+```ts
+{
+  priority: number,            // TriagePriority value
+  hazard: number,              // HazardClass value
+  status: number,              // RescueStatus value (UNKNOWN when top1 - top2 < unknown_margin)
+  medicalProbs: number[] | null,   // 8 probabilities (Stage 2) or null (Stage 1)
+  thirdPartyProb: number | null,   // Stage 2 or null
+  scores: { priority: number[4], hazard: (number|null)[16], status: (number|null)[4] }  // null where no prototype exists
+}
+```
+
+Until K4 arrives, T4 builds against a `MockClassifier` with the same signature, plus manual mode.
+
+### K5 — Parity fixtures (T1 provides by **hour 3**, refreshed at hour 5; T4 consumes in Vitest)
+
+- `tests/fixtures/packer_vectors.json` — both §3 test vectors as `{"name", "fields": {...}, "hex"}`, plus the four round-trip coordinate points.
+- `tests/fixtures/parity_sentences.jsonl` — **50 sentences written by T1 (never from Appendix A)**, one object per line:
+  ```json
+  {"text": "...", "headcount": [adults, children], "medical_mask": 5, "location": {"type": "EXPLICIT_ADDRESS", "text": "12 Oak St", "flags": 6144}, "stage1": {"priority": 2, "hazard": 1, "status": 2, "scores": {...}}}
+  ```
+  `stage1` is added once the embedder exists (hour 5). JS must match `headcount`, `medical_mask` and `location` exactly, and `stage1` decoded fields on ≥ 98% of fields (INT8 vs PyTorch noise).
+
+Vitest reads them from `../tests/fixtures/` relative to `web/`.
+
+### K6 — Python helpers shared with T3 (T1 provides `training/common.py` by **hour 1**)
+
+`training/common.py` exports: `LABEL_VERSION = 2`, `COUNT_RULE`, `THIRD_PARTY_RULE` (the §4 text), the label vocabularies as lists (`PRIORITY_LABELS = ["Minor","Delayed","Immediate","Deceased"]`, `HAZARD_NAMES` [16], `STATUS_LABELS = ["Sheltered","Exposed","Trapped","Unknown"]`, `MEDICAL_NAMES` [8], `LANGUAGES` [3]), the §2 descriptions (`PRIORITY_DESCRIPTIONS`, `HAZARD_DESCRIPTIONS`, `STATUS_DESCRIPTIONS`, `MEDICAL_DESCRIPTIONS`), `read_jsonl(path)`, `append_jsonl(path, rows)`, and an OpenRouter client `openrouter_post(path, payload, timeout=120)` implementing the §6 retry policy. T3 builds `generate.py`/`verify.py`/`import_chatbot.py` on top of it. If T3 needs something added, ask T1.
+
+### K7 — Live values (`docs/INTEGRATION.md`)
+
+One table every track reads: the hosted website URL (`APP_URL`, T4 fills by **hour 3**), the demo map center and bbox (T3 fills), the base station's serial port on the demo laptop (T2), the current model kind in `web/public/model/` (T1). Update the table when a value changes and say so in the team chat.
+
+---
+
+## Sync points (put these on a shared timer)
+
+| Hour | Who → whom | What lands on `main` | Unblocks |
+|---|---|---|---|
+| 1 | T1 → all | K1 schema + packer + tests, K6 `training/common.py` | T2 bridge decoding, T3 importer, T4 has a reference |
+| 1 | T2 | Radio link test passes on both boards (Appendix B) | Hardware de-risked |
+| 2–3 | T3 → T1 | 310 chatbot rows imported into `data/synthetic/raw.jsonl` | T1 tunes `unknown_margin`, scores Stage 1 on validation |
+| 3 | T1 → T4 | K5 fixtures (packer vectors + resolver parity) | T4 Vitest parity |
+| 3 | T4 → T2 | `APP_URL` in `docs/INTEGRATION.md` | Field node "Back to CivicMesh" link |
+| 4 | T2 → T3 | Bridge with `--simulate` | Dashboard switches from mocks to live data |
+| 5 | T1 → T4 | K4 model files in `web/public/model/` (+ `stage1` parity values) | Real inference in the PWA |
+| 7 | T2 + T3 | Field node: a hand-typed `http://192.168.4.1/sos?d=…` puts a pin on the dashboard | Hardware path proven |
+| 12 | T4 → all | PWA works in Airplane Mode after one visit (iPhone + Android) | End-to-end rehearsal |
+| 12–15 | **everyone** | §13.5 demo script works **5 times in a row** → tag `demo-freeze` | Phase B may begin |
+| 15–17 | T3 → T1 | `data/synthetic/scored.jsonl` (5,000 generated + checked rows) | Training |
+| 21 | T1 | Stage 2 ships **only** if it beats Stage 1 (§15) | — |
+
+If you are going to miss a sync point, say so in the team chat **as soon as you know**, with a new ETA.
+
+---
+
+## Git workflow
+
+- **`main` must always run.** Never push something to `main` that breaks the tests or the demo.
+- Each track works on its long-lived branch: `track/t1-core-model`, `track/t2-hardware-bridge`, `track/t3-dashboard-data`, `track/t4-survivor-pwa`. Short feature branches off your track branch are fine.
+- **Merge to `main` small and often** — at least at every sync point you own, ideally every 1–2 hours:
+  ```bash
+  git checkout track/tN-xxx
+  git fetch origin && git merge origin/main     # take everyone else's work first
+  # run your tests (pytest / npm test / compile the sketch)
+  git checkout main && git pull && git merge --no-ff track/tN-xxx && git push
+  ```
+  (Or open a PR from your track branch to `main` if the team is using PR review; keep it under ~400 lines so it can be reviewed in two minutes.)
+- **Stay in your paths** (ownership table). Shared files: pull first, edit only your section, push quickly.
+- Commit messages start with the track: `[T1] packer: both §3 test vectors pass`.
+- **Never commit:** `.env` / API keys, `node_modules/`, `dist/`, `models/` checkpoints, `bridge/*.db`, `*.pmtiles`. They are in `.gitignore`. Large model files go in `web/public/model/*.gz` only (≤ 30 MB each).
+- **Demo freeze:** when the §13.5 script passes 5 times in a row, T2 tags it: `git tag -a demo-freeze -m "Demo freeze" && git push origin demo-freeze`. After that, `main` only takes changes that keep the demo working. Phase B work happens on `phaseb/*` branches and is merged only after the §15 ship decision.
+- If `main` breaks: whoever notices says so in chat; the owner of the breaking commit reverts first (`git revert <sha>`), fixes second.
+
+
+---
+
+## Part 3 — Specification excerpts (verbatim from MASTER_PROMPT.md)
+
+Section numbers (§) refer to MASTER_PROMPT.md.
+
+## 0. Role, goal, and ground rules
+
+You are my engineering partner for a 24-hour hackathon. We are building **CivicMesh-SOS**, an offline disaster-triage pipeline:
+
+1. A survivor types a free-text distress message on a phone in **Airplane Mode**.
+2. An **on-device encoder model** turns it into structured triage fields.
+3. The phone shows a confirmation screen and the survivor taps Send.
+4. The fields are bit-packed into an **18-byte frame**.
+5. The frame goes over **local Wi-Fi** to a LoRa field node, then over **915 MHz LoRa** to a base station.
+6. A laptop decodes it and drops a color-coded pin on an **offline map dashboard**.
+
+Ground rules:
+
+1. **Demo first, fine-tuning last.** Phase A builds a complete working demo with an untrained (zero-shot) model (§5.0). Fine-tuning (Phase B) starts only after the demo works end to end and is frozen. **Build in the order of §15.** Each step has a "done when" check. Don't move on until it passes.
+2. **Never fit anything to the test set.** The 54 hand-labeled messages in Appendix A are the test set.
+   - Never train on them.
+   - Never tune thresholds on them.
+   - Never add keyword rules containing phrases from them.
+
+   Keyword overrides copied from test messages make accuracy look much better than it is. Don't add them.
+3. **Report honestly.** For any evaluation, report Red recall and Red precision, per-field accuracy, and whole-summary accuracy (§9), not just overall accuracy.
+4. **Stay on budget.** Model download ≤ **30 MB gzipped**. Inference ≤ **50 ms** per message on a phone. Data-generation API spend is about $2.
+5. **Verify unverified APIs with a single call before any batch run** (§16).
+6. **Write tests** for the frame packer (both test vectors in §3), the resolvers (§5.4) and the data importer.
+7. The user runs macOS with zsh and Python 3.13, on an Apple Silicon Mac (PyTorch MPS is available).
+
+---
+
+## 2. Triage fields
+
+Create `src/schema.py` with Python `IntEnum` / `IntFlag` and Pydantic v2 models. These exact names and values are used everywhere: Python, JS and C.
+
+### TriagePriority (2 bits)
+
+| Value | Name | Label string | Color | Meaning |
+|---|---|---|---|---|
+| 0 | MINOR | `Minor` | Green | Safe, or only minor injuries; walking wounded; needs supplies or information, not rescue |
+| 1 | DELAYED | `Delayed` | Yellow | Serious but stable; injured or stranded but not in immediate danger of dying; rescue can wait hours |
+| 2 | IMMEDIATE | `Immediate` | Red | Life-threatening right now: severe bleeding, can't breathe, unconscious, or trapped with a rising hazard (water, fire, gas, collapse) |
+| 3 | DECEASED | `Deceased` | Black | Dead, or unresponsive with no signs of life |
+
+### HazardClass (4 bits)
+
+The label string is the enum name.
+
+| Value | Name | Description (also used as the checker's option text) |
+|---|---|---|
+| 0 | NONE | no hazard mentioned |
+| 1 | FLOOD | flooding, rising water, submerged roads or homes |
+| 2 | FIRE_SMOKE | fire, flames, smoke, wildfire |
+| 3 | STRUCTURAL_COLLAPSE | building, roof, wall, stairwell or bridge collapse; rubble |
+| 4 | HAZMAT_GAS | gas leak, chemical spill, toxic fumes |
+| 5 | ELECTRICAL_POWER | downed power lines, sparking, electrocution risk |
+| 6 | EXTREME_WEATHER | tornado, hurricane winds, hail, severe storm |
+| 7 | MEDICAL_CRISIS | a medical emergency is the main problem, with no environmental hazard |
+| 8 | ACTIVE_VIOLENCE | shooter, assault, looting, hostile people |
+| 9 | TSUNAMI_SURGE | tsunami, storm surge, ocean water coming inland |
+| 10 | LANDSLIDE | landslide, mudslide, debris flow |
+| 11 | HYPOTHERMIA_FREEZE | extreme cold, blizzard, freezing conditions |
+| 12 | HEAT_STROKE | extreme heat, heat stroke, no cooling |
+| 13 | SINKHOLE_SUBSIDENCE | sinkhole, ground giving way |
+| 14 | CONTAMINATED_WATER | unsafe or contaminated drinking water, no clean water |
+| 15 | OTHER | a hazard that fits none of the other categories |
+
+### RescueStatus (2 bits)
+
+| Value | Name | Label string | Meaning |
+|---|---|---|---|
+| 0 | SHELTERED | `Sheltered` | inside a secure building or shelter, not trapped |
+| 1 | EXPOSED | `Exposed` | outdoors or exposed to the elements: on a roof, in water, in a car, on the street |
+| 2 | TRAPPED | `Trapped` | cannot get out: pinned, stuck in an attic, under rubble, in a vehicle, cut off |
+| 3 | UNKNOWN | `Unknown` | the message does not say where the victims are or whether they can move |
+
+### Flags (16-bit `IntFlag`, `MedicalFlags`)
+
+| Bit | Mask | Name | Meaning (bits 0–7 also used as the checker's question text: "Does the message indicate that …?") |
+|---|---|---|---|
+| 0 | 0x0001 | INSULIN | someone is diabetic or needs insulin |
+| 1 | 0x0002 | OXYGEN | someone has trouble breathing or depends on oxygen |
+| 2 | 0x0004 | BLEEDING | someone is bleeding heavily or has a serious wound |
+| 3 | 0x0008 | HYPOTHERMIA | someone is dangerously cold, hypothermic, or soaked in cold water |
+| 4 | 0x0010 | MOBILITY_IMPAIRED | someone cannot walk: wheelchair, broken leg or pelvis, elderly and immobile, pinned |
+| 5 | 0x0020 | CARDIAC | someone has chest pain, a heart attack, or a heart condition flaring up |
+| 6 | 0x0040 | PREGNANCY_INFANT | someone is pregnant or in labor, or a newborn or infant needs care |
+| 7 | 0x0080 | BURNS | someone has burns |
+| 8 | 0x0100 | THIRD_PARTY_REPORT | the writer is not at the scene (§4) |
+| 9 | 0x0200 | LOC_PROXIMATE | incident is nearby ("a few blocks away") |
+| 10 | 0x0400 | LOC_LANDMARK | a named landmark is mentioned |
+| 11 | 0x0800 | LOC_EXPLICIT_ADDRESS | a street address is mentioned |
+| 12 | 0x1000 | LOCATION_DISCREPANCY_ALERT | the phone's GPS is probably not the incident location |
+| 13–15 | — | reserved | 0 |
+
+### LocationConfidenceType (not transmitted directly; it sets flag bits)
+
+| Value | Name |
+|---|---|
+| 0 | DIRECT_ON_SCENE |
+| 1 | PROXIMATE_OFFSET |
+| 2 | LANDMARK_POI |
+| 3 | EXPLICIT_ADDRESS |
+
+### GpsAccuracy (3 bits)
+
+`GpsAccuracy.from_meters(m)` buckets the browser's `coords.accuracy`, in meters. `None` or a negative value → NO_FIX.
+
+| Value | Name | Accuracy |
+|---|---|---|
+| 0 | NO_FIX | lat/lon are meaningless |
+| 1 | M5 | ≤ 5 m |
+| 2 | M10 | ≤ 10 m |
+| 3 | M25 | ≤ 25 m |
+| 4 | M50 | ≤ 50 m |
+| 5 | M100 | ≤ 100 m |
+| 6 | M500 | ≤ 500 m |
+| 7 | COARSE | > 500 m |
+
+### Models
+
+**`TriageSlotResult`:**
+
+| Field | Type / default |
+|---|---|
+| priority | TriagePriority |
+| hazard | HazardClass, default NONE |
+| rescue_status | RescueStatus, default UNKNOWN |
+| adult_count | int, 0–15, clamped, default 1 |
+| pediatric_count | int, 0–15, clamped, default 0 |
+| medical_flags | MedicalFlags |
+| is_third_party_report | bool |
+| location_type | LocationConfidenceType |
+| extracted_location_text | optional str |
+| confidence | float |
+| raw_text | optional str |
+| extraction_latency_ms | optional float |
+
+**`EmergencyPacket`:**
+
+| Field | Type / default |
+|---|---|
+| slots | TriageSlotResult |
+| latitude | float, −90 to 90 |
+| longitude | float, −180 to 180 |
+| gps_accuracy | GpsAccuracy, default NO_FIX |
+| timestamp | int, default `int(time.time())` |
+| device_id | int, 0–65535, default 0 |
+| seq | int, 0–255, default 0 |
+
+---
+
+## 3. The 18-byte frame, format version 1 (`src/serialization/bit_packer.py`)
+
+Big-endian. Exactly 18 bytes. **No application checksum:** the SX1262 hardware CRC protects the radio hop, and TCP protects the Wi-Fi hop. No CBOR wrapper.
+
+| Byte(s) | Bits | Field | Encoding |
+|---|---|---|---|
+| 0x00 | 0–1 (LSB) | priority | TriagePriority |
+| 0x00 | 2–5 | hazard | HazardClass |
+| 0x00 | 6–7 | rescue_status | RescueStatus |
+| 0x01 | 0–3 | adult_count | 0–15, clamped |
+| 0x01 | 4–7 | pediatric_count | 0–15, clamped |
+| 0x02–0x03 | 16 | flags | MedicalFlags, `>H` |
+| 0x04–0x06 | 24 | latitude | signed int24 = `round(lat / 90 × (2²³−1))`, clamped to ±(2²³−1). ~1.2 m resolution. |
+| 0x07–0x09 | 24 | longitude | signed int24 = `round(lon / 180 × (2²³−1))`. ~2.4 m at the equator. |
+| 0x0A–0x0D | 32 | timestamp | uint32 POSIX seconds |
+| 0x0E–0x0F | 16 | device_id | uint16, random per app install |
+| 0x10 | 8 | seq | uint8 per-device counter, wraps at 255. `(device_id, seq)` deduplicates mesh repeats and retries. |
+| 0x11 | 0–2 | spare | 0 |
+| 0x11 | 3–5 | gps_accuracy | GpsAccuracy |
+| 0x11 | 6–7 | version | **1**. The unpacker raises `ValueError` on any other version or on a length ≠ 18. |
+
+**Packer rule for the flag bits:** start from `slots.medical_flags`, then:
+- if `is_third_party_report`: add THIRD_PARTY_REPORT | LOCATION_DISCREPANCY_ALERT
+- if location_type is PROXIMATE_OFFSET: add LOC_PROXIMATE | LOCATION_DISCREPANCY_ALERT
+- if location_type is LANDMARK_POI: add LOC_LANDMARK | LOCATION_DISCREPANCY_ALERT
+- if location_type is EXPLICIT_ADDRESS: add LOC_EXPLICIT_ADDRESS | LOCATION_DISCREPANCY_ALERT
+
+The unpacker derives `is_third_party_report` from THIRD_PARTY_REPORT. It derives `location_type` from the LOC_* bits, with priority ADDRESS > LANDMARK > PROXIMATE.
+
+**Coordinate math:** use **double precision** in C and JS. A float32 version is off by one unit (~2 m).
+
+### Test vectors
+
+Every implementation (Python, JS, C) must reproduce these exactly.
+
+1. **Main vector.**
+   - Fields:
+     - priority = IMMEDIATE, hazard = FLOOD, status = TRAPPED
+     - 2 adults, 1 child
+     - flags = INSULIN
+     - lat 30.2672, lon −97.7431
+     - ts 1760000000, device 0xBEEF, seq 0
+     - gps_accuracy = M10
+   - Bytes: `861200012B0BF3BA7E6A68E77800BEEF0050`
+2. **Third-party / address vector.**
+   - Fields:
+     - priority = IMMEDIATE, hazard = MEDICAL_CRISIS, status = TRAPPED
+     - 1 adult, 0 children
+     - medical_flags = none
+     - is_third_party_report = true, location_type = EXPLICIT_ADDRESS (so flags become 0x1900)
+     - same lat, lon and ts as vector 1
+     - device 0, seq 0, gps NO_FIX
+   - Bytes: `9E0119002B0BF3BA7E6A68E7780000000040`
+
+### Required packer tests
+
+- every frame is 18 bytes
+- byte 0 and 1 bit positions are correct
+- headcounts saturate at 15
+- round-trip coordinates within 1.1e-5° (latitude) and 2.2e-5° (longitude) at (±90, ±180), (0, 0), (−33.8688, 151.2093) and (64.1466, −21.9426)
+- the tail bytes (timestamp, device, seq, GPS bucket, version) land in the right places
+- wrong version and wrong length are rejected
+- GPS bucketing: None→0, 3.2→1, 10→2, 480→6, 2000→7
+- both test vectors
+
+---
+
+### 5.0 Two stages: an untrained demo model first, fine-tuning last
+
+**Stage 1 — demo model (built first, no training).**
+- Use `BAAI/bge-small-en-v1.5` **zero-shot**, by prototype matching:
+  1. Embed the message: masked mean pooling over the last hidden state, then L2-normalize.
+  2. For each class, the prototype is the mean of the normalized embeddings of its example sentences (below).
+  3. Per field, pick the class with the highest cosine similarity.
+- Prototypes are precomputed once in Python (`stage1/build_prototypes.py` → `prototypes.json`, 384 floats per class, label order as in §2). The browser only embeds the message.
+- **Priority, hazard and status** come from prototypes.
+- **Status UNKNOWN:** predict it when the top status similarity minus the second is below `unknown_margin`. Tune `unknown_margin` on the chatbot rows (§8), **never on Appendix A**. Start at 0.02.
+- **Medical flags:** the keyword resolver (§5.4) is the only source in Stage 1.
+- **Third-party:** the website asks the user directly: "Are you at the emergency?" (§12). The location resolver pre-fills a suggestion.
+- **Headcounts and location:** the resolvers (§5.4).
+- **No prototype for OTHER.** The user can pick it on the confirmation screen.
+- **Expected quality:** prototype matching tends to judge a message by its topic rather than its severity, and it ignores negation. Expect it to over-call Red. That is acceptable for a demo, because the survivor confirms or edits every field before sending. Measure it on Appendix A and the chatbot rows during the event.
+
+**Stage 2 — fine-tuned classifier (§5.1–5.3, §6–9), built only after the demo works end to end (§15).**
+- Swap it in only if it beats Stage 1 on **both** Appendix A and validation, on Red recall and whole-summary accuracy.
+
+**Swappable model interface.** The website reads `model/model.json`:
+
+| `kind` | Files | `classify(text)` returns |
+|---|---|---|
+| `"prototype"` (Stage 1) | `embedder.onnx.gz` + `prototypes.json` + `tokenizer.json` + thresholds | priority/hazard/status scores; medical = null; third_party = null |
+| `"classifier"` (Stage 2) | `classifier.onnx.gz` + `tokenizer.json` + thresholds | the five head outputs |
+
+`classify(text)` always returns `{priority, hazard, status, medicalProbs | null, thirdPartyProb | null, scores}`. The rest of the app never needs to know which stage is loaded.
+
+**Stage 1 example sentences (verbatim).** These were written alongside the test set, so Stage 1's scores on Appendix A will be optimistic.
+
+- **IMMEDIATE:**
+  - "Critical life-threatening emergency! Active arterial bleeding, cannot breath, trapped in rising flood water or fire."
+  - "Trapped in collapsing building or attic with water rising. Unconscious victim, severe trauma, urgent rescue needed!"
+- **DELAYED:**
+  - "Serious injury, broken bones, dislocated shoulder, non-ambulatory, but stable in safe shelter."
+  - "Road washed out, bridge collapsed, stranded but safe inside with food, non-critical medical condition."
+- **MINOR:**
+  - "Minor cuts, safe from danger, walking wounded, house intact, requesting drinking water or power update."
+  - "We are safe and uninjured, plenty of food, no emergency medical need."
+- **DECEASED:**
+  - "Victim unresponsive, no pulse, cold and stiff, deceased body found under rubble."
+  - "Fatal head trauma, no sign of life, victim has died."
+- **Hazards (one sentence each):**
+
+  | Hazard | Sentence |
+  |---|---|
+  | NONE | "no hazard, clear area, normal safe conditions" |
+  | FLOOD | "rising flood water, submerged, drowning, river overflow, boat rescue" |
+  | FIRE_SMOKE | "active fire, thick black smoke, flames burning, wildfire surrounding" |
+  | STRUCTURAL_COLLAPSE | "building collapsed, rubble, trapped under concrete slab or beam" |
+  | HAZMAT_GAS | "strong gas leak smell, toxic chemical fumes, chlorine leak, vomiting" |
+  | ELECTRICAL_POWER | "sparking power line, downed high voltage line, transformer exploded" |
+  | EXTREME_WEATHER | "tornado, hurricane wind, hail broke roof, severe storm damage" |
+  | MEDICAL_CRISIS | "severe medical emergency, diabetic shock, arterial bleeding, heart attack" |
+  | ACTIVE_VIOLENCE | "active shooter, gunfire, barricaded in room, hostile threat" |
+  | TSUNAMI_SURGE | "tsunami warning, ocean receding, storm surge wave approaching" |
+  | LANDSLIDE | "mudslide, landslide swept house, buried in mud debris" |
+  | HYPOTHERMIA_FREEZE | "freezing blizzard, subzero cold, severe hypothermia, blue lips" |
+  | HEAT_STROKE | "extreme heat wave, no air conditioning, overheating, heat stroke, confused and not sweating" |
+  | SINKHOLE_SUBSIDENCE | "sinkhole opened up, ground collapsing under the road or house, earth giving way" |
+  | CONTAMINATED_WATER | "water main broke, tap water contaminated, no clean drinking water" |
+
+- **Status:**
+
+  | Status | Sentence |
+  |---|---|
+  | TRAPPED | "trapped inside, pinned under rubble, attic door stuck, cannot escape" |
+  | EXPOSED | "outdoors in storm, stranded on roof, in water, exposed to elements" |
+  | SHELTERED | "safe inside house, dry shelter, protected in basement or hall" |
+
+Also build a Python reference (`src/models/prototype_classifier.py`, same interface as the Stage 2 extractor), so `evaluate_dataset.py` can score Stage 1 and the JS version can be parity-tested against it.
+
+### 5.3 Stage 2 decoding (`FinetunedTriageExtractor(model_dir)`)
+
+The extractor loads `config.json`, the tokenizer and `model.pt`.
+
+- **Priority:** if P(IMMEDIATE) ≥ `red_threshold`, predict IMMEDIATE. Otherwise predict the argmax of the other three classes.
+- **Hazard and status:** argmax.
+- **Medical flag *i*:** on if sigmoid_i ≥ `medical_thresholds[i]`. Then **OR** the result with the medical keyword backstop (§5.4).
+- **Third party:** sigmoid ≥ `third_party_threshold`, **from the model only**. If true, set THIRD_PARTY_REPORT | LOCATION_DISCREPANCY_ALERT.
+- **Headcounts:** the headcount resolver (§5.4).
+- **Location type and text:** the location resolver (§5.4). Its flags are OR'd in.
+- Fill `extraction_latency_ms`.
+
+### 5.4 Deterministic resolvers (`src/models/resolvers.py`, used by both stages)
+
+Write these as **generic** patterns. **Do not copy phrases from Appendix A.** Test them with your own example sentences.
+
+#### Headcount resolver → `(adults, children)`
+
+**Number words:**
+- digits 0–99
+- English: one–twenty
+- "a couple" = 2, "both of us" = 2, "twins" = 2 children
+- Spanish: un/uno/una, dos, tres, cuatro, cinco, seis, siete, ocho, nueve, diez
+
+**Nouns:**
+- **Child nouns:** baby/babies, infant(s), newborn(s), toddler(s), kid(s), child/children, son(s), daughter(s), boy(s), girl(s), teen(s)/teenager(s); Spanish bebé/bebe(s), niño/niña(s), hijo/hija(s).
+- **Adult or generic nouns:** adult(s), people, **ppl**, person(s), "of us", men, women, neighbors, workers, passengers, students, guests; Spanish personas, adultos.
+
+**Rules:**
+1. "N <child noun>" → children = N. A child noun without a number → children = 1.
+2. "N <adult noun>" → adults = N. If the noun is generic ("people", "of us"…) and children were found and N > children, then adults = N − children.
+3. "me and my <adult relation: wife/husband/mom/dad/sister/brother/partner/friend/grandma…>" → at least 2 adults. "me and my N kids" → 1 adult + N children.
+4. "alone" / "just me" → 1 adult.
+5. Default: 1 adult, 0 children.
+6. Clamp both to 0–15.
+
+Unit-test it, including "4 ppl", "1 kid", "mi bebé", "me and my 2 kids", "3 of us" and "two adults and a toddler".
+
+#### Medical keyword backstop → MedicalFlags bits 0–7
+
+Case-insensitive. Use word-boundary regex. Handle common typos ("cant breath").
+
+| Flag | Keywords |
+|---|---|
+| INSULIN | insulin, diabetic, diabetes, blood sugar, "sugar is/sugar's", type 1, type 2; insulina, diabétic- |
+| OXYGEN | can't/cant/cannot breathe/breath, trouble breathing, gasping, choking on smoke, oxygen, inhaler, asthma; no puedo respirar |
+| BLEEDING | bleeding, blood everywhere, hemorrhag-, gash, deep cut, tourniquet; sangr- |
+| HYPOTHERMIA | hypotherm-, freezing cold, shivering, frostbite, blue lips; hipotermia |
+| MOBILITY_IMPAIRED | wheelchair, can't/cannot walk, broken leg/hip/pelvis, pinned, bedridden, paralyz-; silla de ruedas |
+| CARDIAC | chest pain, heart attack, cardiac, pacemaker, heart condition; dolor de pecho, infarto |
+| PREGNANCY_INFANT | pregnant, contractions, in labor, water broke, newborn, infant; embarazada |
+| BURNS | burned, burns, burnt, scald-, blister-; quemad- — but not "burn barrel" or "sunburn" |
+
+#### Location resolver → `(location_type, location_text, flags)`
+
+1. **Explicit street address** (case-insensitive): a house number of 1–5 digits, then a street name of a few words, then a street-type word: Lane/Ln, Street/St, Road/Rd, Avenue/Ave, Boulevard/Blvd, Drive/Dr, Court/Ct, Way, Highway/Hwy, Terrace, Place/Pl. → EXPLICIT_ADDRESS, with the matched address as the location text.
+2. **Landmark:** any of these words as whole words: walmart, target, costco, home depot, kroger, heb, safeway, walgreens, cvs, high school, middle school, elementary school, school, hospital, clinic, church, stadium, mall, library, city hall, airport, fire station, police station, bridge, overpass. → LANDMARK_POI, unless an address was already found.
+3. **Offset:** any of these phrases: "a few blocks away", "down the street", "across the street", "nearby", "around the corner", "blocks north", "blocks south", "miles away". → PROXIMATE_OFFSET if nothing else was found; otherwise appended to the location text in parentheses.
+
+---
+
+## 11. Export to the browser (`training/export_onnx.py`)
+
+### 11.1 Stage 1: embedding model (needed for the demo)
+
+1. Wrap `AutoModel("BAAI/bge-small-en-v1.5")` so `forward(input_ids, attention_mask)` returns the **mean-pooled, L2-normalized embedding** `[batch, 384]`, with pooling inside the graph.
+2. Export to ONNX: opset ≥ 17, dynamic batch and sequence axes.
+3. INT8 dynamic quantization with `onnxruntime.quantization.quantize_dynamic`, then `gzip -9`.
+4. **Parity check** on the chatbot rows:
+   - mean cosine(PyTorch embedding, INT8 embedding) ≥ 0.99
+   - the decoded fields match on ≥ 98% of fields
+5. **Check the quantization cost:** compare INT8 against PyTorch on the chatbot rows. If INT8 loses more than 3 points of Red recall, also try `per_channel=True`, or ship FP16. Report the size.
+6. Output `web/public/model/`:
+   - `embedder.onnx.gz`
+   - `tokenizer.json`
+   - `prototypes.json`
+   - `model.json`: `{"kind": "prototype", "unknown_margin": …, "labels": {…}}`
+
+### 11.2 Stage 2: classifier (fine-tuning phase only)
+
+1. Wrap `TriageClassifier` so it returns 5 logit tensors, in order: priority, hazard, status, medical, third_party.
+2. Export the same way: ONNX opset ≥ 17, dynamic axes, INT8 dynamic quantization, `gzip -9`.
+3. **Parity:** decoded fields from INT8 must match PyTorch on ≥ 98% of fields over 200 validation rows. The gzipped size must be ≤ 30 MB.
+4. Output `classifier.onnx.gz` and `model.json`: `{"kind": "classifier", "red_threshold", "medical_thresholds", "third_party_threshold", "labels"}`. Swapping models is just replacing the files in `web/public/model/`.
+
+---
+
+## 12. Survivor website (PWA) — `web/`
+
+**This is a website, not a native app.** No App Store, Swift or Xcode. It is a Progressive Web App: a normal website that caches itself and the model with a service worker, so after **one online visit** it opens and runs in Airplane Mode. It works in iOS Safari and Android Chrome from one codebase.
+
+- **Why not native:** we need iPhone and Android in 24 hours, and a judge can't easily install a native app.
+- **Why not serve it from the field node:** the model (~15–25 MB) doesn't fit in the ESP32's 8 MB flash.
+- **For the demo:** use it in a normal browser tab. Open the site once while online, then switch to Airplane Mode. Home-screen installation is optional; it only matters for real-world use, against iOS storage eviction (`navigator.storage.persist()` + an "Add to Home Screen" hint).
+- **Hosting:** deploy to any static HTTPS host (GitHub Pages, Netlify or Vercel). Service workers require HTTPS, except on localhost.
+
+### 12.1 Stack
+
+- **Vite + React + TypeScript + Tailwind CSS.** Icons from `lucide-react`. Fonts bundled locally (e.g. Inter); **no runtime CDN requests of any kind**.
+- **Offline:** `vite-plugin-pwa` (Workbox), precaching the app and everything in `public/model/`. Raise `maximumFileSizeToCacheInBytes` to 40 MB.
+- **Inference:** `onnxruntime-web`, WASM backend.
+  - Serve the `.wasm` files locally and set `ort.env.wasm.wasmPaths`.
+  - `numThreads = 1` for iOS safety.
+  - Use WebGPU only if available and tested.
+  - Decompress the model with `DecompressionStream('gzip')`.
+- **Tokenizer:** `@huggingface/transformers` (transformers.js) `AutoTokenizer`, loading the local `tokenizer.json` with `env.allowRemoteModels = false`.
+  - **OPEN:** verify this loads fully offline on iOS Safari.
+  - Fallback: implement BERT WordPiece directly from `tokenizer.json` (lowercase, basic punctuation split, greedy longest-match with `##` continuation pieces, `[CLS]`/`[SEP]`, max 128).
+- **Port to `src/lib/`:**
+  - the §5.0 / §5.3 decoding
+  - the §5.4 resolvers
+  - the §3 packer (double precision)
+- **Tests (Vitest):**
+  - the JS packer reproduces both §3 test vectors
+  - the JS resolvers and decoding match the Python reference on 50 sentences
+
+### 12.2 Design process
+
+1. **Before writing any UI,** browse **Dribbble** (dribbble.com) for references. Searches: "emergency app", "SOS app", "disaster relief app", "crisis report mobile", "medical emergency app", "safety app onboarding".
+2. Pick **3–5 shots** and record them in `design/REFERENCES.md`: link, a screenshot or description, and **what to borrow** (layout, color, typography, card style, component patterns).
+3. Write a short design-token section there too: colors, radii, spacing, type scale. Then build to it.
+
+**Design direction:**
+- Calm and trustworthy under stress, not alarming.
+- Mobile-first and one-handed: tap targets ≥ 48 px, body text ≥ 17 px, high contrast. Works at 320 px wide.
+- **Dark theme by default** (night use, OLED battery), plus a light theme.
+- **Triage colors are reserved for triage only:** Red, Yellow, Green, and Black (shown as near-black with an outline in dark mode). Never use red for generic errors or buttons.
+- Clear status at all times: "Ready offline ✓", GPS state, model state.
+- Respect `prefers-reduced-motion`. Every control has an aria label.
+
+### 12.3 Screens and flow
+
+**1. First visit / loading**
+- "Preparing emergency mode…" with a progress bar for the model download (~15–25 MB).
+- Then **"Ready offline ✓ — you can now use this in Airplane Mode."**
+- If the model fails to load: **manual mode**, where the survivor picks every field by hand. The app must always be able to send a report.
+
+**2. Report (home)**
+- Status pills: offline-ready, GPS (with ± accuracy), model ready.
+- A large textarea: **"What's happening? Who needs help?"**, with a short placeholder example.
+- Primary button **Analyze** (shows a spinner; inference should take well under 1 s).
+- A link to **My reports**.
+
+**3. Review (confirmation)**
+- A large triage banner in the triage color: e.g. **"RED · Life-threatening"**.
+- **Hazard** (icon + name), **Situation** (Trapped / Exposed / Sheltered / Unknown).
+- **People:** steppers for adults and children.
+- **Medical needs:** 8 toggle chips with icons.
+- **"Are you at the emergency?"** — Yes / No, I'm reporting for someone else. This sets `third_party`.
+- **Location:** GPS accuracy and coordinates. If a location was mentioned, a note: "You mentioned '123 Elm St' — GPS shows where you are, not necessarily the emergency."
+- **Every field is editable by tap,** using bottom sheets.
+- A collapsed **"What gets sent (18 bytes)"** section shows the hex frame and a one-line explanation. Judges love it.
+- Primary button **Continue to send**.
+
+**4. Send**
+- Three steps with icons:
+  1. Keep Airplane Mode on; turn on Wi-Fi.
+  2. Join the network **CivicMesh-SOS**.
+  3. Tap **Send**.
+- **Send** saves the report to My reports (status "handed to relay"), then sets `location.href = "http://192.168.4.1/sos?d=<36 uppercase hex>"`. This must be a top-level navigation: an HTTPS page cannot `fetch()` plain HTTP.
+- Then increment `seq`.
+
+**5. Relay reply page** (served by the field node, §13.1)
+- Shows "Sent ✓", with a **Back to CivicMesh** link to the app's hosted URL.
+
+**6. My reports**
+- A list of sent reports: time, triage color, hazard, seq. Stored in localStorage, with every access wrapped in try/catch.
+
+**Identity and GPS:**
+- `device_id` is a random uint16, created on first run and stored.
+- GPS uses `navigator.geolocation.getCurrentPosition({enableHighAccuracy: true, timeout: 10000})`. Bucket `coords.accuracy` per §2. On failure → NO_FIX with lat/lon 0, and the Review screen says "No GPS fix".
+
+---
+
+### §13.1 (the field node that receives your Send — Track 2 builds it)
+
+### 13.1 Field node firmware (`firmware/field_node/`, extend the radio test from Appendix B)
+
+- Wi-Fi SoftAP with SSID `CivicMesh-SOS`, open, IP `192.168.4.1`. ESP32 `WebServer`.
+- **`GET /sos?d=<hex>`:**
+  1. Require exactly 36 hex chars and version bits = 1. Otherwise return 400 with a friendly HTML error.
+  2. Transmit over LoRa.
+  3. Show `SENT · RED · 3 ppl · seq 12` on the OLED.
+  4. Return a small, self-contained HTML page (inline CSS, matching the website's dark design): **"Sent ✓ — your report is on the rescue network. Stay where you are if it is safe."**
+  5. Include a **Back to CivicMesh** link to `APP_URL`, a `#define` holding the hosted website URL.
+- **`GET /`:** "CivicMesh relay — open the CivicMesh website to send a report."
+- **Idle OLED:** `READY · <n> sent`.
+- **No captive-portal DNS redirect.** iOS's portal browser can't see the website's cached model.
+
+### 13.5 Demo script
+
+1. A judge's phone opens the website once while online ("Ready offline ✓"), then goes into Airplane Mode.
+2. Type: "Water is rising fast, my mother needs insulin, 2 of us trapped in attic".
+3. Review shows Red · Flood · Trapped · 2 adults · Insulin.
+4. Join the `CivicMesh-SOS` Wi-Fi network and tap Send.
+5. Within about 1 s, a pulsing Red pin appears on the dashboard. Click it to show the decoded fields and the 18-byte breakdown, then remove the pin and undo.
+
+---
+
+## 14. Project layout to create
+
+```
+civicmesh-sos/
+├── requirements.txt          # torch transformers tokenizers onnx onnxruntime pydantic requests tqdm numpy pytest pyserial fastapi uvicorn
+├── src/schema.py
+├── src/serialization/bit_packer.py
+├── src/models/resolvers.py
+├── src/models/prototype_classifier.py   # Stage 1 Python reference
+├── src/models/triage_classifier.py      # Stage 2
+├── stage1/build_prototypes.py           # → web/public/model/prototypes.json
+├── training/common.py        # label lists, descriptions, LABEL_VERSION, COUNT_RULE, THIRD_PARTY_RULE, OpenRouter client, JSONL helpers
+├── training/export_onnx.py   # §11.1 and §11.2
+├── training/generate.py  training/verify.py  training/import_chatbot.py  training/train.py
+├── training/chatbot_prompt_A.md  _B.md  _C.md   # Appendix C
+├── benchmark/evaluate_dataset.py
+├── data/benchmark_dataset.jsonl   # Appendix A, verbatim
+├── data/synthetic/                # raw.jsonl, scored.jsonl (generated)
+├── firmware/radio_test/radio_test.ino   # written during the event from Appendix B's description
+├── firmware/field_node/field_node.ino
+├── firmware/base_station/base_station.ino
+├── bridge/server.py               # FastAPI + serial + SQLite + WebSocket + --simulate
+├── dashboard/                     # Vite + React + TS + Tailwind + MapLibre + PMTiles
+├── web/                           # survivor PWA: Vite + React + TS + Tailwind + onnxruntime-web
+├── design/REFERENCES.md           # Dribbble references + design tokens
+└── tests/                         # packer, resolvers, importer; Vitest in web/ for JS parity
+```
+
+Run Python scripts as modules from the project root (`python3 -m training.generate`). Node.js 20+ for `web/` and `dashboard/`.
+
+---
+
+## 15. Hackathon schedule (24 h): demo first, fine-tuning last
+
+### Phase A — Working demo with the Stage 1 model (hours 0–15)
+
+| Hours | Work | Done when |
+|---|---|---|
+| 0–1 | Project skeleton, schema, packer and tests | Both §3 test vectors pass |
+| 0–1 (in parallel) | Write the radio link test from Appendix B's description and flash both boards | Receiver prints `FRAME 861200012B0BF3BA7E6A68E77800BEEF0050 …` (bytes 10–13 and 16 change per frame) |
+| 1–2 (in parallel, a human task) | Run the three chatbot prompts (Appendix C) in a chatbot; import with the pre-import checks | 310 rows in `raw.jsonl`, none close to a test message |
+| 1–3 | Resolvers + tests; Stage 1 prototypes + Python reference; `evaluate_dataset.py`; tune `unknown_margin` on the chatbot rows | Stage 1 scored on Appendix A and the chatbot rows |
+| 3–5 | §11.1 export: embedder INT8 + gzip + parity | Parity passes; size reported |
+| 2–7 (in parallel) | Bridge server with `--simulate`; dashboard (Dribbble references first) | Simulated pins appear live; click shows the byte breakdown; remove + undo work |
+| 5–7 (in parallel) | Field node firmware | A hand-typed `http://192.168.4.1/sos?d=…` puts a pin on the dashboard |
+| 5–12 | Survivor website (Dribbble references first) | Vitest: the JS packer matches the test vectors, and JS/Python parity passes; works in Airplane Mode after one visit |
+| 12–15 | End-to-end in Airplane Mode on iPhone **and** Android | The demo script (§13.5) works 5 times in a row → **DEMO FREEZE**: tag the commit and don't break it |
+
+### Phase B — Fine-tuning (hours 15–22, only after the demo freeze)
+
+| Hours | Work | Done when |
+|---|---|---|
+| 15–16 | Verify the OpenRouter and Jev endpoints with one call each; `verify --benchmark`; `generate --n 200` and read the rows | Endpoints confirmed; generated rows look realistic |
+| 16–17 | `generate --n 5000`, then `verify` | Keep rate and per-writer report reviewed |
+| 17–19 | Train bge-small (and MiniLM if time allows), `--val-writer chatbot` | Both scored on Appendix A and validation |
+| 19–21 | §11.2 export; swap behind `model.json` on a branch | Ship **only** if it beats Stage 1 on Red recall and whole-summary accuracy on Appendix A **and** validation. Otherwise keep Stage 1. |
+
+### Phase C — hours 22–24
+
+Optional ACK, polish, slides, rehearsal, buffer.
+
+**Optional speed-up:** generation is mostly waiting on the API. If someone is idle during Phase A, they can run Phase B's first two rows early in the background. Never at the expense of Phase A.
+
+---
+
+## 16. Pitfalls and open items
+
+- **Map tiles:** never bulk-download openstreetmap.org tiles; use the PMTiles extract. Have the plain-grid fallback ready.
+- **Offline means no CDNs:** no Google Fonts, unpkg or cdnjs at runtime in either web app. Bundle everything.
+- **vite-plugin-pwa skips large files by default.** Raise `maximumFileSizeToCacheInBytes`, or the model won't be cached and the app breaks in Airplane Mode.
+- **onnxruntime-web needs its `.wasm` files served locally** (`ort.env.wasm.wasmPaths`). Test in Airplane Mode on a real iPhone early: memory and speed on iOS Safari are unmeasured.
+- **Quantization accuracy:** INT8 can cost a few points of accuracy. Measure it (§11.1).
+- **Stage 1 judges topic more than severity,** so expect it to over-call Red. The Review screen is the mitigation; make editing priority one tap.
+- **Original message text is never transmitted.** The dashboard shows decoded fields and the raw 18 bytes, not the survivor's words.
+- **OPEN:** the OpenRouter `/systemone` path and payload for Jev. Test one call before any batch run. Fallback: TypeSafe's direct API.
+- **OPEN:** whether both writer models accept `reasoning: {"enabled": false}` and `response_format: json_object`. Test one call each. If either is rejected, remove that field.
+- Never tune or select anything on Appendix A. It has only 54 messages: one message ≈ 1.9 points of accuracy, one Red ≈ 3.6 points of Red recall.
+- Appendix A's mix is 28 Immediate / 10 Delayed / 13 Minor / 3 Deceased, and status is 26 Sheltered / 20 Trapped / 7 Exposed / 1 Unknown. It barely tests Unknown and Deceased, so also report validation (chatbot-writer) metrics.
+- Validating on the same writers you train on hides overfitting to style. Always use `--val-writer chatbot` for real runs.
+- A Red threshold tuned on ~30 rows is noise.
+- On macOS zsh, an unquoted `$var` in a `for` loop is not split into words. Write separate commands.
+- Coordinates: double precision in C and JS (float32 is off by ~2 m).
+- Both boards must use the same spreading factor, sync word and frequency.

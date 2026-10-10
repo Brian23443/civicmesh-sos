@@ -1,0 +1,41 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+*.egg-info/
+
+# --- Secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Node / Vite ---
+node_modules/
+dist/
+*.local
+.vite/
+
+# --- Model training outputs (large; share by AirDrop/Drive, not git) ---
+models/*
+!models/.gitkeep
+*.onnx
+# The shipped, gzipped browser model IS committed (needed for static hosting):
+#   web/public/model/embedder.onnx.gz / classifier.onnx.gz  (~15-25 MB each)
+
+# --- Bridge runtime state ---
+bridge/*.db
+bridge/*.db-journal
+
+# --- Offline basemap extract (large; copy to the demo laptop by hand) ---
+dashboard/public/*.pmtiles
+
+# --- Arduino build output ---
+firmware/**/build/
+
+# --- OS / editor ---
+.DS_Store
+.idea/
+.vscode/
+*.swp

@@ -1,0 +1,16 @@
+# §14 — pinned names only; install with: python3 -m pip install -r requirements.txt
+torch
+transformers
+tokenizers
+onnx
+onnxruntime
+pydantic
+requests
+tqdm
+numpy
+pytest
+pyserial
+fastapi
+uvicorn
+# not in §14, needed by FastAPI's TestClient for bridge tests
+httpx
