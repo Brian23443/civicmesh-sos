@@ -195,6 +195,41 @@ static inline int16_t cmRadioInit(SX1262& radio) {
   return radio.setCRC(LORA_CRC_BYTES);  // 2-byte hardware CRC, enabled explicitly
 }
 
+// --- Continuous receive -----------------------------------------------------
+// Don't use the blocking radio.receive(): it listens in windows of 5x the
+// time on air and restarts the radio between them, so a frame that starts in
+// the gap is silently lost (seen on hardware: 1 of 3 frames missed). Instead
+// the radio stays in continuous RX and DIO1 raises a flag per packet.
+
+static volatile bool cmRxFlag = false;
+static void IRAM_ATTR cmOnPacketReceived() { cmRxFlag = true; }
+
+// Puts the radio in continuous receive. Call once in setup().
+static inline int16_t cmStartListening(SX1262& radio) {
+  radio.setPacketReceivedAction(cmOnPacketReceived);
+  return radio.startReceive();
+}
+
+struct CmRxResult {
+  int16_t state;   // RADIOLIB_ERR_NONE, RADIOLIB_ERR_CRC_MISMATCH, ...
+  size_t len;      // received packet length
+  float rssi;
+  float snr;
+};
+
+// Returns false if no packet arrived since the last call. Otherwise reads it
+// into buf (must hold 256 bytes), fills r, and re-arms continuous receive.
+static inline bool cmPollPacket(SX1262& radio, uint8_t* buf, CmRxResult& r) {
+  if (!cmRxFlag) return false;
+  cmRxFlag = false;
+  r.len = radio.getPacketLength();
+  r.state = radio.readData(buf, r.len);
+  r.rssi = radio.getRSSI();
+  r.snr = radio.getSNR();
+  radio.startReceive();
+  return true;
+}
+
 // Prints the error, shows it on the OLED and halts (Appendix B setup step 5).
 static inline void cmHaltOnRadioError(SSD1306Wire& display, int16_t code) {
   Serial.printf("Radio init FAILED %d\n", code);

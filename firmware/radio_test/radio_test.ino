@@ -24,6 +24,9 @@ void setup() {
   SPI.begin(CM_LORA_SCK, CM_LORA_MISO, CM_LORA_MOSI, CM_LORA_NSS);
 
   int16_t state = cmRadioInit(radio);
+#if !ROLE_SENDER
+  if (state == RADIOLIB_ERR_NONE) state = cmStartListening(radio);
+#endif
   if (state != RADIOLIB_ERR_NONE) cmHaltOnRadioError(display, state);
 
   const char* ready = ROLE_SENDER ? "SENDER ready" : "RECEIVER ready";
@@ -62,29 +65,26 @@ void loop() {
 #else
 
 void loop() {
-  uint8_t frame[CM_FRAME_LEN];
-  int16_t state = radio.receive(frame, CM_FRAME_LEN);
+  uint8_t buf[256];
+  CmRxResult rx;
+  if (!cmPollPacket(radio, buf, rx)) return;
 
-  if (state == RADIOLIB_ERR_NONE) {
-    if (radio.getPacketLength() != CM_FRAME_LEN || cmFrameVersion(frame) != CM_FRAME_VERSION) {
-      Serial.println("Unknown frame version, ignored");
-      return;
-    }
-    float rssi = radio.getRSSI();
-    float snr = radio.getSNR();
+  if (rx.state == RADIOLIB_ERR_CRC_MISMATCH) {
+    Serial.println("CRC error, packet dropped");
+  } else if (rx.state != RADIOLIB_ERR_NONE) {
+    Serial.printf("Receive error %d\n", rx.state);
+  } else if (rx.len != CM_FRAME_LEN || cmFrameVersion(buf) != CM_FRAME_VERSION) {
+    Serial.println("Unknown frame version, ignored");
+  } else {
     char hex[2 * CM_FRAME_LEN + 1];
-    cmToHex(frame, CM_FRAME_LEN, hex);
-    Serial.printf("FRAME %s %.1f %.2f\n", hex, rssi, snr);
+    cmToHex(buf, CM_FRAME_LEN, hex);
+    Serial.printf("FRAME %s %.1f %.2f\n", hex, rx.rssi, rx.snr);
 
     char ids[32];
-    snprintf(ids, sizeof(ids), "dev %04X  seq %u", cmFrameDeviceId(frame), cmFrameSeq(frame));
-    cmOledShow(display, cmPriorityWord(cmFramePriority(frame)),
-               String(cmFrameAdults(frame)) + " adults  " + String(cmFrameChildren(frame)) + " children",
-               ids, "RSSI " + String(rssi, 0) + "  SNR " + String(snr, 1));
-  } else if (state == RADIOLIB_ERR_CRC_MISMATCH) {
-    Serial.println("CRC error, packet dropped");
-  } else if (state != RADIOLIB_ERR_RX_TIMEOUT) {
-    Serial.printf("Receive error %d\n", state);
+    snprintf(ids, sizeof(ids), "dev %04X  seq %u", cmFrameDeviceId(buf), cmFrameSeq(buf));
+    cmOledShow(display, cmPriorityWord(cmFramePriority(buf)),
+               String(cmFrameAdults(buf)) + " adults  " + String(cmFrameChildren(buf)) + " children",
+               ids, "RSSI " + String(rx.rssi, 0) + "  SNR " + String(rx.snr, 1));
   }
 }
 

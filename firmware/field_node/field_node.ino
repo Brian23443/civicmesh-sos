@@ -82,10 +82,18 @@ static void showIdle() {
 // ---------------------------------------------------------------------------
 // HTTP handlers
 // ---------------------------------------------------------------------------
+// Every response must reach the board: a cached "Sent ✓" page would mean nothing was sent.
+static void sendNoCache(int code, const char* type, const String& content) {
+  server.sendHeader("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+  server.sendHeader("Pragma", "no-cache");
+  server.sendHeader("Expires", "0");
+  server.send(code, type, content);
+}
+
 static void sendError(int code, const String& title, const String& detail) {
   String body = "<div class=\"icon\" aria-hidden=\"true\">!</div><h1>" + title + "</h1><p>" + detail + "</p>" +
                 backLink();
-  server.send(code, "text/html; charset=utf-8", page(body));
+  sendNoCache(code, "text/html; charset=utf-8", page(body));
 }
 
 static void handleSos() {
@@ -126,17 +134,17 @@ static void handleSos() {
                 "<h1>Sent &#10003;</h1>" +
                 "<p>Your report is on the rescue network. Stay where you are if it is safe.</p>" + backLink() +
                 "<div class=\"meta\">seq " + String(cmFrameSeq(frame)) + "</div>";
-  server.send(200, "text/html; charset=utf-8", page(body));
+  sendNoCache(200, "text/html; charset=utf-8", page(body));
 }
 
 static void handleRoot() {
   String body = String("<div class=\"icon\" aria-hidden=\"true\">&#128225;</div><h1>CivicMesh relay</h1>") +
                 "<p>Open the CivicMesh website to send a report.</p>" + backLink();
-  server.send(200, "text/html; charset=utf-8", page(body));
+  sendNoCache(200, "text/html; charset=utf-8", page(body));
 }
 
 static void handleNotFound() {
-  server.send(404, "text/plain; charset=utf-8", "Not found. Open the CivicMesh website to send a report.");
+  sendNoCache(404, "text/plain; charset=utf-8", "Not found. Open the CivicMesh website to send a report.");
 }
 
 // ---------------------------------------------------------------------------
