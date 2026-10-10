@@ -9,7 +9,7 @@ Update a row when its value changes, and announce it in team chat.
 | Dashboard dev server | T3 | `http://localhost:5174` | — |
 | Survivor PWA dev server | T4 | `http://localhost:5173` | — |
 | Field node relay | T2 | SSID `CivicMesh-SOS` (open), `http://192.168.4.1/sos?d=<36 hex>` | T4 Send screen |
-| Base station serial port on the demo laptop | T2 | _TBD_ (auto-detect `/dev/cu.usbserial*` / `/dev/cu.usbmodem*`) | bridge `--port` |
+| Base station serial port on the demo laptop | T2 | `/dev/cu.usbserial-0001` on Brian's MacBook (auto-detect also works; the second board shows up as `/dev/cu.usbserial-4`) | bridge `--port` |
 | LoRa spreading factor | T2 | 7 | both boards |
 | Demo map center (lat, lon) | T3 | _TBD — venue_; simulator default `30.2672, -97.7431` | T2 `--simulate --center`, T3 map |
 | Demo map bbox (minLon,minLat,maxLon,maxLat) | T3 | _TBD_ | PMTiles extract |
