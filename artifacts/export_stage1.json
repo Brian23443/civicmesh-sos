@@ -4,12 +4,12 @@
   "fp32_mb": 133.08,
   "int8_mb": 34.02,
   "int8_gz_mb": 27.42,
-  "mean_cosine": 0.9964220523834229,
-  "min_cosine": 0.9915048480033875,
-  "decoded_field_match": 0.9622437971952535,
+  "mean_cosine": 0.9968240261077881,
+  "min_cosine": 0.9877227544784546,
+  "decoded_field_match": 0.9719525350593312,
   "per_channel": true,
-  "cpu_latency_ms_per_message_1_thread": 9.7,
-  "red_recall_pytorch": 0.9523809523809523,
-  "red_recall_int8": 0.9428571428571428,
+  "cpu_latency_ms_per_message_1_thread": 9.6,
+  "red_recall_pytorch": 0.9619047619047619,
+  "red_recall_int8": 0.9619047619047619,
   "passed": false
 }

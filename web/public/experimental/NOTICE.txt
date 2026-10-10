@@ -1,8 +1,0 @@
-Experimental CivicMesh replacement; not T1 parity or validated triage.
-Model: Xenova/all-MiniLM-L6-v2 (ONNX conversion of sentence-transformers/all-MiniLM-L6-v2).
-Revision: 751bff37182d3f1213fa05d7196b954e230abad9
-Source: https://huggingface.co/Xenova/all-MiniLM-L6-v2
-Model license: Apache License 2.0.
-Prototype sentences: MASTER_PROMPT.md Stage 1 class descriptions, copied in scripts/experimental-seeds.json.
-Embedding recipe: q8 ONNX, mean pooling, L2 normalization; class means re-normalized.
-Runtime: @huggingface/transformers 3.8.1 and its matching ONNX Runtime web assets.

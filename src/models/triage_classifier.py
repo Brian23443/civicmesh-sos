@@ -132,6 +132,8 @@ class FinetunedTriageExtractor:
 
     @torch.no_grad()
     def logits(self, texts: list[str], batch_size: int = 32) -> dict[str, np.ndarray]:
+        if self.session is not None:
+            batch_size = 1  # INT8 dynamic quantization is batch-dependent; the phone runs one message
         chunks: dict[str, list[np.ndarray]] = {k: [] for k in HEAD_ORDER}
         for i in range(0, len(texts), batch_size):
             enc = self.tokenizer(texts[i:i + batch_size], truncation=True, max_length=MAX_LENGTH, padding=True,

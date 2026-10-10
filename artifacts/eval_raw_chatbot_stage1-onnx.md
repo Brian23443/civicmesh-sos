@@ -6,12 +6,12 @@
 
 | Metric | Value |
 |---|---|
-| **Red recall** | **98.1%** (103/105) |
-| **Red precision** | **49.3%** (103/209) |
-| **Whole-summary accuracy** | **4.5%** |
-| Priority accuracy | 55.7% |
+| **Red recall** | **96.2%** (101/105) |
+| **Red precision** | **48.1%** (101/210) |
+| **Whole-summary accuracy** | **4.9%** |
+| Priority accuracy | 54.7% |
 | Hazard accuracy | 58.9% |
-| Status accuracy | 50.5% |
+| Status accuracy | 49.8% |
 | Exact headcounts (adults and children) | 65.0% |
 | Exact adults / exact children | 70.2% / 90.9% |
 | Exact medical set | 67.3% |
@@ -22,19 +22,19 @@
 
 | gold \ predicted | Minor | Delayed | Immediate | Deceased |
 |---|---|---|---|---|
-| **Minor** | 36 | 8 | 43 | 6 |
-| **Delayed** | 12 | 14 | 47 | 3 |
-| **Immediate** | 1 | 0 | 103 | 1 |
-| **Deceased** | 0 | 0 | 16 | 19 |
+| **Minor** | 35 | 8 | 45 | 5 |
+| **Delayed** | 12 | 13 | 49 | 2 |
+| **Immediate** | 1 | 0 | 101 | 3 |
+| **Deceased** | 0 | 0 | 15 | 20 |
 
 ## Status confusion
 
 | gold \ predicted | Sheltered | Exposed | Trapped | Unknown |
 |---|---|---|---|---|
-| **Sheltered** | 53 | 60 | 13 | 0 |
+| **Sheltered** | 51 | 63 | 12 | 0 |
 | **Exposed** | 8 | 59 | 8 | 0 |
-| **Trapped** | 12 | 12 | 44 | 0 |
-| **Unknown** | 11 | 22 | 7 | 0 |
+| **Trapped** | 11 | 13 | 44 | 0 |
+| **Unknown** | 11 | 21 | 8 | 0 |
 
 ## Medical flags
 
@@ -53,20 +53,20 @@
 
 | Gold | Predicted | Count |
 |---|---|---|
+| TSUNAMI_SURGE | FLOOD | 7 |
 | NONE | MEDICAL_CRISIS | 7 |
-| TSUNAMI_SURGE | FLOOD | 6 |
+| MEDICAL_CRISIS | HYPOTHERMIA_FREEZE | 6 |
 | NONE | HAZMAT_GAS | 6 |
 | NONE | STRUCTURAL_COLLAPSE | 5 |
-| MEDICAL_CRISIS | HYPOTHERMIA_FREEZE | 5 |
-| STRUCTURAL_COLLAPSE | MEDICAL_CRISIS | 5 |
 | FLOOD | MEDICAL_CRISIS | 4 |
 | EXTREME_WEATHER | STRUCTURAL_COLLAPSE | 4 |
+| STRUCTURAL_COLLAPSE | MEDICAL_CRISIS | 4 |
 | ELECTRICAL_POWER | MEDICAL_CRISIS | 4 |
-| STRUCTURAL_COLLAPSE | EXTREME_WEATHER | 3 |
+| OTHER | FIRE_SMOKE | 3 |
 
 ## Example errors (up to 25 per field)
 
-### priority (137 wrong)
+### priority (140 wrong)
 
 - `chat_chatbot_chatA_003` gold **Minor**, predicted **Immediate** — OMG OMG OMG MY DESIGNER BAG IS FLOATING DOWN 4TH AVE AND MY SHOES ARE RUINED PLEASE SOMEONE DO SOMETHING I AM SHAKING IN MY LIVING ROOM
 - `chat_chatbot_chatA_006` gold **Deceased**, predicted **Immediate** — my brother called before his cell cut out. he is at 1420 maple ridge drive. ceiling collapsed on their bed. he says our elderly mom has no pulse and is cold to 
@@ -99,7 +99,6 @@
 - `chat_chatbot_chatA_001` gold **FLOOD**, predicted **HYPOTHERMIA_FREEZE** — WATER AT MY CHIN IN ATTIC ROOF VENT WONT BUDGE CANT SWIM 3 PPL HERE 2 KIDS
 - `chat_chatbot_chatA_002` gold **STRUCTURAL_COLLAPSE**, predicted **EXTREME_WEATHER** — Hate to trouble anyone with everything going on, but a large oak branch fell through the roof onto my husband's chest. He stopped speaking and his lips look blu
 - `chat_chatbot_chatA_003` gold **FLOOD**, predicted **HAZMAT_GAS** — OMG OMG OMG MY DESIGNER BAG IS FLOATING DOWN 4TH AVE AND MY SHOES ARE RUINED PLEASE SOMEONE DO SOMETHING I AM SHAKING IN MY LIVING ROOM
-- `chat_chatbot_chatA_004` gold **FLOOD**, predicted **SINKHOLE_SUBSIDENCE** — water got up to the porch about an hour ago but it receded back to the ditch now. we had to kick a window out earlier to get grandma up high but neighbor pulled
 - `chat_chatbot_chatA_007` gold **LANDSLIDE**, predicted **MEDICAL_CRISIS** — mi hermana me llamo llorando desde colonia las palmas. hay un deslave de lodo sobre su casa. dice que su vecino don pedro quedo enterrado y no respira nada, ya 
 - `chat_chatbot_chatA_009` gold **FLOOD**, predicted **ELECTRICAL_POWER** — basement flooded up to ankles, electric heater got wet but power is off. we are fine upstairs with dry clothes just need to know when power truck comes
 - `chat_chatbot_chatA_015` gold **CONTAMINATED_WATER**, predicted **HAZMAT_GAS** — tap water came out brown and smells like sour sulfur or gasoline. drank a sip before realizing. stomach hurts bad and throwing up violently, alone in apartment
@@ -116,13 +115,14 @@
 - `chat_chatbot_chatA_049` gold **MEDICAL_CRISIS**, predicted **HYPOTHERMIA_FREEZE** — chest tight cant breathe inhaler empty asthma attack getting worse turning blue sitting on porch
 - `chat_chatbot_chatA_050` gold **NONE**, predicted **STRUCTURAL_COLLAPSE** — Saw a vehicle rollover 20 minutes ago on Route 9 by the stone bridge. Went down to check before fire crews arrive. Driver was thrown onto rocks, no signs of lif
 - `chat_chatbot_chatA_051` gold **FIRE_SMOKE**, predicted **ELECTRICAL_POWER** — my brother sent audio from his apt on 4th st before his phone died. grease fire got out of control burned through stairs. says his roommate had third degree bur
-- `chat_chatbot_chatA_052` gold **FIRE_SMOKE**, predicted **HAZMAT_GAS** — Sorry to bother emergency services, our woodstove pipe disconnected and the bedroom filled with dense fumes. My sister collapsed on the floor and is not waking 
+- `chat_chatbot_chatA_052` gold **FIRE_SMOKE**, predicted **MEDICAL_CRISIS** — Sorry to bother emergency services, our woodstove pipe disconnected and the bedroom filled with dense fumes. My sister collapsed on the floor and is not waking 
 - `chat_chatbot_chatA_054` gold **STRUCTURAL_COLLAPSE**, predicted **EXTREME_WEATHER** — roof caved in on kitchen earlier during peak gust but we crawled into hallway closet. storm wind died down completely now, walked over to neighbor house with do
 - `chat_chatbot_chatA_055` gold **NONE**, predicted **HAZMAT_GAS** — I thought I smelled natural gas leaking near the meter at 714 Oak Avenue so I ran outside. Turned out city utility truck was just flushing the sewer line with d
 - `chat_chatbot_chatA_056` gold **NONE**, predicted **MEDICAL_CRISIS** — called my elderly mother at 512 south pine st. she says our neighbor mr gomez had a heart attack on her porch during earthquake. she checked his neck and breath
 - `chat_chatbot_chatA_057` gold **ACTIVE_VIOLENCE**, predicted **LANDSLIDE** — mi tia me mando mensaje desde su rancho en sonora. hubo tiroteo fuerte afuera de su cerca. vio a dos hombres tirados en el camino sin moverse desde hace tres ho
+- `chat_chatbot_chatA_058` gold **FIRE_SMOKE**, predicted **STRUCTURAL_COLLAPSE** — ceiling joist snapped pinned my legs to mattress floor below filled with smoke cant push timber off losing strength coughing up black phlegm
 
-### status (153 wrong)
+### status (155 wrong)
 
 - `chat_chatbot_chatA_001` gold **Trapped**, predicted **Exposed** — WATER AT MY CHIN IN ATTIC ROOF VENT WONT BUDGE CANT SWIM 3 PPL HERE 2 KIDS
 - `chat_chatbot_chatA_002` gold **Trapped**, predicted **Exposed** — Hate to trouble anyone with everything going on, but a large oak branch fell through the roof onto my husband's chest. He stopped speaking and his lips look blu
@@ -137,6 +137,7 @@
 - `chat_chatbot_chatA_015` gold **Sheltered**, predicted **Exposed** — tap water came out brown and smells like sour sulfur or gasoline. drank a sip before realizing. stomach hurts bad and throwing up violently, alone in apartment
 - `chat_chatbot_chatA_017` gold **Sheltered**, predicted **Exposed** — my aunt texted me from south hill. chlorine tank at the water plant ruptured green vapor rolling down valley toward her street. she says her eyes burn and she c
 - `chat_chatbot_chatA_020` gold **Sheltered**, predicted **Exposed** — hail storm smashed back sunroof on subaru. got tiny glass cuts on fingers cleaned with alcohol wipe. storm passed now skies clearing
+- `chat_chatbot_chatA_022` gold **Sheltered**, predicted **Exposed** — my neighbor mr carlson fell down cellar stairs. compound fracture bone sticking thru skin of left shin. bleeding controlled with clean towel. he is alert and ta
 - `chat_chatbot_chatA_027` gold **Sheltered**, predicted **Exposed** — THE WIND BLEW MY PATIO CHAIR INTO THE POOL AND THE POWER FLICKERED TWICE IM SO TERRIFIED WHAT IF THE ROOF FLIES OFF SEND NATIONAL GUARD PLEASE
 - `chat_chatbot_chatA_030` gold **Sheltered**, predicted **Exposed** — I am terribly sorry if this ties up resources during the blizzard. My home generator sputtered out and my supplemental oxygen concentrator has about 12 minutes 
 - `chat_chatbot_chatA_031` gold **Sheltered**, predicted **Exposed** — power went out 4 hours ago. fridge is warming up. is there ice distribution somewhere in ward 4? plenty of food and clean water here just worried about meat spo
@@ -148,7 +149,6 @@
 - `chat_chatbot_chatA_038` gold **Sheltered**, predicted **Exposed** — PARDON THE DISTURBANCE BUT WATER IS RUSHING THROUGH THE FRONT DOOR FRAME AND REACHING ELECTRIC OUTLETS CRACKLING LOUD SPARKING FAST
 - `chat_chatbot_chatA_040` gold **Exposed**, predicted **Trapped** — submerged car upside down in canal near willow creek bridge. two occupants trapped inside underwater for over 20 minutes before bystanders arrived. pulled out o
 - `chat_chatbot_chatA_042` gold **Sheltered**, predicted **Trapped** — my grandpa 82 has crushing chest pain radiating down left arm sweating profusely nausea started 15 min ago sitting on couch. history of bypass surgery.
-- `chat_chatbot_chatA_043` gold **Sheltered**, predicted **Exposed** — storm ripped off shingles and rain coming into attic insulation. our cats are super freaked out under the bed and we had to move our wedding photo albums into t
 
 ### adults (92 wrong)
 
@@ -269,7 +269,7 @@
 | `chat_chatbot_chatA_001` | Red · FLOOD · Trapped · 1 adult + 2 children | Red · HYPOTHERMIA_FREEZE · Exposed · 1 adult + 2 children | ✗ |
 | `chat_chatbot_chatA_002` | Red · STRUCTURAL_COLLAPSE · Trapped · 2 adults · OXYGEN, MOBILITY_IMPAIRED | Red · EXTREME_WEATHER · Exposed · 2 adults | ✗ |
 | `chat_chatbot_chatA_003` | Green · FLOOD · Sheltered · 1 adult | Red · HAZMAT_GAS · Trapped · 1 adult | ✗ |
-| `chat_chatbot_chatA_004` | Green · FLOOD · Sheltered · 4 adults | Green · SINKHOLE_SUBSIDENCE · Sheltered · 4 adults | ✗ |
+| `chat_chatbot_chatA_004` | Green · FLOOD · Sheltered · 4 adults | Green · FLOOD · Sheltered · 4 adults | ✓ |
 | `chat_chatbot_chatA_005` | Green · NONE · Sheltered · 1 adult | Green · NONE · Exposed · 1 adult | ✗ |
 | `chat_chatbot_chatA_006` | Black · STRUCTURAL_COLLAPSE · Trapped · 2 adults · MOBILITY_IMPAIRED | Red · STRUCTURAL_COLLAPSE · Trapped · 2 adults | ✗ |
 | `chat_chatbot_chatA_007` | Black · LANDSLIDE · Trapped · 2 adults · MOBILITY_IMPAIRED | Red · MEDICAL_CRISIS · Sheltered · 2 adults | ✗ |
