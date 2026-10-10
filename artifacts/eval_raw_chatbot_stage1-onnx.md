@@ -8,12 +8,12 @@
 |---|---|
 | **Red recall** | **94.3%** (99/105) |
 | **Red precision** | **50.5%** (99/196) |
-| **Whole-summary accuracy** | **2.9%** |
+| **Whole-summary accuracy** | **4.2%** |
 | Priority accuracy | 56.3% |
 | Hazard accuracy | 58.9% |
 | Status accuracy | 42.7% |
-| Exact headcounts (adults and children) | 48.9% |
-| Exact adults / exact children | 50.5% / 90.9% |
+| Exact headcounts (adults and children) | 65.0% |
+| Exact adults / exact children | 70.2% / 90.9% |
 | Exact medical set | 67.3% |
 | Medical F1 (micro) | 63.6% |
 | Third-party accuracy | 77.3% |
@@ -150,33 +150,33 @@
 - `chat_chatbot_chatA_038` gold **Sheltered**, predicted **Exposed** — PARDON THE DISTURBANCE BUT WATER IS RUSHING THROUGH THE FRONT DOOR FRAME AND REACHING ELECTRIC OUTLETS CRACKLING LOUD SPARKING FAST
 - `chat_chatbot_chatA_040` gold **Exposed**, predicted **Trapped** — submerged car upside down in canal near willow creek bridge. two occupants trapped inside underwater for over 20 minutes before bystanders arrived. pulled out o
 
-### adults (153 wrong)
+### adults (92 wrong)
 
-- `chat_chatbot_chatA_002` gold **2**, predicted **1** — Hate to trouble anyone with everything going on, but a large oak branch fell through the roof onto my husband's chest. He stopped speaking and his lips look blu
-- `chat_chatbot_chatA_006` gold **2**, predicted **1** — my brother called before his cell cut out. he is at 1420 maple ridge drive. ceiling collapsed on their bed. he says our elderly mom has no pulse and is cold to 
-- `chat_chatbot_chatA_007` gold **2**, predicted **1** — mi hermana me llamo llorando desde colonia las palmas. hay un deslave de lodo sobre su casa. dice que su vecino don pedro quedo enterrado y no respira nada, ya 
-- `chat_chatbot_chatA_009` gold **2**, predicted **1** — basement flooded up to ankles, electric heater got wet but power is off. we are fine upstairs with dry clothes just need to know when power truck comes
-- `chat_chatbot_chatA_010` gold **2**, predicted **1** — por favor help us mi abuelo is shivering uncontrollably lips blue soaked from storm cant stand up we are at corner of 5th and hidalgo
-- `chat_chatbot_chatA_011` gold **3**, predicted **1** — Active shooter outside corner bodega on Lincoln Ave. Guy came in with a rifle shot two clerks. Both bleeding on the floor behind counter conscious but losing bl
+- `chat_chatbot_chatA_011` gold **3**, predicted **2** — Active shooter outside corner bodega on Lincoln Ave. Guy came in with a rifle shot two clerks. Both bleeding on the floor behind counter conscious but losing bl
 - `chat_chatbot_chatA_012` gold **2**, predicted **1** — car stalled in rising wash out on county rd 12. water to doors not rising anymore. me and my teenage son inside. we got dry blankets and snacks, completely stab
-- `chat_chatbot_chatA_013` gold **2**, predicted **1** — huge ground crater swallowed driveway and part of garage. no one fell in. house foundation looks cracked but we walked out to sidewalk with our luggage and parr
-- `chat_chatbot_chatA_016` gold **2**, predicted **1** — HEAT IN APARTMENT IS 104 DEGREES ELDERLY DAD CONFUSED NOT SWEATING RED SKIN PASSED OUT ON FLOOR 88 YRS OLD
-- `chat_chatbot_chatA_018` gold **2**, predicted **1** — Downed live wire sparking across our metal fence and sparking onto driveway. We are staying inside house, no fire, not touching anything outside, just reporting
-- `chat_chatbot_chatA_019` gold **2**, predicted **1** — No disaster here just my sister went into labor 3 weeks early. contractions 2 mins apart baby head crowning right now in bedroom no ambulance responding
-- `chat_chatbot_chatA_021` gold **2**, predicted **1** — swarm of aggressive wild dogs cornered two hikers inside trail shelter near beacon rock. one has deep bite wound on leg not spurting. stuck inside cant leave tr
-- `chat_chatbot_chatA_022` gold **2**, predicted **1** — my neighbor mr carlson fell down cellar stairs. compound fracture bone sticking thru skin of left shin. bleeding controlled with clean towel. he is alert and ta
-- `chat_chatbot_chatA_025` gold **2**, predicted **1** — estamos atrapados en el segundo piso, el agua sigue subiendo y mi mama es diabetica necesita insulina que se quedo en la cocina inundada. ya son 10 horas sin me
+- `chat_chatbot_chatA_024` gold **1**, predicted **2** — crush injury from collapsed concrete slab at west warehouse. worker trapped from waist down. pale, thready pulse, crushed pelvis, heavy blood pool forming under
 - `chat_chatbot_chatA_028` gold **2**, predicted **1** — Looking through binoculars from my balcony on high ridge. House across the lake at 304 Shoreline Rd is completely underwater to eaves. Can see elderly couple si
 - `chat_chatbot_chatA_029` gold **2**, predicted **1** — se cayo el puente viejo sobre el arroyo. vimos una camioneta caer. logramos sacar al chofer pero tiene pierna rota y golpe en la cabeza, esta consciente descans
-- `chat_chatbot_chatA_032` gold **2**, predicted **1** — Mudslide swept down ravine behind school. Found 1 man buried under debris. Checked neck for carotid pulse for over 2 minutes, skin is stiff and cold, pupil dila
-- `chat_chatbot_chatA_034` gold **2**, predicted **1** — my primo just texted me from his ranch near Rio Grande. 3 armed cartel guys took over their barn shooting rifles. one cousin shot in gut bleeding heavily uncons
-- `chat_chatbot_chatA_039` gold **2**, predicted **1** — we thought my uncle had a heart attack during the tremor because he collapsed on the floor clutching his ribs. turned out he just tripped over the dog in the da
-- `chat_chatbot_chatA_040` gold **2**, predicted **1** — submerged car upside down in canal near willow creek bridge. two occupants trapped inside underwater for over 20 minutes before bystanders arrived. pulled out o
-- `chat_chatbot_chatA_042` gold **2**, predicted **1** — my grandpa 82 has crushing chest pain radiating down left arm sweating profusely nausea started 15 min ago sitting on couch. history of bypass surgery.
-- `chat_chatbot_chatA_043` gold **2**, predicted **1** — storm ripped off shingles and rain coming into attic insulation. our cats are super freaked out under the bed and we had to move our wedding photo albums into t
+- `chat_chatbot_chatA_034` gold **2**, predicted **3** — my primo just texted me from his ranch near Rio Grande. 3 armed cartel guys took over their barn shooting rifles. one cousin shot in gut bleeding heavily uncons
+- `chat_chatbot_chatA_037` gold **1**, predicted **2** — heat dome index 112 outside. elderly lady in apt 2b ran out of drinking water yesterday. she is dizzy and weak but drinking tap water now with salt, staying in 
 - `chat_chatbot_chatA_044` gold **2**, predicted **1** — beehive fell out of fallen willow tree in back yard stung my cousin 4 times on arm. applied ice and baking soda paste. swelling going down, no allergy reaction,
 - `chat_chatbot_chatA_045` gold **10**, predicted **14** — city reservoir main broke dirty black silt coming out of taps. 14 people staying at church shelter. we have enough bottled gallon jugs for today but will need c
-- `chat_chatbot_chatA_046` gold **2**, predicted **1** — car crashed into ditch in blizzard near junction 88. heater broke, temp 4 below zero. my wife is 8 months pregnant and shivering violently feet numb lips purple
+- `chat_chatbot_chatA_047` gold **2**, predicted **1** — my coworker phoned from downtown office tower. bomb or explosion on 12th floor. she is on 14th floor stairway blocked by smoke. she is with our boss who had a c
+- `chat_chatbot_chatA_050` gold **1**, predicted **2** — Saw a vehicle rollover 20 minutes ago on Route 9 by the stone bridge. Went down to check before fire crews arrive. Driver was thrown onto rocks, no signs of lif
+- `chat_chatbot_chatA_051` gold **2**, predicted **3** — my brother sent audio from his apt on 4th st before his phone died. grease fire got out of control burned through stairs. says his roommate had third degree bur
+- `chat_chatbot_chatA_054` gold **1**, predicted **2** — roof caved in on kitchen earlier during peak gust but we crawled into hallway closet. storm wind died down completely now, walked over to neighbor house with do
+- `chat_chatbot_chatA_059` gold **2**, predicted **1** — river overflowed onto patio about an inch deep but stopped rising two hours ago. living room dry, plenty of canned food and batteries, no one hurt here just wai
+- `chat_chatbot_chatA_063` gold **1**, predicted **2** — part of road edge caved into gully behind our barn. looks like a small sinkhole or washout. 2 horses secured in stable, our house is 200 yards away safe, nobody
+- `chat_chatbot_chatA_070` gold **3**, predicted **1** — tornado touched down mile east. hail broke storm door glass. my vintage car in car port got dented hood. family all fine sitting in interior hallway with blanke
+- `chat_chatbot_chatA_076` gold **2**, predicted **1** — wall collapsed onto neighbor bed next door during mudslide. I dug out her torso but her pulse stopped 15 minutes ago, skin purple and pupils fixed. 1 dead adult
+- `chat_chatbot_chatA_079` gold **3**, predicted **2** — el terremoto tiro la barda del corral y mato una vaca pero mi familia y yo salimos al patio a tiempo. la casa tiene grietas pero estamos todos bien sin heridas.
+- `chat_chatbot_chatA_085` gold **3**, predicted **1** — massive sinkhole opened beneath westbound lane of interstate 80 near exit 15. road closed by state troopers. three cars pulled over safely on shoulder, no vehic
+- `chat_chatbot_chatA_088` gold **2**, predicted **1** — water line ruptured inside ceiling flooding kitchen fast but main shutoff valve just turned it off. wet carpets and soggy drywall, everyone unhurt and vacuuming
+- `chat_chatbot_chatA_089` gold **6**, predicted **8** — we were trapped inside church basement by downed elm tree across doors but fire crew sawed trunk ten minutes ago. all 8 of us walked out fine, going home now.
+- `chat_chatbot_chatA_094` gold **2**, predicted **1** — stray aggressive pitbull pack roving around intersection of 7th and maple. bitten one elderly pedestrian in arm, wound washed and bandaged at corner store, dog 
+- `chat_chatbot_chatA_095` gold **4**, predicted **1** — flood water entered city treatment basins, tap water running muddy brown and smells foul. neighborhood has 20 cases of bottled water left. no one sick yet, need
+- `chat_chatbot_chatA_097` gold **2**, predicted **1** — my coworker at downtown bank called. armed robber shot security guard in chest point blank. guard bleeding heavily slumped behind security desk fading fast.
+- `chat_chatbot_chatA_0100` gold **2**, predicted **3** — Reporting from collision on outer beltway milepost 41. Tractor trailer crushed pickup cab completely. Checked both driver and passenger through broken window, n
 
 ### children (28 wrong)
 
@@ -267,17 +267,17 @@
 | id | Gold | Predicted | ✓ |
 |---|---|---|---|
 | `chat_chatbot_chatA_001` | Red · FLOOD · Trapped · 1 adult + 2 children | Red · HYPOTHERMIA_FREEZE · Exposed · 1 adult + 2 children | ✗ |
-| `chat_chatbot_chatA_002` | Red · STRUCTURAL_COLLAPSE · Trapped · 2 adults · OXYGEN, MOBILITY_IMPAIRED | Red · EXTREME_WEATHER · Exposed · 1 adult | ✗ |
+| `chat_chatbot_chatA_002` | Red · STRUCTURAL_COLLAPSE · Trapped · 2 adults · OXYGEN, MOBILITY_IMPAIRED | Red · EXTREME_WEATHER · Exposed · 2 adults | ✗ |
 | `chat_chatbot_chatA_003` | Green · FLOOD · Sheltered · 1 adult | Red · HAZMAT_GAS · Trapped · 1 adult | ✗ |
 | `chat_chatbot_chatA_004` | Green · FLOOD · Sheltered · 4 adults | Green · SINKHOLE_SUBSIDENCE · Exposed · 4 adults | ✗ |
 | `chat_chatbot_chatA_005` | Green · NONE · Sheltered · 1 adult | Green · NONE · Exposed · 1 adult | ✗ |
-| `chat_chatbot_chatA_006` | Black · STRUCTURAL_COLLAPSE · Trapped · 2 adults · MOBILITY_IMPAIRED | Red · STRUCTURAL_COLLAPSE · Trapped · 1 adult | ✗ |
-| `chat_chatbot_chatA_007` | Black · LANDSLIDE · Trapped · 2 adults · MOBILITY_IMPAIRED | Red · MEDICAL_CRISIS · Sheltered · 1 adult | ✗ |
+| `chat_chatbot_chatA_006` | Black · STRUCTURAL_COLLAPSE · Trapped · 2 adults · MOBILITY_IMPAIRED | Red · STRUCTURAL_COLLAPSE · Trapped · 2 adults | ✗ |
+| `chat_chatbot_chatA_007` | Black · LANDSLIDE · Trapped · 2 adults · MOBILITY_IMPAIRED | Red · MEDICAL_CRISIS · Sheltered · 2 adults | ✗ |
 | `chat_chatbot_chatA_008` | Red · FIRE_SMOKE · Exposed · 2 adults · OXYGEN, BURNS | Red · FIRE_SMOKE · Exposed · 2 adults · BURNS | ✗ |
-| `chat_chatbot_chatA_009` | Green · FLOOD · Sheltered · 2 adults | Red · ELECTRICAL_POWER · Sheltered · 1 adult | ✗ |
-| `chat_chatbot_chatA_010` | Red · HYPOTHERMIA_FREEZE · Exposed · 2 adults · HYPOTHERMIA, MOBILITY_IMPAIRED | Red · HYPOTHERMIA_FREEZE · Exposed · 1 adult · HYPOTHERMIA | ✗ |
-| `chat_chatbot_chatA_011` | Red · ACTIVE_VIOLENCE · Trapped · 3 adults · BLEEDING | Red · ACTIVE_VIOLENCE · Sheltered · 1 adult · BLEEDING | ✗ |
+| `chat_chatbot_chatA_009` | Green · FLOOD · Sheltered · 2 adults | Red · ELECTRICAL_POWER · Sheltered · 2 adults | ✗ |
+| `chat_chatbot_chatA_010` | Red · HYPOTHERMIA_FREEZE · Exposed · 2 adults · HYPOTHERMIA, MOBILITY_IMPAIRED | Red · HYPOTHERMIA_FREEZE · Exposed · 2 adults · HYPOTHERMIA | ✗ |
+| `chat_chatbot_chatA_011` | Red · ACTIVE_VIOLENCE · Trapped · 3 adults · BLEEDING | Red · ACTIVE_VIOLENCE · Sheltered · 2 adults · BLEEDING | ✗ |
 | `chat_chatbot_chatA_012` | Yellow · FLOOD · Exposed · 2 adults | Red · FLOOD · Exposed · 1 adult + 1 child | ✗ |
-| `chat_chatbot_chatA_013` | Green · SINKHOLE_SUBSIDENCE · Exposed · 2 adults | Green · SINKHOLE_SUBSIDENCE · Sheltered · 1 adult | ✗ |
+| `chat_chatbot_chatA_013` | Green · SINKHOLE_SUBSIDENCE · Exposed · 2 adults | Green · SINKHOLE_SUBSIDENCE · Sheltered · 2 adults | ✗ |
 | `chat_chatbot_chatA_014` | Yellow · TSUNAMI_SURGE · Sheltered · 3 adults + 1 child · PREGNANCY_INFANT | Red · TSUNAMI_SURGE · Exposed · 3 adults + 2 children | ✗ |
 | `chat_chatbot_chatA_015` | Yellow · CONTAMINATED_WATER · Sheltered · 1 adult | Red · HAZMAT_GAS · Exposed · 1 adult | ✗ |

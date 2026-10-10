@@ -12,8 +12,8 @@
 | Priority accuracy | 81.5% |
 | Hazard accuracy | 70.4% |
 | Status accuracy | 50.0% |
-| Exact headcounts (adults and children) | 75.9% |
-| Exact adults / exact children | 79.6% / 94.4% |
+| Exact headcounts (adults and children) | 79.6% |
+| Exact adults / exact children | 83.3% / 94.4% |
 | Exact medical set | 72.2% |
 | Medical F1 (micro) | 71.2% |
 | Third-party accuracy | 88.9% |
@@ -126,14 +126,12 @@
 - `tricky_07` gold **Sheltered**, predicted **Exposed** — We are NOT out of food or water, no bleeding, no injuries. Tree fell in back yard. 2 adults.
 - `tricky_08` gold **Trapped**, predicted **Exposed** — Overturned tour bus on highway overpass with 25 adults and children injured, multiple people trapped in wreckage.
 
-### adults (11 wrong)
+### adults (9 wrong)
 
-- `flood_03` gold **2**, predicted **1** — ON THE ROOF WITH 2 BABIES AND MY WIFE. FLOOD WATER CURRENT IS STRONG. PLEASE SEND A BOAT
-- `fire_02` gold **2**, predicted **1** — Heavy black smoke filling apartment, coughing blood. Elderly grandmother unable to walk without wheelchair.
-- `green_03` gold **2**, predicted **1** — Water in yard but house dry. Family of 3 with baby, we have 4 days food. Inquiring about evacuation shelter status.
 - `black_01` gold **2**, predicted **1** — One body found under collapsed masonry, no pulse for over 2 hours, unresponsive. Survivor 1 adult uninjured nearby.
 - `tricky_03` gold **3**, predicted **2** — me, my husband, our two young daughters and my elderly grandmother trapped in attic. grandmother has heart failure and chest pain.
 - `tricky_05` gold **1**, predicted **14** — Active shooter reported down street, barricaded in classroom with 14 students and 1 teacher. Nobody wounded yet.
+- `med_02` gold **1**, predicted **2** — Chainsaw accident while clearing storm debris, deep laceration to thigh, spurting blood, tourniquet applied. 1 victim.
 - `yellow_08` gold **3**, predicted **2** — Grandmother's oxygen machine backup battery has 6 hours remaining. She is resting comfortably now with 2 adults watching her.
 - `black_02` gold **2**, predicted **1** — Elderly neighbor passed away overnight from hypothermia, cold and stiff, no breathing or pulse. 1 survivor adult here.
 - `black_03` gold **2**, predicted **1** — Found car submerged in canal, driver trapped underwater for 30 minutes, unrecoverable, dead. Calling from bank 1 person.
@@ -179,13 +177,13 @@
 |---|---|---|---|
 | `flood_01` | Red · FLOOD · Trapped · 2 adults + 1 child · INSULIN | Red · FLOOD · Trapped · 2 adults + 1 child · INSULIN | ✓ |
 | `flood_02` | Red · FLOOD · Trapped · 3 adults · HYPOTHERMIA | Red · HYPOTHERMIA_FREEZE · Exposed · 3 adults · HYPOTHERMIA | ✗ |
-| `flood_03` | Red · FLOOD · Exposed · 2 adults + 2 children · PREGNANCY_INFANT | Red · FLOOD · Exposed · 1 adult + 2 children | ✗ |
+| `flood_03` | Red · FLOOD · Exposed · 2 adults + 2 children · PREGNANCY_INFANT | Red · FLOOD · Exposed · 2 adults + 2 children | ✗ |
 | `flood_04` | Red · FLOOD · Trapped · 1 adult · OXYGEN | Red · CONTAMINATED_WATER · Trapped · 1 adult · OXYGEN | ✗ |
 | `collapse_01` | Red · STRUCTURAL_COLLAPSE · Trapped · 2 adults · BLEEDING, MOBILITY_IMPAIRED | Red · STRUCTURAL_COLLAPSE · Trapped · 2 adults · BLEEDING, MOBILITY_IMPAIRED | ✓ |
 | `collapse_02` | Red · STRUCTURAL_COLLAPSE · Trapped · 4 adults · PREGNANCY_INFANT | Red · STRUCTURAL_COLLAPSE · Trapped · 4 adults · PREGNANCY_INFANT | ✓ |
 | `collapse_03` | Red · STRUCTURAL_COLLAPSE · Trapped · 1 adult + 1 child · OXYGEN | Red · STRUCTURAL_COLLAPSE · Trapped · 1 adult + 1 child · OXYGEN | ✓ |
 | `fire_01` | Red · FIRE_SMOKE · Trapped · 2 adults · BURNS | Red · FIRE_SMOKE · Exposed · 2 adults · BURNS | ✗ |
-| `fire_02` | Red · FIRE_SMOKE · Trapped · 2 adults · OXYGEN, MOBILITY_IMPAIRED | Red · FIRE_SMOKE · Exposed · 1 adult | ✗ |
+| `fire_02` | Red · FIRE_SMOKE · Trapped · 2 adults · OXYGEN, MOBILITY_IMPAIRED | Red · FIRE_SMOKE · Exposed · 2 adults | ✗ |
 | `yellow_01` | Yellow · EXTREME_WEATHER · Sheltered · 3 adults · MOBILITY_IMPAIRED | Yellow · STRUCTURAL_COLLAPSE · Exposed · 3 adults | ✗ |
 | `yellow_02` | Yellow · FLOOD · Sheltered · 5 adults · CARDIAC | Yellow · FLOOD · Exposed · 5 adults · CARDIAC | ✗ |
 | `yellow_03` | Yellow · STRUCTURAL_COLLAPSE · Sheltered · 2 adults + 1 child · MOBILITY_IMPAIRED | Green · EXTREME_WEATHER · Exposed · 2 adults + 1 child | ✗ |

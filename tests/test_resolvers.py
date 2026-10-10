@@ -48,8 +48,19 @@ HEADCOUNT_CASES = [
     ("my 8yr old son and me", (1, 1)),
     ("grabbed my 3 year old daughter", (1, 1)),
     # filler words, and no crossing a conjunction
-    ("2 small kids and their grandma", (1, 2)),
+    ("2 small kids and their grandma", (2, 2)),  # writer + grandma (§4 count rule)
     ("2 adults and toddler", (2, 1)),
+    # no number given: count the people mentioned (§4), writer included unless relayed
+    ("stuck in the basement with my mom", (2, 0)),
+    ("roofing crew member fainted, the worker is not sweating", (2, 0)),
+    ("the driver is slumped over the wheel", (2, 0)),
+    ("my cousin texted me, her landlord is hurt", (1, 0)),
+    ("mi abuela y mi tía están conmigo", (3, 0)),
+    ("help us the water keeps rising", (2, 0)),
+    ("we are hiding with the baby", (1, 1)),
+    ("family of 5 waiting on the overpass", (5, 0)),
+    ("two elderly sisters stuck in a sedan", (2, 0)),
+    ("three guys burned by the blast", (3, 0)),
     # clamping
     ("40 passengers on the stranded bus", (15, 0)),
     ("20 children at the daycare", (1, 15)),

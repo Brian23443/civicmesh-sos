@@ -74,13 +74,34 @@ CHILD_NOUNS = [
 ]
 # Adult-specific nouns: the count is the number of adults.
 ADULT_NOUNS = ["adults", "adult", "men", "women", "neighbors", "neighbours", "workers", "passengers",
-               "students", "guests", "adultos", "adultas"]
+               "students", "guests", "adultos", "adultas",
+               # more plural people nouns ("two elderly sisters", "two guys", "3 occupants")
+               "guys", "sisters", "brothers", "occupants", "victims", "residents", "tenants", "hikers",
+               "campers", "customers", "patients", "coworkers", "roommates", "friends", "seniors", "survivors",
+               "hombres", "mujeres", "señores", "senores"]
 # Generic nouns: the count may include children ("5 people incl. 2 kids" → 3 adults).
 GENERIC_NOUNS = ["people", "ppl", "persons", "person", "of us", "personas", "folks"]
 ADULT_RELATIONS = ["wife", "husband", "mom", "mother", "mum", "dad", "father", "sister", "brother",
                    "partner", "friend", "boyfriend", "girlfriend", "grandma", "grandmother", "grandpa",
                    "grandfather", "aunt", "uncle", "roommate", "neighbor", "neighbour", "coworker",
                    "fiance", "fiancee", "spouse"]
+# Singular adult people mentioned without a number ("with my mom", "the driver", "roofing worker").
+# Each distinct noun counts once (§4: "if no number is given, count the people the message mentions").
+ADULT_PERSON_NOUNS = ADULT_RELATIONS + [
+    "auntie", "aunty", "grandparent", "stepdad", "stepmom", "sister-in-law", "brother-in-law",
+    "worker", "customer", "driver", "guy", "man", "woman", "lady", "victim", "passenger", "hiker", "camper",
+    "patient", "tenant", "resident", "stranger", "teacher", "nurse", "coach",
+    "mam[aá]", "madre", "pap[aá]", "padre", "esposo", "esposa", "marido", "hermano", "hermana",
+    "abuelo", "abuela", "abuelito", "abuelita", "t[ií]o", "t[ií]a", "primo", "prima", "suegro", "suegra",
+    "vecino", "vecina", "se[nñ]or", "se[nñ]ora",
+]
+# The writer is not at the scene when the message is relayed ("my brother texted", "me llamó").
+RELAY_WORDS = ["called", "calls", "calling", "texted", "texting", "phoned", "messaged", "voice note",
+               "voicemail", "on behalf", "reporting for", "heard from", "me llam[oó]", "me escribi[oó]",
+               "me mand[oó]", "me avis[oó]"]
+# First-person plural: the writer is with at least one other person.
+WE_WORDS = ["we", "us", "our", "ours", "we're", "we've", "we'll", "nosotros", "nosotras", "estamos",
+            "tenemos", "nuestro", "nuestra", "nuestros", "nuestras"]
 # Words between a number and an age unit make it an age, not a count ("8 yr old son").
 AGE_UNITS = ["yr", "yrs", "yo", "y/o", "year", "years", "month", "months", "mo", "mos", "week", "weeks",
              "a[nñ]os", "a[nñ]o", "meses"]
@@ -102,9 +123,21 @@ ME_AND_RELATION_RX = _rx(
 )
 ME_AND_KIDS_RX = _rx(f"{WB_START}(?:me|i)\\s*(?:,|and|&|\\+|y)\\s*(?:my|mi|mis)\\s+({NUMBER})?\\s*"
                      f"{_FILLER}{_alt(CHILD_NOUNS)}")
+FAMILY_OF_RX = _rx(f"{WB_START}(?:family of|familia de)\\s+({NUMBER}){WB_END}")
+ADULT_PERSON_RX = _rx(_words(ADULT_PERSON_NOUNS))
+RELAY_RX = _rx(_words(RELAY_WORDS))
+WE_RX = _rx(_words(WE_WORDS))
 ALONE_RX = _rx(_words(["alone", "just me", "only me", "by myself", "on my own", "solo", "sola",
                        "solo yo", "estoy solo", "estoy sola"]))
 AGE_RX = _rx(f"^\\s*(?:-|\\s)?(?:{'|'.join(AGE_UNITS)}){WB_END}")
+
+
+_UNACCENT = str.maketrans("áéíóúñ", "aeioun")
+
+
+def _distinct(rx: re.Pattern, text: str) -> set[str]:
+    """Distinct matched words, accents stripped ("mamá" and "mama" are one person)."""
+    return {m.group(0).translate(_UNACCENT) for m in rx.finditer(text)}
 
 
 def parse_number(token: str) -> int:
@@ -130,7 +163,7 @@ def _count_matches(rx: re.Pattern, text: str) -> list[tuple[int, int, int]]:
 
 
 def resolve_headcount(text: str) -> tuple[int, int]:
-    """Returns (adults, children), each clamped to 0-15 (§5.4 rules 1-6)."""
+    """Returns (adults, children), each clamped to 0-15 (§5.4 rules 1-6, plus the §4 count rule)."""
     t = normalize(text)
 
     # Rule 1: children.
@@ -150,6 +183,7 @@ def resolve_headcount(text: str) -> tuple[int, int]:
     generic = [n for n, _, _ in _count_matches(GENERIC_COUNT_RX, t)]
     if BOTH_OF_US_RX.search(t):
         generic.append(2)
+    generic += [parse_number(m.group(1)) for m in FAMILY_OF_RX.finditer(t)]
     if generic:
         n = max(generic)
         from_generic = n - children if children and n > children else n
@@ -164,6 +198,17 @@ def resolve_headcount(text: str) -> tuple[int, int]:
     # Rule 4: alone.
     if adults is None and ALONE_RX.search(t):
         adults = 1
+
+    # No number given: count the people mentioned (§4 count rule) — the writer unless the
+    # message is relayed, plus each distinct adult mentioned; "we/us/our" means at least
+    # 2 people (1 adult if children were found).
+    if adults is None:
+        relayed = bool(RELAY_RX.search(t))
+        estimate = (0 if relayed else 1) + len(_distinct(ADULT_PERSON_RX, t))
+        if not relayed and WE_RX.search(t):
+            estimate = max(estimate, 1 if children else 2)
+        if estimate > 0:
+            adults = estimate
 
     # Rule 5: default 1 adult, 0 children.
     if adults is None:
