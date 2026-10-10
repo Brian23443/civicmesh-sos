@@ -189,3 +189,23 @@ def test_old_rule_rows_are_relabeled(monkeypatch):
     assert out["legacy_labels"] == {"adult_count": 2, "pediatric_count": 0, "is_third_party": False}
     assert (out["adult_count"], out["pediatric_count"], out["is_third_party"]) == (3, 1, True)
     assert out["label_version"] == 2 and "keep" in out and "reject_reasons" in out
+
+
+# --- prompt versions -------------------------------------------------------------------------
+
+
+def test_prompt_v1_is_the_spec_prompt_and_v2_adds_the_checker_definitions():
+    from training.common import MEDICAL_DESCRIPTIONS, PRIORITY_DESCRIPTIONS, STATUS_DESCRIPTIONS
+    v1, v2 = G.system_prompt("v1"), G.system_prompt("v2")
+    assert "Label definitions" not in v1 and v1 == G.system_prompt()
+    for text in [*PRIORITY_DESCRIPTIONS.values(), *STATUS_DESCRIPTIONS.values(), *MEDICAL_DESCRIPTIONS.values()]:
+        assert text in v2
+    assert "if MOBILITY_IMPAIRED is not listed" in v2 and "For Deceased" in v2
+    assert v2.endswith("with one entry per spec, in order.")  # the JSON contract stays last
+
+
+def test_rows_record_the_prompt_version(monkeypatch):
+    monkeypatch.setattr(G, "PROMPT_VERSION", "v2")
+    spec = G.sample_spec(random.Random(3))
+    row = G.rows_from([spec], {spec["id"]: "water rising"}, "w")[0]
+    assert row["prompt_version"] == "v2"

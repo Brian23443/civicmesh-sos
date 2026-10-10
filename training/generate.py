@@ -18,16 +18,21 @@ import os
 import random
 import threading
 import uuid
+from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any
 
 from training.common import (
     COUNT_RULE,
+    HAZARD_DESCRIPTIONS,
     HAZARD_NAMES,
     LABEL_VERSION,
+    MEDICAL_DESCRIPTIONS,
     MEDICAL_NAMES,
     RAW_PATH,
     THIRD_PARTY_RULE,
+    PRIORITY_DESCRIPTIONS,
+    STATUS_DESCRIPTIONS,
     OpenRouterError,
     append_jsonl,
     iter_jsonl,
@@ -166,10 +171,44 @@ For each spec you get, write ONE message that conveys exactly the facts in the s
 Return JSON: {"messages": [{"id": "<spec id>", "text": "<message>"}, ...]} with one entry per spec, in order."""
 
 
-def system_prompt() -> str:
+# Prompt v2 (team decision, deviates from §6.4's verbatim prompt): v1 gives the writer bare label
+# names while the checker (§7) judges against the §2 definitions, so the writer can't tell what
+# "Deceased", "Delayed" or "Unknown" must look like (keep rates 6% / 13% / 14% with v1). v2 adds the
+# same §2 definitions the checker uses. Rows record which prompt wrote them (`prompt_version`).
+PROMPT_VERSIONS = ("v1", "v2")
+
+
+def definitions_block() -> str:
+    def lines(defs: dict[str, str]) -> str:
+        return "\n".join(f"  - {k}: {v}" for k, v in defs.items())
+
+    return (
+        "\n\nLabel definitions (the message will be checked against exactly these):\n"
+        f"- priority:\n{lines(PRIORITY_DESCRIPTIONS)}\n"
+        "  Make the level unambiguous from the facts: for Deceased the message must make clear the victim is dead "
+        "or shows no signs of life; for Delayed make clear the person is hurt or stranded but stable and not about "
+        "to die.\n"
+        f"- hazard:\n{lines(HAZARD_DESCRIPTIONS)}\n"
+        f"- status:\n{lines(STATUS_DESCRIPTIONS)}\n"
+        f"- medical (the message implies a need only if):\n{lines(MEDICAL_DESCRIPTIONS)}\n"
+        "\nAvoid implying needs that are NOT listed. In particular: if MOBILITY_IMPAIRED is not listed, nobody is "
+        "pinned, crushed, paralyzed or unable to walk (for Trapped, block the way out instead: a jammed door, water on "
+        "the stairs, rubble across the doorway); if OXYGEN is not listed, nobody coughs, chokes or struggles to breathe; "
+        "if HYPOTHERMIA is not listed, nobody is dangerously cold or soaked; if BLEEDING is not listed, no serious "
+        "wounds.\n"
+        "For Deceased, the dead person is the emergency: say plainly that they are dead or show no signs of life (no "
+        "pulse, not breathing, cold); anyone else at the scene is alive and not in danger."
+    )
+
+
+def system_prompt(version: str = "v1") -> str:
     # COUNT_RULE is written as a clause ("count the people …"); capitalise it after the colon.
-    return SYSTEM_PROMPT.replace("{COUNT_RULE}", COUNT_RULE[0].upper() + COUNT_RULE[1:]).replace(
+    prompt = SYSTEM_PROMPT.replace("{COUNT_RULE}", COUNT_RULE[0].upper() + COUNT_RULE[1:]).replace(
         "{THIRD_PARTY_RULE}", THIRD_PARTY_RULE[0].upper() + THIRD_PARTY_RULE[1:])
+    if version == "v2":
+        head, tail = prompt.rsplit("\n\nReturn JSON:", 1)
+        prompt = head + definitions_block() + "\n\nReturn JSON:" + tail
+    return prompt
 
 
 # --- requests --------------------------------------------------------------------------
@@ -181,6 +220,9 @@ _dropped_lock = threading.Lock()
 OPTIONAL_FIELDS = ("reasoning", "response_format")
 
 
+PROMPT_VERSION = "v1"  # set from --prompt-version
+
+
 def build_payload(model: str, specs: list[dict]) -> dict[str, Any]:
     payload = {
         "model": model,
@@ -188,7 +230,7 @@ def build_payload(model: str, specs: list[dict]) -> dict[str, Any]:
         "response_format": {"type": "json_object"},
         "reasoning": {"enabled": False},
         "messages": [
-            {"role": "system", "content": system_prompt()},
+            {"role": "system", "content": system_prompt(PROMPT_VERSION)},
             {"role": "user", "content": "Specs:\n" + "\n".join(json.dumps(s) for s in specs)},
         ],
     }
@@ -228,13 +270,16 @@ def rows_from(specs: list[dict], texts: dict[str, str], writer: str) -> list[dic
             "triage_priority": s["priority"], "hazard_class": s["hazard"], "rescue_status": s["status"],
             "adult_count": s["adults"], "pediatric_count": s["children"], "medical_flags": s["medical"],
             "is_third_party": s["third_party"], "style": s["style"], "language": s["language"],
-            "writer": writer, "label_version": LABEL_VERSION,
+            "writer": writer, "label_version": LABEL_VERSION, "prompt_version": PROMPT_VERSION,
         })
     return rows
 
 
+OUT_PATH = RAW_PATH  # set from --out
+
+
 def existing_count() -> int:
-    return sum(1 for r in iter_jsonl(RAW_PATH) if r.get("writer") in WRITER_SHARES)
+    return sum(1 for r in iter_jsonl(OUT_PATH) if r.get("writer") in WRITER_SHARES)
 
 
 # --- modes -------------------------------------------------------------------------------
@@ -263,7 +308,7 @@ def generate(n: int, workers: int, seed: int | None) -> None:
 
     have = existing_count()
     if have >= n:
-        print(f"{have} writer rows already in {RAW_PATH} (≥ {n}); nothing to do")
+        print(f"{have} writer rows already in {OUT_PATH} (≥ {n}); nothing to do")
         return
     rng = random.Random(seed)
     lock = threading.Lock()
@@ -275,7 +320,7 @@ def generate(n: int, workers: int, seed: int | None) -> None:
         texts, usage = call_writer(model, specs)
         rows = rows_from(specs, texts, model)
         with lock:
-            append_jsonl(RAW_PATH, rows)
+            append_jsonl(OUT_PATH, rows)
             stats["prompt_tokens"] += usage.get("prompt_tokens", 0) or 0
             stats["completion_tokens"] += usage.get("completion_tokens", 0) or 0
             stats["cost"] += usage.get("cost", 0) or 0
@@ -322,7 +367,12 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=30)
     parser.add_argument("--seed", type=int, help="spec sampling seed (default: random)")
     parser.add_argument("--probe", action="store_true", help="one call per writer model, then exit")
+    parser.add_argument("--prompt-version", choices=PROMPT_VERSIONS, default="v1",
+                        help="v1 = §6.4 verbatim; v2 = v1 + the §2 label definitions the checker uses")
+    parser.add_argument("--out", type=Path, default=RAW_PATH, help="output JSONL (default data/synthetic/raw.jsonl)")
     args = parser.parse_args()
+    global PROMPT_VERSION, OUT_PATH
+    PROMPT_VERSION, OUT_PATH = args.prompt_version, args.out
     if args.probe:
         probe()
     elif args.n:
