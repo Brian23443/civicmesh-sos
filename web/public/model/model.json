@@ -44,5 +44,7 @@
       "PREGNANCY_INFANT",
       "BURNS"
     ]
-  }
+  },
+  "red_margin": 0.005,
+  "status_backstop": true
 }

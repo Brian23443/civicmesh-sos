@@ -18,7 +18,7 @@ import difflib
 import json
 from pathlib import Path
 
-from src.models.resolvers import resolve_headcount, resolve_location, resolve_medical
+from src.models.resolvers import resolve_headcount, resolve_location, resolve_medical, resolve_status
 from training.common import load_benchmark
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -123,7 +123,8 @@ def main() -> None:
         adults, children = resolve_headcount(text)
         loc_type, loc_text, loc_flags = resolve_location(text)
         rows.append({"text": text, "headcount": [adults, children], "medical_mask": int(resolve_medical(text)),
-                     "location": {"type": loc_type.name, "text": loc_text, "flags": int(loc_flags)}})
+                     "location": {"type": loc_type.name, "text": loc_text, "flags": int(loc_flags)},
+                     "status_keyword": (lambda st: None if st is None else st.name)(resolve_status(text))})
 
     if not args.no_model and (MODEL_DIR / "embedder.onnx.gz").exists():
         from src.models.prototype_classifier import PrototypeClassifier, onnx_embed_fn  # noqa: PLC0415
@@ -136,6 +137,7 @@ def main() -> None:
         for row, r8, rt in zip(rows, int8.classify_many(SENTENCES), torch_ref.classify_many(SENTENCES)):
             row["input_ids"] = tok(row["text"], truncation=True, max_length=128)["input_ids"]
             row["stage1"] = {k: r8[k] for k in ("priority", "hazard", "status", "scores")}
+            row["stage1_summary"] = int8.to_slots(row["text"], r8).summary()  # model + every resolver
             row["stage1_pytorch"] = {k: rt[k] for k in ("priority", "hazard", "status")}
         print("added Stage 1 results (INT8 ONNX, with PyTorch for reference) and token ids")
 

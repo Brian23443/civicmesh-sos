@@ -125,8 +125,10 @@ def export_stage1(args: argparse.Namespace) -> None:
             extra.unlink()
 
     prev = json.loads((out_dir / "model.json").read_text()) if (out_dir / "model.json").exists() else {}
+    # Keep the settings stage1.tune_stage1 chose on the validation rows.
     model_json = {"kind": "prototype", "base_model": args.base_model, "max_length": MAX_LENGTH,
-                  "unknown_margin": prev.get("unknown_margin", 0.02), "labels": labels()}
+                  "unknown_margin": prev.get("unknown_margin", 0.02), "red_margin": prev.get("red_margin", 0.0),
+                  "status_backstop": prev.get("status_backstop", False), "labels": labels()}
     (out_dir / "model.json").write_text(json.dumps(model_json, indent=2) + "\n")
 
     # --- parity: PyTorch vs INT8 (§11.1 step 4) and quantization cost (step 5) ---

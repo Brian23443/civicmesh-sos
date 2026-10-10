@@ -18,12 +18,13 @@ from typing import Any
 
 import numpy as np
 
-from src.models.resolvers import resolve_headcount, resolve_location, resolve_medical
+from src.models.resolvers import resolve_headcount, resolve_location, resolve_medical, resolve_status
 from src.schema import HazardClass, LocationConfidenceType, RescueStatus, TriagePriority, TriageSlotResult
 
 ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MODEL_DIR = ROOT / "web" / "public" / "model"
 DEFAULT_UNKNOWN_MARGIN = 0.02
+DEFAULT_RED_MARGIN = 0.0
 
 PRIORITY_NAMES = [p.name for p in TriagePriority]
 HAZARD_NAMES = [h.name for h in HazardClass]
@@ -69,6 +70,8 @@ class PrototypeClassifier:
         model_dir: str | Path = DEFAULT_MODEL_DIR,
         embed_fn: EmbedFn | None = None,
         unknown_margin: float | None = None,
+        red_margin: float | None = None,
+        status_backstop: bool | None = None,
     ):
         self.model_dir = Path(model_dir)
         protos = json.loads((self.model_dir / "prototypes.json").read_text())
@@ -76,6 +79,11 @@ class PrototypeClassifier:
         cfg = json.loads(cfg_path.read_text()) if cfg_path.exists() else {}
         self.unknown_margin = (unknown_margin if unknown_margin is not None
                                else cfg.get("unknown_margin", DEFAULT_UNKNOWN_MARGIN))
+        # Red bias: predict IMMEDIATE when its score is within red_margin of the top score.
+        self.red_margin = red_margin if red_margin is not None else cfg.get("red_margin", DEFAULT_RED_MARGIN)
+        # Status keyword backstop (resolvers.resolve_status) overrides the prototype status.
+        self.status_backstop = (status_backstop if status_backstop is not None
+                                else cfg.get("status_backstop", False))
         self.embed_fn = embed_fn or torch_embed_fn(protos.get("base_model"))
 
         def matrix(field: str, names: list[str]) -> tuple[np.ndarray, list[int]]:
@@ -88,9 +96,11 @@ class PrototypeClassifier:
 
     # --- decoding (§5.0) ----------------------------------------------------------
 
-    def decode(self, emb: np.ndarray, unknown_margin: float | None = None) -> dict[str, Any]:
+    def decode(self, emb: np.ndarray, unknown_margin: float | None = None,
+               red_margin: float | None = None) -> dict[str, Any]:
         """Decodes one unit-length embedding into the K4 classify() result."""
         margin = self.unknown_margin if unknown_margin is None else unknown_margin
+        red = self.red_margin if red_margin is None else red_margin
 
         def scores(mat: np.ndarray, idx: list[int], n: int) -> list[float | None]:
             full: list[float | None] = [None] * n
@@ -107,8 +117,12 @@ class PrototypeClassifier:
 
         ranked = sorted((x for x in ss if x is not None), reverse=True)
         status = int(RescueStatus.UNKNOWN) if ranked[0] - ranked[1] < margin else argmax(ss)
+        priority = argmax(sp)
+        red_idx = int(TriagePriority.IMMEDIATE)
+        if sp[red_idx] is not None and sp[red_idx] >= sp[priority] - red:
+            priority = red_idx
         return {
-            "priority": argmax(sp),
+            "priority": priority,
             "hazard": argmax(sh),
             "status": status,
             "medicalProbs": None,
@@ -130,10 +144,15 @@ class PrototypeClassifier:
     def to_slots(self, text: str, result: dict[str, Any], latency_ms: float | None = None) -> TriageSlotResult:
         adults, children = resolve_headcount(text)
         loc_type, loc_text, _ = resolve_location(text)
+        status = RescueStatus(result["status"])
+        if self.status_backstop:
+            keyword_status = resolve_status(text)
+            if keyword_status is not None:  # not `or`: SHELTERED is 0 (JS: use ??, not ||)
+                status = keyword_status
         return TriageSlotResult(
             priority=TriagePriority(result["priority"]),
             hazard=HazardClass(result["hazard"]),
-            rescue_status=RescueStatus(result["status"]),
+            rescue_status=status,
             adult_count=adults,
             pediatric_count=children,
             medical_flags=resolve_medical(text),

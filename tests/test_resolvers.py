@@ -8,9 +8,10 @@ import difflib
 
 import pytest
 
-from src.models.resolvers import resolve_headcount, resolve_location, resolve_medical
+from src.models.resolvers import resolve_headcount, resolve_location, resolve_medical, resolve_status
 from src.schema import LocationConfidenceType as L
 from src.schema import MedicalFlags as M
+from src.schema import RescueStatus as S
 from src.schema import medical_names
 from training.common import load_benchmark
 
@@ -154,11 +155,39 @@ def test_location_flags(loc_type, flags):
     assert resolve_location(text)[2] == flags
 
 
+# --- status keyword backstop ------------------------------------------------------
+
+STATUS_CASES = [
+    ("pinned under the shelf in the garage", S.TRAPPED),
+    ("the door is jammed and smoke is coming in", S.TRAPPED),
+    ("stuck inside the elevator between floors", S.TRAPPED),       # TRAPPED beats SHELTERED
+    ("atrapados en el sótano", S.TRAPPED),
+    ("standing on the roof waving a towel", S.EXPOSED),
+    ("sitting in the car outside the clinic", S.EXPOSED),
+    ("en la calle sin zapatos", S.EXPOSED),
+    ("we are safe at home with candles", S.SHELTERED),
+    ("we are NOT trapped, safe inside", S.SHELTERED),               # negated TRAPPED is skipped
+    ("estamos en casa, todo bien", S.SHELTERED),
+    ("smoke everywhere, please hurry", None),
+]
+
+
+@pytest.mark.parametrize("text,expected", STATUS_CASES)
+def test_status(text, expected):
+    assert resolve_status(text) == expected
+
+
+def test_sheltered_backstop_is_not_falsy():
+    # SHELTERED == 0: callers must test `is not None` (JS: ??), never `or` (JS: ||).
+    assert resolve_status("safe at home") == S.SHELTERED and int(S.SHELTERED) == 0
+
+
 # --- guard: these tests must not be fitted to the test set ----------------------------
 
 
 def test_no_sentence_copies_the_test_set():
-    ours = [t for t, _ in HEADCOUNT_CASES] + [t for t, _ in MEDICAL_CASES] + [t for t, _, _ in LOCATION_CASES]
+    ours = ([t for t, _ in HEADCOUNT_CASES] + [t for t, _ in MEDICAL_CASES]
+            + [t for t, _, _ in LOCATION_CASES] + [t for t, _ in STATUS_CASES])
     test_set = [r["text"].lower() for r in load_benchmark()]
     for sentence in ours:
         for msg in test_set:

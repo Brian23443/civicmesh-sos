@@ -11,7 +11,7 @@
 | **Whole-summary accuracy** | **14.8%** |
 | Priority accuracy | 83.3% |
 | Hazard accuracy | 68.5% |
-| Status accuracy | 48.1% |
+| Status accuracy | 51.9% |
 | Exact headcounts (adults and children) | 79.6% |
 | Exact adults / exact children | 83.3% / 94.4% |
 | Exact medical set | 72.2% |
@@ -31,9 +31,9 @@
 
 | gold \ predicted | Sheltered | Exposed | Trapped | Unknown |
 |---|---|---|---|---|
-| **Sheltered** | 9 | 17 | 0 | 0 |
-| **Exposed** | 0 | 6 | 1 | 0 |
-| **Trapped** | 0 | 9 | 11 | 0 |
+| **Sheltered** | 8 | 17 | 1 | 0 |
+| **Exposed** | 0 | 5 | 2 | 0 |
+| **Trapped** | 1 | 4 | 15 | 0 |
 | **Unknown** | 0 | 0 | 1 | 0 |
 
 ## Medical flags
@@ -98,7 +98,7 @@
 - `tricky_09` gold **FIRE_SMOKE**, predicted **STRUCTURAL_COLLAPSE** — MY MOM CANNOT BREATH. ASH EVERYWHERE. WE ARE 3 ADULTS TRAPPED IN BASEMENT DOOR JAMMED.
 - `tricky_10` gold **ELECTRICAL_POWER**, predicted **HYPOTHERMIA_FREEZE** — Just 1 elderly person here, power is out. I have my insulin in a cooler with ice, so I am good for 48 hours. No assistance needed yet.
 
-### status (28 wrong)
+### status (26 wrong)
 
 - `flood_02` gold **Trapped**, predicted **Exposed** — roof caved in water up to our chests 3 people here hypothermia setting in cant swim help us please
 - `fire_01` gold **Trapped**, predicted **Exposed** — Flames surrounding driveway, car won't start. 2 people, severe 3rd degree burns on hands and face.
@@ -109,22 +109,22 @@
 - `yellow_04` gold **Sheltered**, predicted **Exposed** — Car broke down in blizzard off highway 80. Engine running low on fuel. 2 adults and infant. Warm clothes but need towing before dark.
 - `green_03` gold **Sheltered**, predicted **Exposed** — Water in yard but house dry. Family of 3 with baby, we have 4 days food. Inquiring about evacuation shelter status.
 - `black_01` gold **Exposed**, predicted **Trapped** — One body found under collapsed masonry, no pulse for over 2 hours, unresponsive. Survivor 1 adult uninjured nearby.
+- `tricky_01` gold **Sheltered**, predicted **Exposed** — Water is outside the door but we are NOT trapped and NOT injured. 3 adults and 2 golden retrievers safe inside.
 - `tricky_02` gold **Sheltered**, predicted **Exposed** — There are zero injuries here. Power line sparking on street outside. 1 person alone inside looking out window.
 - `tricky_05` gold **Sheltered**, predicted **Exposed** — Active shooter reported down street, barricaded in classroom with 14 students and 1 teacher. Nobody wounded yet.
-- `flood_05` gold **Trapped**, predicted **Exposed** — Flash flood carried truck into ditch. Water up to dashboard and rising. 2 adults 1 baby trapped inside cab!
-- `collapse_04` gold **Trapped**, predicted **Exposed** — Tornado hit neighborhood. Our roof collapsed into hallway, 1 adult pinned under ceiling joist with broken pelvis and severe arterial bleeding.
-- `fire_03` gold **Trapped**, predicted **Exposed** — Wildfire jumped ridge line, house caught fire! 3 of us trapped in swimming pool with wet towels, extreme smoke inhalation cannot breath.
 - `med_01` gold **Sheltered**, predicted **Exposed** — 72-year-old grandfather in severe diabetic ketoacidosis, unconscious, insulin was destroyed in flood. 2 adults here.
 - `med_02` gold **Sheltered**, predicted **Exposed** — Chainsaw accident while clearing storm debris, deep laceration to thigh, spurting blood, tourniquet applied. 1 victim.
 - `freeze_01` gold **Sheltered**, predicted **Exposed** — Furnace failed in -20F blizzard. 2 adults and 3 children under blankets, 1 baby showing signs of severe hypothermia lips turning blue.
-- `power_01` gold **Trapped**, predicted **Exposed** — High voltage power line fell onto our occupied SUV in rain. 2 adults inside. Tires smoking, afraid to step out.
+- `power_01` gold **Trapped**, predicted **Sheltered** — High voltage power line fell onto our occupied SUV in rain. 2 adults inside. Tires smoking, afraid to step out.
 - `yellow_05` gold **Sheltered**, predicted **Exposed** — Basement flooded with 2 feet of water. Furnaces off. 3 adults stranded on main floor. Cold but dry, need evacuation assist tomorrow.
-- `yellow_07` gold **Sheltered**, predicted **Exposed** — Bridge washed out behind our subdivision. 8 adults cut off from main road. Everyone uninjured, seeking supplies.
+- `yellow_07` gold **Sheltered**, predicted **Trapped** — Bridge washed out behind our subdivision. 8 adults cut off from main road. Everyone uninjured, seeking supplies.
 - `yellow_09` gold **Sheltered**, predicted **Exposed** — Chimney collapsed into yard. 4 adults, one cuts on arm cleaned and dressed. Road impassable due to fallen oak tree.
 - `green_05` gold **Sheltered**, predicted **Exposed** — Water main broke down street, no tap water. 1 person alone in apartment. Plenty of canned food, just requesting drinking water.
 - `green_06` gold **Sheltered**, predicted **Exposed** — Hail broke skylight, water on rug. Cleaned up, plastic tarp placed. 2 adults doing fine.
 - `black_02` gold **Sheltered**, predicted **Exposed** — Elderly neighbor passed away overnight from hypothermia, cold and stiff, no breathing or pulse. 1 survivor adult here.
+- `black_03` gold **Exposed**, predicted **Trapped** — Found car submerged in canal, driver trapped underwater for 30 minutes, unrecoverable, dead. Calling from bank 1 person.
 - `tricky_07` gold **Sheltered**, predicted **Exposed** — We are NOT out of food or water, no bleeding, no injuries. Tree fell in back yard. 2 adults.
+- `proxy_02` gold **Unknown**, predicted **Trapped** — I live a few blocks away from a Walmart. I heard the building collapsed and people are screaming. Send help.
 
 ### adults (9 wrong)
 
