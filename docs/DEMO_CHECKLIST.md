@@ -9,6 +9,7 @@
 | 2026-10-10 13:26 | Phone (Airplane Mode + Wi-Fi) → field node `/sos` → base station, blocking `receive()` | 2 of 3 frames received. Cause: RadioLib's blocking `receive()` listens in ~250 ms windows and drops frames that start between them. Fixed with continuous RX + DIO1 interrupt (`cmStartListening` / `cmPollPacket`). |
 | 2026-10-10 13:32 | Same, continuous RX, identical URL reloaded 10× | 7 heard; browser served cached pages. Fixed with `Cache-Control: no-store` on every field-node response. |
 | 2026-10-10 13:36 | Same, both fixes, 10 reloads | **10/10** relayed and received; one pin, `heard_count` 10; RSSI −16 dBm, SNR +13.25 dB. Hour-7 check passes (pin via hand-typed `/sos` URL). |
+| 2026-10-10 13:42 | Field node on a wall USB adapter (not the Mac), 5 reloads | **5/5** received, one pin `heard_count` 5; RSSI −44 dBm, SNR +13.25 dB. Power bank still to be tried once (some banks shut off at low current draw). |
 | _TBD_ | Range at demo distance (SNR > ~0 dB → SF7 OK) | |
 | _TBD_ | Field node on power bank, 100 back-to-back `/sos` requests (free heap stable) | |
 
