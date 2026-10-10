@@ -39,6 +39,17 @@ Demo script (MASTER_PROMPT §13.5): a judge's phone opens the website once onlin
 
 **Never power a board without its antenna.** Transmitting without one can damage the SX1262.
 
+## 1b. Software prep (once per laptop, needs internet)
+
+```bash
+.venv/bin/pip install -r requirements.txt          # includes uvicorn[standard] — without it the dashboard never connects
+(cd dashboard && npm install && npm run build)      # → dashboard/dist, served by the bridge at /
+(cd web && corepack pnpm@10 install && corepack pnpm@10 build && corepack pnpm@10 check:inference-assets)
+```
+
+Then deploy `web/dist` to the HTTPS host (`APP_URL` in docs/INTEGRATION.md) and re-flash the field node with that URL
+(firmware/README.md). Quick local checks: `.venv/bin/python -m pytest -q`, `(cd web && corepack pnpm@10 test)`.
+
 ## 2. Setup (T−30 min)
 
 Order matters: the bridge must be listening before any frame is sent, and opening a board's serial port restarts that board.
