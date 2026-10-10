@@ -51,7 +51,9 @@ it('analyzes, edits review, preserves user choice, saves before navigation, and 
     medicalFlags:0x1402,locationType:2,gpsAccuracy:0,lat:0,lon:0,seq:0});
   expect(JSON.stringify([...data.values()])).not.toContain(message);
   expect(store.snapshot().seq).toBe(1);
-  expect(screen.getByRole('link',{name:'Open relay with the same report'})).toHaveAttribute('href',RELAY_URL+hex);
+  expect(screen.getByRole('link',{name:'Open the relay again (same report)'})).toHaveAttribute('href',RELAY_URL+hex);
+  expect(screen.getByRole('heading',{name:'Sent to the relay'})).toBeInTheDocument();
+  expect(screen.getByText(/· seq \d+$/)).toBeInTheDocument();
   await user.click(screen.getAllByRole('link',{name:'My reports'})[0]);
   expect(await screen.findByRole('heading',{name:'My reports'})).toBeInTheDocument();
   expect(screen.getByText('handed to relay')).toBeInTheDocument();
@@ -108,7 +110,7 @@ it('guards repeated Send clicks and allows retry without consuming another seque
   await user.dblClick(screen.getByRole('button',{name:'Send'}));
   expect(relay).toHaveBeenCalledOnce();expect(store.snapshot().seq).toBe(1);expect(store.snapshot().reports).toHaveLength(1);
   expect(screen.getByRole('alert')).toHaveTextContent('Navigation was blocked');
-  expect(screen.getByRole('link',{name:'Open relay with the same report'})).toHaveAttribute('href',RELAY_URL+store.snapshot().reports[0].hex);
+  expect(screen.getByRole('link',{name:'Open the relay again (same report)'})).toHaveAttribute('href',RELAY_URL+store.snapshot().reports[0].hex);
 });
 it('keeps sending available when localStorage is blocked',async()=>{
   const safe=createStorage(()=>{throw Error('storage blocked');});
@@ -187,4 +189,16 @@ it('starts an empty manual report with one adult (the writer, §5.4 rule 5) and 
   await user.click(screen.getByRole('button',{name:'Fill in manually'}));
   expect(screen.getByRole('button',{name:'Edit adults'})).toHaveTextContent('1');
   expect(screen.getByRole('button',{name:'Edit children'})).toHaveTextContent('0');
+});
+
+it('starts a fresh report from the receipt without leaving the app',async()=>{
+  const {user,relay}=setup();
+  await user.type(screen.getByLabelText('What’s happening? Who needs help?'),'water in the attic, 2 of us');
+  await user.click(screen.getByRole('button',{name:'Analyze'}));
+  await user.click(await screen.findByRole('button',{name:/Continue to send/}));
+  await user.click(screen.getByRole('button',{name:'Send'}));
+  expect(relay).toHaveBeenCalledOnce();
+  await user.click(screen.getByRole('button',{name:/Start a new report/}));
+  expect(await screen.findByLabelText('What’s happening? Who needs help?')).toHaveValue('');
+  expect(screen.queryByRole('heading',{name:'Sent to the relay'})).not.toBeInTheDocument();
 });

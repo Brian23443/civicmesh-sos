@@ -37,6 +37,14 @@ function Field({ label, value, open, icon, onEdit }: {label:string;value:string;
     </Button>;
   }
 
+/** "RED · Life-threatening · Flood · 2 people · seq 4" from the 18 bytes that were sent. */
+function receiptSummary(receipt: SentReport): string {
+  try {
+    const f = unpackFrame(fromHex(receipt.hex));
+    return `${priorityLabels[f.priority]} · ${hazardLabels[f.hazard]} · ${f.adults + f.children} ${f.adults + f.children === 1 ? 'person' : 'people'} · seq ${f.seq}`;
+  } catch { return 'Report saved'; }
+}
+
 export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, analysisReady=true }: Props) {
   const navigate=useNavigate(); const route=useLocation();
   const [message,setMessage]=useState(''); const [draft,setDraft]=useState<Draft|null>(null);
@@ -64,6 +72,10 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
     const run=++gpsRun.current;
     cancelGps.current=acquireGps(navigator.geolocation,update=>{if(mounted.current && run===gpsRun.current) setGpsUpdate(update);});
   },[]);
+  /** Ready for the next report. The model stays loaded (the relay's Back restores this page). */
+  function newReport() {
+    setReceipt(null); setPrepared(null); setDraft(null); setMessage(''); setError(''); navigate('/');
+  }
   function patch(fields: Partial<Draft>) { setDraft(current=>current ? {...current,...fields}:current); }
   async function analyze() {
     if(busy||!analysisReady||!message.trim()) return;
@@ -147,10 +159,13 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
         <Button className="primary full-width mt-6" onClick={continueToSend}>Continue to send <ArrowRight aria-hidden="true" size={20}/></Button>
         <Link to="/" className="text-link"><ArrowLeft aria-hidden="true" size={18}/>Back to report</Link>
       </section>:<Navigate to="/" replace/>}/>
-      <Route path="/send" element={receipt?<section><p className="eyebrow">SAVED ON THIS DEVICE</p><h1>Handed to relay</h1><p>The report was saved before relay navigation. Delivery to the rescue network is not confirmed here.</p>
+      <Route path="/send" element={receipt?<section><p className="eyebrow">SAVED ON THIS DEVICE</p><h1>Sent to the relay</h1>
+        <p><strong>{receiptSummary(receipt)}</strong></p>
+        <p>If the relay showed “Sent ✓”, your report is on the rescue network. Stay where you are if it is safe.</p>
         {error&&<p role="alert" className="notice">{error}</p>}
-        <a className="button full-width" href={RELAY_URL+receipt.hex}>Open relay with the same report</a>
-        <Link className="button primary full-width mt-6" to="/reports">My reports</Link>{storageNote}
+        <Button className="primary full-width" onClick={newReport}>Start a new report <ArrowRight aria-hidden="true" size={20}/></Button>
+        <Link className="button full-width mt-6" to="/reports">My reports</Link>
+        <p className="small mt-6">Relay page didn’t load? <a href={RELAY_URL+receipt.hex}>Open the relay again (same report)</a> — it won’t be counted twice.</p>{storageNote}
       </section>:prepared?<section><p className="eyebrow">CONNECT TO THE RELAY</p><h1>Send your report</h1>
         <ol className="send-steps"><li><Plane aria-hidden="true"/><div><strong>Keep Airplane Mode on</strong><p>Turn on Wi-Fi.</p></div></li>
           <li><Wifi aria-hidden="true"/><div><strong>Join CivicMesh-SOS</strong><p>Open Wi-Fi settings and select the network.</p></div></li>
