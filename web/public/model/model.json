@@ -1,0 +1,50 @@
+{
+  "kind": "prototype",
+  "base_model": "BAAI/bge-small-en-v1.5",
+  "max_length": 128,
+  "unknown_margin": 0.0,
+  "labels": {
+    "priority": [
+      "MINOR",
+      "DELAYED",
+      "IMMEDIATE",
+      "DECEASED"
+    ],
+    "hazard": [
+      "NONE",
+      "FLOOD",
+      "FIRE_SMOKE",
+      "STRUCTURAL_COLLAPSE",
+      "HAZMAT_GAS",
+      "ELECTRICAL_POWER",
+      "EXTREME_WEATHER",
+      "MEDICAL_CRISIS",
+      "ACTIVE_VIOLENCE",
+      "TSUNAMI_SURGE",
+      "LANDSLIDE",
+      "HYPOTHERMIA_FREEZE",
+      "HEAT_STROKE",
+      "SINKHOLE_SUBSIDENCE",
+      "CONTAMINATED_WATER",
+      "OTHER"
+    ],
+    "status": [
+      "SHELTERED",
+      "EXPOSED",
+      "TRAPPED",
+      "UNKNOWN"
+    ],
+    "medical": [
+      "INSULIN",
+      "OXYGEN",
+      "BLEEDING",
+      "HYPOTHERMIA",
+      "MOBILITY_IMPAIRED",
+      "CARDIAC",
+      "PREGNANCY_INFANT",
+      "BURNS"
+    ]
+  },
+  "red_margin": 0.005,
+  "status_backstop": true
+}
