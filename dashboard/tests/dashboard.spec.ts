@@ -89,13 +89,38 @@ test("renders the live operator dashboard without browser errors", async ({
   await expect(page.locator(".incident-card")).toHaveCount(9);
   await expect(page.getByRole("heading", { name: "No location" })).toBeVisible();
   await expect(page.locator(".map-mode")).toContainText(
-    /Offline canvas|Grid fallback/,
+    /Street basemap|Cached street map|Grid fallback|Loading streets/,
   );
   await expect(
     page.locator(".maplibregl-canvas, .fallback-grid").first(),
   ).toBeVisible();
 
   expect(browserErrors).toEqual([]);
+});
+
+test("reloads the dashboard shell while offline", async ({ page, context }) => {
+  await page.goto("/");
+  await page.evaluate(async () => {
+    await navigator.serviceWorker.ready;
+  });
+  await expect
+    .poll(() =>
+      page.evaluate(() => navigator.serviceWorker.controller !== null),
+    )
+    .toBe(true);
+
+  await context.setOffline(true);
+  try {
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await expect(
+      page.getByRole("heading", { name: "CivicMesh-SOS Operator Dashboard" }),
+    ).toBeVisible();
+    await expect(
+      page.locator(".maplibregl-canvas, .fallback-grid").first(),
+    ).toBeVisible();
+  } finally {
+    await context.setOffline(false);
+  }
 });
 
 test("opens the detail drawer and decodes every frame field", async ({
