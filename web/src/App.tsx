@@ -29,6 +29,8 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
     } catch { setModelState('error'); setModelMessage('The on-device model could not start. Retry, or fill in every field manually.'); }
   }, []);
   useEffect(() => { if (!suppliedClassifier) void loadModel(); }, [suppliedClassifier, loadModel]);
+  // §12: ask the browser to keep the offline copy (iOS can otherwise evict it).
+  useEffect(() => { try { void navigator.storage?.persist?.().catch(() => {}); } catch { /* unsupported */ } }, []);
   const offline=useOfflineStatus();
   useEffect(() => {
     const titles: Record<string,string> = { '/':'Report', '/analyze':'Analyze', '/review':'Review', '/send':'Send', '/reports':'My reports' };
@@ -57,6 +59,6 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
       <footer className="flex items-center justify-between gap-3 mt-8"><span>On your device. In your control.</span><Button aria-label="Open CivicMesh information" onClick={() => setHelp(true)}><HelpCircle aria-hidden="true" size={22}/></Button></footer>
       <nav aria-label="Main navigation" className="bottom-nav"><NavLink to="/" end><Shield aria-hidden="true" size={20}/>Report</NavLink><NavLink to="/reports"><FileText aria-hidden="true" size={20}/>My reports</NavLink></nav>
     </div>
-    <Sheet open={help} onClose={() => setHelp(false)} title="About CivicMesh"><p>CivicMesh sends structured emergency reports through a nearby relay.</p><p>Your message is analyzed on this phone by a small triage model; the text itself is never sent — only an 18-byte summary you confirm. Check every suggested field before sending. The relay reply confirms radio handoff; this app does not confirm rescue delivery.</p><p>For Airplane Mode, load the website once while online and wait for “Ready offline ✓”. Manual reports remain available if the model cannot start.</p>{offline.missingInference.length>0&&<p>Some model files are missing from this build; manual reports still work.</p>}<p>On iPhone, Add to Home Screen can help retain the app. Offline readiness depends on the browser keeping its cached data.</p><Button className="primary mt-6" onClick={() => setHelp(false)}>Got it</Button></Sheet>
+    <Sheet open={help} onClose={() => setHelp(false)} title="About CivicMesh"><p>CivicMesh sends structured emergency reports through a nearby relay.</p><p>Your message is analyzed on this phone by a small triage model; the text itself is never sent — only an 18-byte summary you confirm. Check every suggested field before sending. The relay reply confirms radio handoff; this app does not confirm rescue delivery.</p><p>For Airplane Mode, load the website once while online and wait for “Ready offline ✓”. Manual reports remain available if the model cannot start.</p>{offline.missingInference.length>0&&<p>Some model files are missing from this build; manual reports still work.</p>}<p>On iPhone, Add to Home Screen helps iOS keep the app. <strong>The Home Screen app keeps its own separate copy:</strong> open it from the Home Screen once while online and wait for “Ready offline ✓” before relying on it offline.</p><Button className="primary mt-6" onClick={() => setHelp(false)}>Got it</Button></Sheet>
   </>;
 }

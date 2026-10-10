@@ -5,6 +5,7 @@ import type { Classifier } from '../inference/types';
 import { resolveReport } from '../resolvers';
 import { finalizeReport } from '../inference/finalize';
 import { gpsBucket, GpsAccuracy } from '../protocol/enums';
+import { acquireGps, gpsLabel, type GpsUpdate } from '../lib/gps';
 import type { FrameFields } from '../protocol/types';
 import { pack, unpackFrame } from '../protocol/packer';
 import { fromHex } from '../protocol/hex';
@@ -39,7 +40,7 @@ function Field({ label, value, open, icon, onEdit }: {label:string;value:string;
 export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, analysisReady=true }: Props) {
   const navigate=useNavigate(); const route=useLocation();
   const [message,setMessage]=useState(''); const [draft,setDraft]=useState<Draft|null>(null);
-  const [gps,setGps]=useState<Gps>(NO_GPS); const [busy,setBusy]=useState(false); const [error,setError]=useState('');
+  const [busy,setBusy]=useState(false); const [error,setError]=useState('');
   const [prepared,setPrepared]=useState<FrameFields|null>(null); const [receipt,setReceipt]=useState<SentReport|null>(null);
   const [editor,setEditor]=useState<Editor>(null); const [snapshot,setSnapshot]=useState(()=>store.snapshot());
   const analyzeRun=useRef(0); const gpsRun=useRef(0); const sending=useRef(false); const mounted=useRef(true);
@@ -48,24 +49,25 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
     if(route.pathname!=='/analyze'){analyzeRun.current++;setBusy(false);setError('');}
     setEditor(null);
   },[route.pathname]);
-  const gpsLabel = gps.state==='loading' ? 'Getting GPS…' : gps.state==='ready' ? `GPS ±${Math.ceil(gps.accuracy!)} m` : 'No GPS fix';
-  useEffect(()=>onGpsStatus(gpsLabel),[gpsLabel,onGpsStatus]);
+  const [gpsUpdate,setGpsUpdate]=useState<GpsUpdate|null>(null);
+  const cancelGps=useRef<(()=>void)|null>(null);
+  useEffect(()=>()=>cancelGps.current?.(),[]);
+  // Best fix so far (even mid-search), so a report sent early still carries a usable position.
+  const fix=gpsUpdate?.fix ?? null;
+  const gps:Gps = fix
+    ? {lat:fix.lat,lon:fix.lon,accuracy:fix.accuracy,bucket:gpsBucket(fix.accuracy),state:gpsUpdate!.phase==='searching'?'loading':'ready'}
+    : {...NO_GPS,state:gpsUpdate?.phase==='searching'?'loading':gpsUpdate?'failed':'idle'};
+  const gpsText=gpsLabel(gpsUpdate);
+  useEffect(()=>onGpsStatus(gpsText),[gpsText,onGpsStatus]);
   const requestGps=useCallback(()=>{
-    const run=++gpsRun.current; setGps({...NO_GPS,state:'loading'});
-    const failure=()=>{if(mounted.current && run===gpsRun.current) setGps({...NO_GPS,state:'failed'});};
-    if (!navigator.geolocation) {failure();return;}
-    try {
-      navigator.geolocation.getCurrentPosition(position=>{
-        if (!mounted.current || run!==gpsRun.current) return;
-        const {latitude:lat,longitude:lon,accuracy}=position.coords;
-        if(!Number.isFinite(lat)||!Number.isFinite(lon)||Math.abs(lat)>90||Math.abs(lon)>180||!Number.isFinite(accuracy)||accuracy<0){failure();return;}
-        setGps({lat,lon,accuracy,bucket:gpsBucket(accuracy),state:'ready'});
-      },failure,{enableHighAccuracy:true,timeout:10000});
-    } catch {failure();}
+    cancelGps.current?.();
+    const run=++gpsRun.current;
+    cancelGps.current=acquireGps(navigator.geolocation,update=>{if(mounted.current && run===gpsRun.current) setGpsUpdate(update);});
   },[]);
   function patch(fields: Partial<Draft>) { setDraft(current=>current ? {...current,...fields}:current); }
   async function analyze() {
     if(busy||!analysisReady||!message.trim()) return;
+    if(!gpsUpdate || gpsUpdate.phase==='timeout' || gpsUpdate.phase==='unavailable') requestGps();
     const run=++analyzeRun.current; const text=message; setDraft(null);setBusy(true);setError('');setReceipt(null);setPrepared(null);navigate('/analyze');
     try {
       const result=await classifier.classify(text);
@@ -115,7 +117,7 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
           <Button className="full-width mt-3" onClick={manual}>Fill in manually</Button>
         </form>
         {error&&<p role="alert" className="notice">{error}</p>}
-        <div className="flex items-center justify-between gap-3 mt-6"><span>{gpsLabel}</span><Button onClick={requestGps} disabled={gps.state==='loading'}><MapPin aria-hidden="true" size={18}/>Get location</Button></div>
+        <div className="flex items-center justify-between gap-3 mt-6"><span aria-live="polite">{gpsText}</span><Button onClick={requestGps} disabled={gps.state==='loading'}><MapPin aria-hidden="true" size={18}/>Get location</Button></div>
         <Link className="text-link" to="/reports">My reports <ArrowRight aria-hidden="true" size={18}/></Link>{storageNote}
       </section>}/>
       <Route path="/analyze" element={busy||error?<section aria-busy={busy}>
@@ -180,7 +182,7 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
         {editor==='status'&&<div className="choice-list">{statusLabels.map((label,value)=><Choice key={value} selected={draft.status===value} onClick={()=>{patch({status:value as Draft['status']});setEditor(null);}}>{label}</Choice>)}</div>}
         {editor==='people'&&<><Stepper label="Adults" value={draft.adults} onChange={adults=>patch({adults})}/><Stepper label="Children" value={draft.children} onChange={children=>patch({children})}/></>}
         {editor==='medical'&&<div className="medical-grid">{medicalLabels.map((label,i)=>{const Icon=medicalIcons[i];return <Choice key={label} selected={Boolean(draft.medicalFlags&(1<<i))} onClick={()=>patch({medicalFlags:draft.medicalFlags^(1<<i)})}><Icon aria-hidden="true" size={22}/>{label}</Choice>;})}</div>}
-        {editor==='location'&&<><p>{gpsLabel}</p>{gps.bucket!==0&&<p className="hex">{gps.lat.toFixed(6)}, {gps.lon.toFixed(6)}</p>}
+        {editor==='location'&&<><p>{gpsText}</p>{gps.bucket!==0&&<p className="hex">{gps.lat.toFixed(6)}, {gps.lon.toFixed(6)}</p>}
           <Button onClick={requestGps} disabled={gps.state==='loading'}>Refresh GPS</Button>
           <p>GPS describes the reporter’s phone. Choose how the emergency location was described.</p>
           <div className="choice-list">{locationLabels.map((label,value)=><Choice key={value} selected={draft.locationType===value} onClick={()=>patch({locationType:value as Draft['locationType']})}>{label}</Choice>)}</div>
