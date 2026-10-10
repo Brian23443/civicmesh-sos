@@ -131,7 +131,7 @@ def data_files(tmp_path, monkeypatch):
 def test_train_extract_and_export(tiny_base, data_files, tmp_path):
     out = tmp_path / "triage-tiny"
     args = argparse.Namespace(base_model=tiny_base, out=out, val_writer="chatbot", unverified=False, writer=None,
-                              scored=data_files, epochs=2, device="cpu")
+                              scored=data_files, epochs=2, device="cpu", class_weights="spec")
     T.train(args)
 
     cfg = json.loads((out / "config.json").read_text())
@@ -166,6 +166,14 @@ def test_refuses_to_train_on_the_test_set(tiny_base, data_files, tmp_path):
     rows[0]["text"] = load_benchmark()[0]["text"]
     data_files.write_text("".join(json.dumps(r) + "\n" for r in rows))
     args = argparse.Namespace(base_model=tiny_base, out=tmp_path / "x", val_writer="chatbot", unverified=False,
-                              writer=None, scored=data_files, epochs=1, device="cpu")
+                              writer=None, scored=data_files, epochs=1, device="cpu", class_weights="spec")
     with pytest.raises(SystemExit, match="Appendix A"):
         T.train(args)
+
+
+def test_balanced_weights_favor_rare_classes():
+    labels = np.array([2] * 56 + [0] * 28 + [1] * 13 + [3] * 3)
+    w = T.balanced_weights(labels, 4)
+    assert w[3] > w[1] > w[0] > w[2]           # rarer → heavier
+    assert all(0.25 <= x <= 4.0 for x in w)     # clamped
+    assert w[3] == pytest.approx(4.0)           # Deceased hits the cap
