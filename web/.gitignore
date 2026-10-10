@@ -1,0 +1,2 @@
+# Ship the pinned experimental ONNX model for static offline hosting.
+!public/experimental/minilm/onnx/model_quantized.onnx

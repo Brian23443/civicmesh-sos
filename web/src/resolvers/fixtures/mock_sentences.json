@@ -1,0 +1,652 @@
+[
+  {
+    "text": "Please help",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "4 ppl",
+    "headcount": [
+      4,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "1 kid",
+    "headcount": [
+      0,
+      1
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "mi bebé",
+    "headcount": [
+      0,
+      1
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "me and my 2 kids",
+    "headcount": [
+      1,
+      2
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "3 of us",
+    "headcount": [
+      3,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "two adults and a toddler",
+    "headcount": [
+      2,
+      1
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "me and my wife",
+    "headcount": [
+      2,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "me and my grandma",
+    "headcount": [
+      2,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "alone",
+    "headcount": [
+      1,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "just me",
+    "headcount": [
+      1,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "a couple",
+    "headcount": [
+      2,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "both of us",
+    "headcount": [
+      2,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "twins",
+    "headcount": [
+      0,
+      2
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "una niña",
+    "headcount": [
+      0,
+      1
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "dos adultos y tres hijos",
+    "headcount": [
+      2,
+      3
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "99 children and twenty adults",
+    "headcount": [
+      15,
+      15
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "0 adults and 0 children",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "7 people including 2 kids",
+    "headcount": [
+      5,
+      2
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "three kids among ten passengers",
+    "headcount": [
+      7,
+      3
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "six men and two girls",
+    "headcount": [
+      6,
+      2
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "seis personas y dos bebés",
+    "headcount": [
+      4,
+      2
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "two students",
+    "headcount": [
+      2,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "a couple kids",
+    "headcount": [
+      0,
+      2
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "a couple people and one child",
+    "headcount": [
+      1,
+      1
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "INSULIN",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 1,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "diabética",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 1,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "sugar’s low",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 1,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "cant breath",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 2,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "no puedo respirar",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 2,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "sangrando",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 4,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "deep cut",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 4,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "blue lips",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 8,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "silla de ruedas",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 16,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "dolor de pecho",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 32,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "embarazada",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 64,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "burned",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 128,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "sunburn",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "burn barrel",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "oxygen and insulin",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 3,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  },
+  {
+    "text": "At 84 Willow Lane",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "EXPLICIT_ADDRESS",
+      "text": "84 Willow Lane",
+      "flags": 6144
+    }
+  },
+  {
+    "text": "Go to 908 North Pine Rd.",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "EXPLICIT_ADDRESS",
+      "text": "908 North Pine Rd.",
+      "flags": 6144
+    }
+  },
+  {
+    "text": "44 Oak St by the hospital",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "EXPLICIT_ADDRESS",
+      "text": "44 Oak St",
+      "flags": 6144
+    }
+  },
+  {
+    "text": "Around the corner from 44 Oak St",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "EXPLICIT_ADDRESS",
+      "text": "44 Oak St (Around the corner)",
+      "flags": 6144
+    }
+  },
+  {
+    "text": "Meet at HOME DEPOT",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "LANDMARK_POI",
+      "text": "HOME DEPOT",
+      "flags": 5120
+    }
+  },
+  {
+    "text": "At the middle school",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "LANDMARK_POI",
+      "text": "middle school",
+      "flags": 5120
+    }
+  },
+  {
+    "text": "Near the hospital, a few blocks away",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "LANDMARK_POI",
+      "text": "hospital (a few blocks away)",
+      "flags": 5120
+    }
+  },
+  {
+    "text": "Down the street",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "PROXIMATE_OFFSET",
+      "text": "Down the street",
+      "flags": 4608
+    }
+  },
+  {
+    "text": "Somewhere nearby",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "PROXIMATE_OFFSET",
+      "text": "nearby",
+      "flags": 4608
+    }
+  },
+  {
+    "text": "hospitality and targetable malls",
+    "headcount": [
+      0,
+      0
+    ],
+    "medical_mask": 0,
+    "location": {
+      "type": "DIRECT_ON_SCENE",
+      "text": null,
+      "flags": 0
+    }
+  }
+]

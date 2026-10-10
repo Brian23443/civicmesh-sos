@@ -1,0 +1,47 @@
+{
+  "name": "civicmesh-survivor",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:parity": "REQUIRE_RESOLVER_PARITY=1 vitest run src/resolvers/parity.test.ts",
+    "check:offline": "node scripts/check-offline.mjs",
+    "check:inference-assets": "node scripts/check-offline.mjs --require-inference",
+    "prepare:experimental": "node scripts/prepare-experimental-model.mjs",
+    "check:experimental-assets": "node scripts/check-offline.mjs --require-experimental"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.1.0",
+    "@huggingface/transformers": "3.8.1",
+    "lucide-react": "^0.468.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "^7.0.0",
+    "workbox-window": "^7.4.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.0.0",
+    "@testing-library/dom": "^10.4.0",
+    "@testing-library/jest-dom": "6.9.1",
+    "@testing-library/react": "^16.1.0",
+    "@testing-library/user-event": "^14.5.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "jsdom": "^26.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "~5.7.3",
+    "vite": "^6.1.0",
+    "vite-plugin-pwa": "^0.21.1",
+    "vitest": "^3.0.0"
+  }
+}
