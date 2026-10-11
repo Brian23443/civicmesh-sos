@@ -146,6 +146,7 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
       <p><strong>To send:</strong> Airplane Mode on, Wi-Fi on, join “RescuNote”.</p>
       {offline.missingInference.length>0&&<p>Some model files are missing from this build; you can still choose details from a list.</p>}
       <Button className="primary full-width mt-4" onClick={() => setHelp(false)}>Got it</Button>
+      <a className="privacy-link" href={`${import.meta.env.BASE_URL}privacy.html`}>Privacy</a>
     </Sheet>
   </>;
 }

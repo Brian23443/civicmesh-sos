@@ -4,7 +4,7 @@
 
 A survivor types (or dictates) what's happening on a phone in Airplane Mode → an on-device model fills in a triage report → they confirm → an 18-byte frame goes over local Wi-Fi to a LoRa field node → 915 MHz LoRa → base station → a pin on the operator dashboard. No internet or cell service anywhere in the chain.
 
-- **Try the survivor app:** https://brian23443.github.io/rescunote/ (works offline after one visit)
+- **Try the survivor app:** https://brian23443.github.io/rescunote/ (works offline after one visit) · [Privacy](https://brian23443.github.io/rescunote/privacy.html)
 - Project story: [docs/DEVPOST_STORY.md](docs/DEVPOST_STORY.md) · Full specification: [MASTER_PROMPT.md](MASTER_PROMPT.md) · Live integration values: [docs/INTEGRATION.md](docs/INTEGRATION.md)
 
 | Part | Folder | Stack |

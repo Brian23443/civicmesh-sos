@@ -15,7 +15,7 @@ We asked: *what's the smallest message that still tells a rescuer everything the
 3. The report is packed into an **18-byte frame** and handed to a nearby **LoRa radio relay** over its local Wi-Fi network. The relay transmits it by long-range radio.
 4. A **base station** at the command post receives it, and a pin appears on a live **operator dashboard** with a "what to bring" list for the crew (insulin kit, water-rescue gear, pediatric care…).
 
-The survivor's words never leave their phone; only the coded summary does.
+The survivor's words never leave their phone; only the coded summary does. There are no accounts, analytics or tracking ([privacy notice](https://brian23443.github.io/rescunote/privacy.html)).
 
 ## How we built it
 
@@ -81,4 +81,4 @@ symbols. For our $PL = 18$ bytes that's $n = 38$, so with the preamble the whole
 
 ## What's next
 
-Mesh repeating between field nodes for longer range, acknowledgements back to the survivor's phone ("a crew has your report"), incident status for operators (acknowledged → en route → resolved), and more languages for both the model and the voice.
+Signing and encrypting frames (today anyone with a 915 MHz receiver can read a report, which is fine for an SOS but not for every situation), mesh repeating between field nodes for longer range, acknowledgements back to the survivor's phone ("a crew has your report"), incident status for operators (acknowledged → en route → resolved), and more languages for both the model and the voice.

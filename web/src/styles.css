@@ -146,3 +146,4 @@ html { overscroll-behavior-y:none; }
    bottom = dvh − lvh is 0 when iOS lays out correctly and −62 pt when it lays out short. */
 html.standalone .bottom-nav { bottom:calc(100dvh - 100lvh); }
 html.standalone .app-shell.is-home { height:100lvh; }
+.privacy-link { display:flex; align-items:center; justify-content:center; min-height:44px; margin-top:4px; font-size:14px; color:var(--muted); text-decoration:underline; }

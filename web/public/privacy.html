@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>RescuNote Privacy</title>
+<meta name="description" content="What RescuNote does with your information.">
+<link rel="icon" href="favicon.png" type="image/png">
+<script>
+  // Match the app's saved light/dark choice (same storage key as the app); otherwise follow the phone.
+  try { var t = JSON.parse(localStorage.getItem('civicmesh:theme')); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}
+</script>
+<style>
+  :root { color-scheme:dark; --bg:#0E0F14; --surface:#1A1B23; --text:#F4F4F7; --muted:#A3A3B5; --accent:#8B8CF8; --border:#2A2B36; }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) { color-scheme:light; --bg:#FFFFFF; --surface:#F3F2F7; --text:#14141A; --muted:#6E6E80; --accent:#6366F1; --border:#E3E2EA; }
+  }
+  :root[data-theme="light"] { color-scheme:light; --bg:#FFFFFF; --surface:#F3F2F7; --text:#14141A; --muted:#6E6E80; --accent:#6366F1; --border:#E3E2EA; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font:16px/1.6 Poppins, Inter, system-ui, -apple-system, sans-serif; }
+  main { max-width:640px; margin:auto; padding:max(24px, env(safe-area-inset-top)) 16px max(40px, env(safe-area-inset-bottom)); }
+  .back { display:inline-flex; align-items:center; min-height:48px; color:var(--accent); font-weight:600; text-decoration:none; }
+  h1 { font-size:clamp(28px, 7vw, 36px); line-height:1.2; letter-spacing:-.03em; margin:8px 0 4px; }
+  h2 { font-size:18px; margin:28px 0 8px; }
+  p, li { color:var(--muted); }
+  strong { color:var(--text); }
+  ul { padding-left:20px; }
+  li { margin:6px 0; }
+  .lead { font-size:17px; padding:16px; border:1px solid var(--border); border-radius:14px; background:var(--surface); }
+  .updated { font-size:13px; margin:0 0 20px; }
+  a { color:var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <a class="back" href="./">‹ Back to RescuNote</a>
+  <h1>Privacy</h1>
+  <p class="updated">Last updated 11 October 2026</p>
+
+  <p class="lead"><strong>Your words never leave your phone.</strong> RescuNote reads your message on this device and sends only a short coded summary to rescuers. There are no accounts, ads, analytics or tracking.</p>
+
+  <h2>What stays on your phone</h2>
+  <ul>
+    <li>Everything you type or dictate. It's read by a model that runs on the phone, then discarded.</li>
+    <li>Your list of sent reports, your light/dark choice and your voice guidance setting, saved in this browser only. Clearing the site's data removes them.</li>
+  </ul>
+
+  <h2>What is sent when you tap Send</h2>
+  <p>An 18-byte summary containing:</p>
+  <ul>
+    <li>how urgent it is, the type of emergency and your situation (for example, trapped);</li>
+    <li>how many adults and children, and any medical needs you chose;</li>
+    <li><strong>your GPS location</strong> and its accuracy, and the time;</li>
+    <li>a random number made by this app to tell your reports apart. It isn't linked to your name, phone number or device.</li>
+  </ul>
+  <p>It goes over the relay's Wi-Fi to the relay, then by long-range radio to the rescue team's command post, where it's shown on a map and kept so responders can follow up.</p>
+
+  <h2>Who can see it</h2>
+  <p>The radio signal is <strong>not encrypted</strong>. That keeps it small and fast, but anyone nearby with a compatible radio receiver could read the summary, including the location. Don't use RescuNote for anything you need kept secret.</p>
+
+  <h2>Visiting this website</h2>
+  <p>The app is hosted on GitHub Pages. Like any web host, GitHub may log your IP address when you load the site; see <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a>. After that first visit the app runs offline. Its fonts, AI model and voice clips are all stored with it, and it never contacts other services. Voice guidance uses recordings made in advance, not live text-to-speech.</p>
+
+  <h2>Location permission</h2>
+  <p>RescuNote asks for your location so rescuers can find you. If you say no, you can still send a report without it.</p>
+
+  <h2>Questions</h2>
+  <p>RescuNote is an open-source hackathon project. Ask questions or report a problem on <a href="https://github.com/Brian23443/civicmesh-sos/issues">GitHub</a>.</p>
+</main>
+</body>
+</html>
