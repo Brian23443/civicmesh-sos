@@ -105,3 +105,28 @@ textarea:focus { outline:2px solid var(--accent); outline-offset:0; }
 .odometer-reel > span { height:var(--gap); line-height:var(--gap); }
 @keyframes odometer-roll { from { transform:translate(-50%, var(--pad)); filter:blur(1.5px); } 70% { filter:blur(0); } to { transform:translate(-50%, calc(var(--steps) * var(--gap) * -1 + var(--pad))); filter:none; } }
 @media (prefers-reduced-motion: reduce) { .odometer-reel { animation:none; } }
+
+/* Home = exactly one screen. The shell is the viewport height; the message box takes whatever room is left,
+   so nothing scrolls on any phone (it shrinks to a 3-line minimum on small ones). */
+html.lock-scroll, html.lock-scroll body { height:100%; overflow:hidden; overscroll-behavior:none; }
+.app-shell.is-home { height:100dvh; display:flex; flex-direction:column; overflow:hidden;
+  padding-top:max(16px, env(safe-area-inset-top)); padding-bottom:calc(84px + env(safe-area-inset-bottom)); }
+.is-home main { flex:1; min-height:0; display:flex; flex-direction:column; }
+.is-home main > .home { flex:1; min-height:0; display:flex; flex-direction:column; }
+.is-home .home h1 { margin:14px 0 10px; }
+.is-home .report-form { flex:1; min-height:0; display:flex; flex-direction:column; }
+.is-home .report-form textarea { flex:1; min-height:84px; resize:none; margin-top:0; }
+.is-home .home > .button { flex-shrink:0; }
+.is-home .sent-banner { flex-shrink:0; }
+@media (max-height:700px) { .is-home .hero-logo { width:44px; height:55px; } .is-home .hero-name { font-size:34px; } .is-home .status-row { margin-top:8px; } }
+
+/* Help: top-left, mirrors the theme toggle. */
+.help-toggle { position:absolute; top:0; left:0; min-width:44px; min-height:44px; padding:0; border-radius:50%;
+  background:color-mix(in srgb, var(--bg) 70%, transparent); }
+.hero--compact .help-toggle { left:auto; right:52px; }
+
+/* Centred card (About): sized to its content, centred both ways, scrolls only if a tiny screen needs it. */
+.sheet.sheet--center { position:fixed; inset:0; margin:auto; width:min(calc(100% - 32px), 460px); height:fit-content;
+  max-height:calc(100dvh - 32px); border-radius:24px; padding:24px; overflow:auto; }
+.sheet--center p { margin:10px 0; font-size:16px; }
+.sheet--center h2 { margin:0; }

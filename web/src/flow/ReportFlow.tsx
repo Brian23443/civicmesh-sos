@@ -142,17 +142,16 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
     {gps.state==='failed'&&gpsUpdate?.phase!=='denied'&&gpsUpdate?.phase!=='unsupported'&&<Button className="small-button" onClick={requestGps}>Try again</Button>}</p>;
   return <>
     <Routes>
-      <Route path="/" element={<section>
+      <Route path="/" element={<section className="home">
         {receipt&&<div className="sent-banner" role="status"><CheckCircle2 aria-hidden="true" size={24}/><div>
           <strong>{relayBlocked?'Report saved — the relay didn’t open':'Report handed to the relay'}</strong>
           <span>{receiptSummary(receipt)}</span>
           <a href={RELAY_URL+receipt.hex}>Didn’t see “Report sent”? Send again (same report)</a>
         </div><Button aria-label="Dismiss" className="banner-close" onClick={()=>setReceipt(null)}><X aria-hidden="true" size={18}/></Button></div>}
         <h1>{receipt?'Anything else?':'What’s happening?'}</h1>
-        <p className="lead">Who needs help, and what’s wrong? Your words stay on this phone.</p>
         <form className="report-form" onSubmit={e=>{e.preventDefault();void analyze();}}>
           <label htmlFor="message" className="sr-only">What’s happening? Who needs help?</label>
-          <textarea id="message" value={message} onChange={e=>setMessage(e.target.value)} disabled={busy} rows={4} placeholder="For example: Water is rising, 3 of us on the roof, my dad needs insulin."/>
+          <textarea id="message" value={message} onChange={e=>setMessage(e.target.value)} disabled={busy} rows={4} placeholder="Who needs help, and what’s wrong? e.g. Water is rising, 3 of us on the roof, my dad needs insulin."/>
           <div className="quick-phrases" role="group" aria-label="Tap to add">
             {QUICK_PHRASES.map(phrase=><Button key={phrase} className="phrase" disabled={busy} onClick={()=>addPhrase(phrase)}><Plus aria-hidden="true" size={16}/>{phrase}</Button>)}
           </div>

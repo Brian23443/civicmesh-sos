@@ -44,6 +44,9 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
   // §12: ask the browser to keep the offline copy (iOS can otherwise evict it).
   useEffect(() => { try { void navigator.storage?.persist?.().catch(() => {}); } catch { /* unsupported */ } }, []);
   const offline=useOfflineStatus();
+  // The home screen is one fixed screen — no page scroll (the message box flexes to fit instead).
+  const isHome = location.pathname === '/';
+  useEffect(() => { document.documentElement.classList.toggle('lock-scroll', isHome); return () => document.documentElement.classList.remove('lock-scroll'); }, [isHome]);
   useEffect(() => {
     const titles: Record<string,string> = { '/':'Get help', '/analyze':'Reading your message', '/review':'Check and send', '/send':'Sent', '/reports':'My reports' };
     document.title = `${titles[location.pathname] ?? 'RescuNote'} · RescuNote`;
@@ -51,9 +54,10 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
   }, [location.pathname]);
   return <>
     <a className="skip-link" href="#main" onClick={event=>{event.preventDefault();main.current?.focus();}}>Skip to main content</a>
-    <div className="app-shell">
+    <div className={`app-shell ${isHome?'is-home':''}`}>
       {/* Big, centred brand with the odometer name on the home screen; compact elsewhere. */}
       <header className={`hero ${location.pathname==='/'?'':'hero--compact'}`}>
+        <Button className="help-toggle" aria-label="Open RescuNote information" onClick={() => setHelp(true)}><HelpCircle aria-hidden="true" size={20}/></Button>
         <Button className="theme-toggle" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} onClick={toggle}>{theme === 'dark' ? <Sun aria-hidden="true" size={20}/> : <Moon aria-hidden="true" size={20}/>}</Button>
         <NavLink to="/" aria-label="RescuNote home" className="hero-brand">
           <span aria-hidden="true" className="brand-logo hero-logo" style={{ maskImage:`url(${logoMark})`, WebkitMaskImage:`url(${logoMark})` }}/>
@@ -78,9 +82,15 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
         <ReportFlow classifier={classifier} store={store} relayNavigate={relayNavigate} onGpsStatus={setGpsLabel} analysisReady={!!suppliedClassifier||modelActive}/>
 
       </main>
-      <footer className="flex items-center justify-between gap-3 mt-8"><span>On your device. In your control.</span><Button aria-label="Open RescuNote information" onClick={() => setHelp(true)}><HelpCircle aria-hidden="true" size={22}/></Button></footer>
       <nav aria-label="Main navigation" className="bottom-nav"><NavLink to="/" end><Send aria-hidden="true" size={20}/>Get help</NavLink><NavLink to="/reports"><FileText aria-hidden="true" size={20}/>My reports</NavLink></nav>
     </div>
-    <Sheet open={help} onClose={() => setHelp(false)} title="About RescuNote"><p>RescuNote sends short emergency reports through a nearby radio relay (Wi-Fi network “RescuNote”), with no cell service or internet.</p><p>Your message is analyzed on this phone by a small triage model; the text itself is never sent — only an 18-byte summary you confirm. Check every suggested field before sending. The relay reply confirms radio handoff; this app does not confirm rescue delivery.</p><p>For Airplane Mode, load the website once while online and wait for “Ready offline ✓”. Manual reports remain available if the model cannot start.</p>{offline.missingInference.length>0&&<p>Some model files are missing from this build; manual reports still work.</p>}<p>On iPhone, Add to Home Screen helps iOS keep the app. <strong>The Home Screen app keeps its own separate copy:</strong> open it from the Home Screen once while online and wait for “Ready offline ✓” before relying on it offline.</p><Button className="primary mt-6" onClick={() => setHelp(false)}>Got it</Button></Sheet>
+    <Sheet open={help} onClose={() => setHelp(false)} title="About RescuNote" variant="center">
+      <p>RescuNote sends short emergency reports by radio through a nearby relay. No cell service or internet needed.</p>
+      <p><strong>Private:</strong> your message is read on this phone. Only an 18-byte summary of the details is sent, never your words.</p>
+      <p><strong>Get ready:</strong> open RescuNote once while online and wait for “Ready offline ✓”. If you add it to your Home Screen, open it from there once online too.</p>
+      <p><strong>To send:</strong> Airplane Mode on, Wi-Fi on, join “RescuNote”.</p>
+      {offline.missingInference.length>0&&<p>Some model files are missing from this build; you can still choose details from a list.</p>}
+      <Button className="primary full-width mt-4" onClick={() => setHelp(false)}>Got it</Button>
+    </Sheet>
   </>;
 }
