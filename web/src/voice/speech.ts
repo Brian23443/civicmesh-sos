@@ -18,9 +18,12 @@ let ctx: Ctx | null = null;
 const decoded = new Map<string, Promise<AudioBuffer | null>>();
 let run = 0;
 let playing: AudioBufferSourceNode[] = [];
+/** Speech that iOS blocked (audio suspended since the app was last in the background), played on the next tap. */
+let pending: { keys: string[]; at: number } | null = null;
+const PENDING_MS = 15_000;
 
 function context(): Ctx | null {
-  if (ctx) return ctx;
+  if (ctx && ctx.state !== 'closed') return ctx;
   const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
   if (!Ctor) return null;
   try {
@@ -34,12 +37,39 @@ function context(): Ctx | null {
 
 /** Call from inside a tap handler: lets later (async) playback start on iOS. */
 export function unlockAudio(): void {
-  const c = context();
+  let c = context();
   if (!c) return;
+  // iOS marks the context "interrupted" after the app was backgrounded (or a call/Siri); a fresh one
+  // is the reliable way back. Decoded clips are kept — AudioBuffers aren't tied to a context.
+  if ((c.state as string) === 'interrupted') { void c.close().catch(() => {}); ctx = null; c = context(); if (!c) return; }
   void c.resume().catch(() => {});
   try { // a one-sample silent buffer completes the unlock on older iOS
     const src = c.createBufferSource(); src.buffer = c.createBuffer(1, 1, 22050); src.connect(c.destination); src.start(0);
   } catch { /* ignore */ }
+  if (pending) {
+    const { keys, at } = pending; pending = null;
+    if (Date.now() - at < PENDING_MS) void say(keys);
+  }
+}
+
+/**
+ * Keeps voice working across leaving and returning to the app: any tap re-unlocks audio while voice
+ * guidance is on (iOS suspends it in the background), and speech stops when the app is hidden.
+ */
+export function installVoiceLifecycle(isOn: () => boolean): () => void {
+  const onTap = () => { if (isOn()) unlockAudio(); };
+  const onVisibility = () => { if (document.visibilityState === 'hidden') stopSpeaking(); };
+  for (const type of ['touchend', 'click'] as const) document.addEventListener(type, onTap, { capture: true, passive: true });
+  document.addEventListener('visibilitychange', onVisibility);
+  return () => {
+    for (const type of ['touchend', 'click'] as const) document.removeEventListener(type, onTap, { capture: true });
+    document.removeEventListener('visibilitychange', onVisibility);
+  };
+}
+
+/** resume() can stay pending forever when iOS won't allow audio yet — don't wait on it. */
+function resumeQuickly(c: Ctx): Promise<void> {
+  return Promise.race([c.resume().catch(() => {}), new Promise<void>(r => setTimeout(r, 300))]);
 }
 
 function clip(key: string): Promise<AudioBuffer | null> {
@@ -56,7 +86,7 @@ function clip(key: string): Promise<AudioBuffer | null> {
 }
 
 export function stopSpeaking(): void {
-  run++;
+  run++; pending = null;
   for (const s of playing) { try { s.stop(); } catch { /* already ended */ } }
   playing = [];
   try { window.speechSynthesis?.cancel(); } catch { /* unsupported */ }
@@ -70,7 +100,9 @@ export async function say(keys: string[]): Promise<void> {
   const buffers = await Promise.all(keys.map(clip));
   if (mine !== run) return;
   if (!c || buffers.some(b => !b)) return fallback(keys, mine);
-  await c.resume().catch(() => {});
+  await resumeQuickly(c);
+  if (mine !== run) return;
+  if (c.state !== 'running') { pending = { keys, at: Date.now() }; return; } // plays on the next tap
   let t = c.currentTime + 0.05;
   for (const b of buffers as AudioBuffer[]) {
     const src = c.createBufferSource(); src.buffer = b; src.connect(c.destination); src.start(t);

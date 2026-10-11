@@ -2,8 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useOfflineStatus } from './offline/useOfflineStatus';
 import { FileText, HelpCircle, Moon, Sun, Volume2, VolumeX, WifiOff } from 'lucide-react';
-import { say, stopSpeaking, unlockAudio } from './voice/speech';
-import { setVoiceEnabled, useVoiceEnabled } from './voice/voiceSetting';
+import { installVoiceLifecycle, say, stopSpeaking, unlockAudio } from './voice/speech';
+import { isVoiceEnabled, setVoiceEnabled, useVoiceEnabled } from './voice/voiceSetting';
 import { CrossIcon } from './components/CrossIcon';
 import logoMark from './assets/logo-mark.png';
 import { Odometer } from './components/Odometer';
@@ -52,6 +52,7 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
   // places the tab bar identically everywhere.
   const isHome = location.pathname === '/';
   const voiceOn = useVoiceEnabled();
+  useEffect(() => installVoiceLifecycle(isVoiceEnabled), []);
   // Turning voice on is a tap, so it also unlocks audio for later playback on iOS.
   const toggleVoice = () => {
     const next = !voiceOn;
