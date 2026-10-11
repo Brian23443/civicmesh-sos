@@ -4,12 +4,22 @@ import {
   ChevronUp,
   MapPin,
   MapPinOff,
-  RadioTower,
   Users,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import type { Incident, PriorityColor } from "../types/incident";
+import {
+  MEDICAL_NEEDS,
+  agoText,
+  hazardLabel,
+  locationNote,
+  medicalLabel,
+  peopleText,
+  priorityLabel,
+  statusLabel,
+  supplyTotals,
+} from "../utils/responder";
 import type { PriorityFilter } from "./TopBar";
 
 interface IncidentSidebarProps {
@@ -28,13 +38,6 @@ const priorityOrder: Record<PriorityColor, number> = {
   black: 3,
 };
 
-function ageLabel(timestamp: number): string {
-  const seconds = Math.max(0, Math.floor(Date.now() / 1000 - timestamp));
-  if (seconds < 60) return `${seconds}s ago`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-  return `${Math.floor(seconds / 3600)}h ago`;
-}
-
 function IncidentCard({
   incident,
   selected,
@@ -46,7 +49,7 @@ function IncidentCard({
   removing: boolean;
   onSelect: () => void;
 }) {
-  const people = incident.adults + incident.children;
+  const medical = incident.medical.filter((flag) => MEDICAL_NEEDS[flag]);
   return (
     <button
       aria-pressed={selected}
@@ -66,46 +69,40 @@ function IncidentCard({
       <div className="incident-card__body">
         <div className="incident-card__heading">
           <div>
-            <span className="priority-label">{incident.priority.name}</span>
-            <strong className="hazard-name">
-              {incident.hazard.name.replaceAll("_", " ")}
-            </strong>
+            <span className="priority-label">{priorityLabel(incident)}</span>
+            <strong className="hazard-name">{hazardLabel(incident)}</strong>
           </div>
-          <time dateTime={new Date(incident.received_at * 1000).toISOString()}>
-            {ageLabel(incident.received_at)}
+          <time
+            dateTime={new Date(incident.sent_at * 1000).toISOString()}
+            title="Time since the survivor sent it"
+          >
+            {agoText(incident.sent_at)}
           </time>
         </div>
 
         <div className="incident-meta">
           <span>
             <Users size={13} aria-hidden="true" />
-            {people} {people === 1 ? "person" : "people"}
+            {peopleText(incident)}
           </span>
-          <span>
-            <RadioTower size={13} aria-hidden="true" />
-            seq {incident.seq} · {incident.rssi ?? "—"} dBm
-          </span>
+          <span>{statusLabel(incident)}</span>
         </div>
 
-        <div className="incident-tags">
-          <span className="tag-pill">{incident.status.name}</span>
-          {incident.third_party && <span className="tag-pill">Third-party</span>}
-          {incident.location_discrepancy && (
-            <span className="tag-pill warning-tag">
-              <AlertTriangle size={11} aria-hidden="true" />
-              Check location
-            </span>
-          )}
-          {incident.medical.map((flag) => (
-            <span className="tag-pill" key={flag}>
-              {flag.replaceAll("_", " ")}
-            </span>
-          ))}
-        </div>
-
-        <code className="frame-preview">
-          {incident.frame_hex.slice(0, 14)}…
-        </code>
+        {(medical.length > 0 || locationNote(incident)) && (
+          <div className="incident-tags">
+            {medical.map((flag) => (
+              <span className="tag-pill tag-pill--need" key={flag}>
+                {medicalLabel(flag)}
+              </span>
+            ))}
+            {locationNote(incident) && (
+              <span className="tag-pill warning-tag">
+                <AlertTriangle size={11} aria-hidden="true" />
+                {incident.third_party ? "Third-party" : "Check location"}
+              </span>
+            )}
+          </div>
+        )}
       </div>
     </button>
   );
@@ -124,6 +121,7 @@ export function IncidentSidebar({
   const [isNoLocationCollapsed, setIsNoLocationCollapsed] = useState(false);
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
+  const supplies = useMemo(() => supplyTotals(incidents), [incidents]);
 
   const sorted = useMemo(
     () =>
@@ -131,7 +129,7 @@ export function IncidentSidebar({
         (left, right) =>
           priorityOrder[left.priority.color] -
             priorityOrder[right.priority.color] ||
-          right.received_at - left.received_at,
+          left.sent_at - right.sent_at,
       ),
     [incidents],
   );
@@ -141,11 +139,13 @@ export function IncidentSidebar({
       if (filter !== "all" && incident.priority.color !== filter) return false;
       if (!normalizedQuery) return true;
 
-      const hazard = incident.hazard.name.toLowerCase().replaceAll("_", " ");
+      const hazard = `${incident.hazard.name.replaceAll("_", " ")} ${hazardLabel(incident)}`.toLowerCase();
       const id = incident.id.toLowerCase();
-      const status = incident.status.name.toLowerCase();
+      const status = statusLabel(incident).toLowerCase();
       const seq = String(incident.seq);
-      const medical = incident.medical.join(" ").toLowerCase();
+      const medical = `${incident.medical.join(" ")} ${incident.medical.map(medicalLabel).join(" ")}`
+        .toLowerCase()
+        .replaceAll("_", " ");
 
       return (
         hazard.includes(normalizedQuery) ||
@@ -193,6 +193,18 @@ export function IncidentSidebar({
           <span>Show removed</span>
         </label>
       </div>
+      {supplies.length > 0 && (
+        <div aria-label="Reported needs across active incidents" className="supplies-summary">
+          <span className="supplies-summary__title">Needs across active incidents</span>
+          <div>
+            {supplies.map((item) => (
+              <span className="supply-chip" key={item.key}>
+                <strong>{item.count}</strong> {item.label}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       <div className="sidebar-floating-scroll">
         {/* Located Section */}

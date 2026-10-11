@@ -18,6 +18,16 @@ import { useEffect, useRef, useState } from "react";
 import darkStyleJson from "../assets/dark.json";
 import lightStyleJson from "../assets/light.json";
 import type { Incident, PriorityColor } from "../types/incident";
+import {
+  agoText,
+  hazardLabel,
+  locationNote,
+  medicalLabel,
+  needsFor,
+  peopleText,
+  priorityLabel,
+  statusLabel,
+} from "../utils/responder";
 import type { PriorityFilter } from "./TopBar";
 
 const protocol = new pmtiles.Protocol();
@@ -80,7 +90,7 @@ const LEGEND: Array<{ color: PriorityColor; label: string }> = [
   { color: "red", label: "Immediate" },
   { color: "yellow", label: "Delayed" },
   { color: "green", label: "Minor" },
-  { color: "black", label: "Expectant" },
+  { color: "black", label: "Deceased" },
 ];
 
 export const TRIAGE_COLORS: Record<PriorityColor, string> = {
@@ -511,35 +521,33 @@ export function OperationsMap({
         header.className = "map-popup-header";
         const badge = document.createElement("span");
         badge.className = `map-popup-priority map-popup-priority--${incident.priority.color}`;
-        badge.textContent = incident.priority.name;
+        badge.textContent = priorityLabel(incident);
         const label = document.createElement("strong");
-        label.textContent = incident.hazard.name.replaceAll("_", " ");
+        label.textContent = hazardLabel(incident);
         header.append(badge, label);
         popup.append(header);
 
-        const frameLabel = document.createElement("div");
-        frameLabel.className = "map-popup-frame-label";
-        frameLabel.textContent = "Compressed Frame (18B):";
-        const frameCode = document.createElement("code");
-        frameCode.className = "map-popup-hex";
-        frameCode.textContent = incident.frame_hex;
-        popup.append(frameLabel, frameCode);
-
         const summary = document.createElement("div");
         summary.className = "map-popup-summary";
-        const people = incident.adults + incident.children;
-        const details = [
-          incident.status.name,
-          `${people} ${people === 1 ? "person" : "people"}`,
-          ...incident.medical,
-        ].filter(Boolean);
-        summary.textContent = details.join(" · ");
+        summary.textContent = `${statusLabel(incident)} · ${peopleText(incident)} · ${agoText(incident.sent_at)}`;
         popup.append(summary);
 
-        if (incident.location_discrepancy) {
+        const needs = needsFor(incident).filter((need) => need.kind === "medical");
+        if (needs.length) {
+          const list = document.createElement("div");
+          list.className = "map-popup-needs";
+          for (const need of needs) {
+            const chip = document.createElement("span");
+            chip.textContent = medicalLabel(need.key);
+            list.append(chip);
+          }
+          popup.append(list);
+        }
+
+        if (locationNote(incident)) {
           const warning = document.createElement("span");
           warning.className = "map-popup-warning";
-          warning.textContent = "⚠ Location discrepancy";
+          warning.textContent = "⚠ Location uncertain — open details";
           popup.append(warning);
         }
 

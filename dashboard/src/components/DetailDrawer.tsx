@@ -5,6 +5,7 @@ import {
   Building2,
   Check,
   Clipboard,
+  Clock3,
   CloudLightning,
   Flame,
   HeartPulse,
@@ -26,6 +27,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { Incident } from "../types/incident";
 import { decodeFrameBreakdown } from "../utils/frame";
+import {
+  accuracyText,
+  agoText,
+  hazardLabel,
+  locationNote,
+  needsFor,
+  peopleText,
+  priorityLabel,
+  statusDetail,
+} from "../utils/responder";
 
 interface DetailDrawerProps {
   incident: Incident | null;
@@ -100,7 +111,8 @@ export function DetailDrawer({
   if (!incident) return null;
 
   const HazardIcon = hazardIcons[incident.hazard.name] ?? AlertTriangle;
-  const people = incident.adults + incident.children;
+  const needs = needsFor(incident);
+  const note = locationNote(incident);
   const hasLocation = incident.gps_accuracy.name !== "NO_FIX";
 
   const copyCoordinates = async () => {
@@ -140,11 +152,23 @@ export function DetailDrawer({
       >
         <header className="drawer-header" data-priority={incident.priority.color}>
           <div>
-            <span className="drawer-priority">{incident.priority.name}</span>
+            <span className="drawer-priority">{priorityLabel(incident)}</span>
             <h2 id="drawer-title">
               <HazardIcon size={21} aria-hidden="true" />
-              {incident.hazard.name.replaceAll("_", " ")}
+              {hazardLabel(incident)}
             </h2>
+            <p className="drawer-subtitle">
+              <strong>{statusDetail(incident)}</strong>
+              <span>
+                <Users size={14} aria-hidden="true" /> {peopleText(incident)}
+              </span>
+              <span>
+                <Clock3 size={14} aria-hidden="true" />
+                <time dateTime={new Date(incident.sent_at * 1000).toISOString()}>
+                  Sent {agoText(incident.sent_at)}
+                </time>
+              </span>
+            </p>
           </div>
           <button
             aria-label="Close incident details"
@@ -156,62 +180,25 @@ export function DetailDrawer({
             <X size={18} aria-hidden="true" />
           </button>
         </header>
-
         <div className="drawer-scroll">
-          {incident.third_party && (
-            <div className="warning-banner warning-banner--third-party">
-              <AlertTriangle size={18} aria-hidden="true" />
-              <div>
-                <strong>Third-party report</strong>
-                <span>
-                  Reporter is not at the scene — GPS shows the reporter, not the
-                  incident
-                </span>
-                <code>{incident.location_type}</code>
-              </div>
-            </div>
-          )}
-
-          {incident.location_discrepancy && !incident.third_party && (
-            <div className="warning-banner">
-              <AlertTriangle size={18} aria-hidden="true" />
-              <span>Reported location may differ from device GPS.</span>
-            </div>
-          )}
-
-          <section className="drawer-section">
-            <h3>Triage summary</h3>
-            <div className="detail-grid">
-              <div>
-                <span>Status</span>
-                <strong>{incident.status.name}</strong>
-              </div>
-              <div>
-                <span>Total people</span>
-                <strong>
-                  <Users size={14} aria-hidden="true" /> {people}
-                </strong>
-              </div>
-              <div>
-                <span>Adults</span>
-                <strong>{incident.adults}</strong>
-              </div>
-              <div>
-                <span>Children</span>
-                <strong>{incident.children}</strong>
-              </div>
-            </div>
-            <div className="medical-flags">
-              {incident.medical.length > 0 ? (
-                incident.medical.map((flag) => (
-                  <span className="medical-flag" key={flag}>
-                    {flag.replaceAll("_", " ")}
-                  </span>
-                ))
-              ) : (
-                <span className="empty-inline">No medical flags</span>
-              )}
-            </div>
+          <section aria-labelledby="needs-title" className="drawer-section needs-section">
+            <h3 id="needs-title">Bring / needs</h3>
+            {needs.length > 0 ? (
+              <ul className="needs-list">
+                {needs.map((need) => (
+                  <li data-kind={need.kind} key={need.key}>
+                    <strong>{need.bring}</strong>
+                    <span>{need.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="empty-inline">No special needs reported.</p>
+            )}
+            <p className="detail-caption">
+              Reported needs come from the survivor&apos;s message, read by the
+              on-phone model. Confirm on scene.
+            </p>
           </section>
 
           <section className="drawer-section">
@@ -236,20 +223,24 @@ export function DetailDrawer({
               <MapPin size={17} aria-hidden="true" />
               <code>
                 {hasLocation
-                  ? `${incident.lat.toFixed(6)}, ${incident.lon.toFixed(6)}`
-                  : "NO FIX"}
+                  ? `${incident.lat.toFixed(5)}, ${incident.lon.toFixed(5)}`
+                  : "No GPS fix — location unknown"}
               </code>
+              {hasLocation && <span className="accuracy-chip">{accuracyText(incident)}</span>}
             </div>
-            <p className="detail-caption">
-              GPS accuracy: {incident.gps_accuracy.name}
-              {incident.gps_accuracy.meters_max === null
-                ? ""
-                : ` · within ${incident.gps_accuracy.meters_max} m`}
-            </p>
+            {note && (
+              <div className="warning-banner">
+                <AlertTriangle size={18} aria-hidden="true" />
+                <span>{note}</span>
+              </div>
+            )}
           </section>
 
-          <section className="drawer-section">
-            <h3>Radio and timing</h3>
+          <details className="drawer-section technical-details">
+            <summary>
+              Technical details
+              <span>signal, timestamps, 18-byte radio frame</span>
+            </summary>
             <div className="detail-grid detail-grid--radio">
               <div>
                 <span>RSSI</span>
@@ -284,11 +275,12 @@ export function DetailDrawer({
                 <dt>Last heard</dt>
                 <dd>{localTime(incident.last_heard_at)}</dd>
               </div>
+              <div>
+                <dt>Message</dt>
+                <dd>seq {incident.seq}</dd>
+              </div>
             </dl>
-          </section>
-
-          <section className="drawer-section frame-section">
-            <h3>Compressed message (18-byte radio frame)</h3>
+            <h4 className="frame-heading">Compressed message (18-byte radio frame)</h4>
             <code className="frame-hex">{incident.frame_hex}</code>
             <div className="frame-table-wrap">
               <table className="frame-table">
@@ -322,7 +314,7 @@ export function DetailDrawer({
               on-device into structured triage fields to minimize radio airtime and
               protect privacy.
             </p>
-          </section>
+          </details>
         </div>
 
         <footer className="drawer-actions">

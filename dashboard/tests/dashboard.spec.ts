@@ -84,7 +84,7 @@ test("renders the live operator dashboard without browser errors", async ({
   await expect(
     page.getByRole("heading", { name: "CivicMesh-SOS Operator Dashboard" }),
   ).toBeVisible();
-  await expect(page.getByText("WS connected")).toBeVisible();
+  await expect(page.getByText(/Radio link OK/)).toBeVisible();
   await expect(
     page.getByRole("complementary", { name: "Incident queue" }),
   ).toBeVisible();
@@ -106,7 +106,12 @@ test("opens the detail drawer and decodes every frame field", async ({
 
   const drawer = page.getByRole("dialog");
   await expect(drawer).toBeVisible();
-  await expect(drawer.getByText("18-byte radio frame")).toBeVisible();
+  // The frame is kept for the demo but collapsed under "Technical details".
+  await expect(drawer.locator(".frame-hex")).toBeHidden();
+  await drawer.getByText("Technical details").click();
+  await expect(
+    drawer.getByRole("heading", { name: /18-byte radio frame/ }),
+  ).toBeVisible();
   await expect(drawer.locator(".frame-hex")).toHaveText(/^[0-9A-F]{36}$/);
   await expect(drawer.locator(".frame-table tbody tr")).toHaveCount(9);
   await expect(drawer.getByText("Priority / Hazard / Status")).toBeVisible();
@@ -170,4 +175,25 @@ test("starts in the operator's system theme and remembers a toggle", async ({
 
   await page.reload();
   await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+});
+
+test("shows responders what to bring and how far to trust the location", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await expect(page.getByLabel("Reported needs across active incidents")).toContainText("Insulin");
+
+  await page.locator(".incident-card", { hasText: "Flood" }).first().click();
+  const drawer = page.getByRole("dialog");
+  await expect(drawer.getByRole("heading", { name: "Flood" })).toBeVisible();
+  await expect(drawer.getByText("Trapped — needs extraction")).toBeVisible();
+  const needs = drawer.locator(".needs-list");
+  await expect(needs).toContainText("Insulin / glucose kit");
+  await expect(needs).toContainText("Water-rescue equipment");
+  await expect(needs).toContainText("Forcible entry / extraction tools");
+  await expect(needs).toContainText("Pediatric care");
+  await page.keyboard.press("Escape");
+
+  await page.locator(".incident-card", { hasText: "Structural collapse" }).first().click();
+  await expect(drawer.getByText(/street address that couldn't fit in the radio message/)).toBeVisible();
 });

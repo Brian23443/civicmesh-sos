@@ -2,7 +2,6 @@ import {
   Clock3,
   MapPinned,
   Radio,
-  RadioTower,
   RotateCw,
   Users,
   Wifi,
@@ -11,6 +10,7 @@ import {
 import type { BridgeConnectionState } from "../hooks/useBridgeSocket";
 import type { BridgeHealth } from "../services/api";
 import type { Incident, PriorityColor } from "../types/incident";
+import { agoText } from "../utils/responder";
 import type { PriorityFilter } from "./TopBar";
 
 export interface BottomDockProps {
@@ -24,10 +24,7 @@ export interface BottomDockProps {
 }
 
 function frameAge(timestamp: number | null | undefined): string {
-  if (timestamp == null) return "No frames";
-  const seconds = Math.max(0, Math.floor(Date.now() / 1000 - timestamp));
-  if (seconds < 60) return `${seconds}s ago`;
-  return `${Math.floor(seconds / 60)}m ago`;
+  return timestamp == null ? "No frames" : agoText(timestamp);
 }
 
 export function BottomDock({
@@ -56,6 +53,12 @@ export function BottomDock({
     0,
   );
   const averageRssi = activeIncidents.filter((i) => i.rssi !== null);
+  const lastReport = health?.last_frame_at == null ? "no reports yet" : `last report ${frameAge(health.last_frame_at)}`;
+  const link: { tone: "ok" | "warn" | "down"; label: string } = !connected
+    ? { tone: "down", label: websocketLabel.replace("WS connecting", "Connecting to bridge…").replace("Reconnecting…", "Reconnecting to bridge…") }
+    : !health?.serial_connected
+      ? { tone: "warn", label: "Radio not connected" }
+      : { tone: "ok", label: `Radio link OK · ${lastReport}` };
   const signalLabel = averageRssi.length
     ? `${Math.round(
         averageRssi.reduce((sum, i) => sum + (i.rssi ?? 0), 0) /
@@ -63,46 +66,41 @@ export function BottomDock({
       )} dBm`
     : "No telemetry";
 
+  const linkDetails = [
+    `Dashboard ↔ bridge: ${websocketLabel}`,
+    `Radio: ${health?.serial_connected ? `connected on ${health.port ?? "serial"}` : "not connected"}`,
+    `Last frame: ${frameAge(health?.last_frame_at)}`,
+    `Average signal: ${signalLabel}`,
+  ].join("\n");
+
   return (
     <footer
       aria-label="Operational status and telemetry"
       className="floating-summary-dock"
     >
-      {/* 3 Telemetry Pills moved to the bottom left */}
+      {/* One link indicator; the technical detail is in its tooltip */}
       <div aria-label="Connection telemetry" className="system-status-pills">
-        <span className="status-pill">
-          {connected ? (
+        <span
+          className={`status-pill link-pill link-pill--${link.tone}`}
+          title={linkDetails}
+        >
+          {link.tone === "ok" ? (
             <Wifi aria-hidden="true" size={14} />
-          ) : (
+          ) : link.tone === "down" ? (
             <RotateCw aria-hidden="true" className="spin-icon" size={14} />
+          ) : (
+            <Radio aria-hidden="true" size={14} />
           )}
           <i
             className={
-              connected
+              link.tone === "ok"
                 ? "status-dot status-dot--online"
-                : "status-dot status-dot--reconnecting"
+                : link.tone === "down"
+                  ? "status-dot status-dot--reconnecting"
+                  : "status-dot status-dot--standby"
             }
           />
-          {websocketLabel}
-        </span>
-
-        <span className="status-pill status-pill--serial">
-          <Radio aria-hidden="true" size={14} />
-          <i
-            className={
-              health?.serial_connected
-                ? "status-dot status-dot--online"
-                : "status-dot status-dot--standby"
-            }
-          />
-          {health?.serial_connected
-            ? `Serial ${health.port ? health.port.replace(/^\/dev\/(cu\.)?/, "") : "connected"}`
-            : "Serial standby"}
-        </span>
-
-        <span className="status-pill status-pill--muted">
-          <Clock3 aria-hidden="true" size={14} />
-          {frameAge(health?.last_frame_at)}
+          {link.label}
         </span>
       </div>
 
@@ -192,7 +190,7 @@ export function BottomDock({
 
         {(counts.black > 0 || filter === "black") && (
           <button
-            aria-label="Filter by Expectant (Black) priority"
+            aria-label="Filter by Deceased (Black) priority"
             aria-pressed={filter === "black"}
             className={`metric-chip metric-chip--button metric-chip--black ${filter === "black" ? "is-active" : ""}`}
             onClick={() =>
@@ -200,14 +198,14 @@ export function BottomDock({
             }
             title={
               filter === "black"
-                ? "Click to clear expectant filter"
-                : "Click to filter expectant (Black)"
+                ? "Click to clear deceased filter"
+                : "Click to filter deceased (Black)"
             }
             type="button"
           >
             <span aria-hidden="true" className="dot-expectant" />
             <span>
-              <strong>{counts.black}</strong> expectant
+              <strong>{counts.black}</strong> deceased
             </span>
           </button>
         )}
@@ -222,15 +220,6 @@ export function BottomDock({
           </span>
         </div>
 
-        <div
-          className="metric-chip"
-          title="Average LoRa signal strength across active nodes"
-        >
-          <RadioTower aria-hidden="true" size={13} />
-          <span>
-            <strong>{signalLabel}</strong>
-          </span>
-        </div>
       </div>
     </footer>
   );
