@@ -1,6 +1,6 @@
 // CivicMesh-SOS — field node (MASTER_PROMPT §13.1).
 //
-// Open Wi-Fi access point "CivicMesh-SOS" at 192.168.4.1. The survivor website
+// Open Wi-Fi access point "RescuNote" at 192.168.4.1. The survivor website
 // navigates to  http://192.168.4.1/sos?d=<36 hex>  and this node relays the
 // 18-byte frame over LoRa to the base station, then shows a "Sent ✓" page.
 // No captive-portal DNS redirect (iOS's portal browser can't see the website's
@@ -21,7 +21,7 @@
 #define APP_URL "https://brian23443.github.io/rescunote/"
 static_assert(APP_URL[0] == 'h', "APP_URL must be a bare URL string, without embedded quote marks");
 
-#define AP_SSID "CivicMesh-SOS"
+#define AP_SSID "RescuNote"
 #define TX_RETRY_DELAY_MS 100
 // A request for the exact frame relayed within this window is not transmitted again (browser
 // back/restore/prefetch of /sos). A deliberate re-send from the app has a new seq, so a new frame.

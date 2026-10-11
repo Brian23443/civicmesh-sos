@@ -28,7 +28,7 @@
 
 # Demo day
 
-Demo script (MASTER_PROMPT §13.5): a judge's phone opens the website once online → Airplane Mode → types *"Water is rising fast, my mother needs insulin, 2 of us trapped in attic"* → Review shows **Red · Flood · Trapped · 2 adults · Insulin** → joins `CivicMesh-SOS` → Send → within ~1 s a pulsing Red pin appears on the dashboard → click it (decoded fields + 18-byte breakdown) → remove the pin → Undo.
+Demo script (MASTER_PROMPT §13.5): a judge's phone opens the website once online → Airplane Mode → types *"Water is rising fast, my mother needs insulin, 2 of us trapped in attic"* → Review shows **Red · Flood · Trapped · 2 adults · Insulin** → joins `RescuNote` → Send → within ~1 s a pulsing Red pin appears on the dashboard → click it (decoded fields + 18-byte breakdown) → remove the pin → Undo.
 
 ## 1. Kit (pack the night before)
 
@@ -71,9 +71,9 @@ Order matters: the bridge must be listening before any frame is sent, and openin
    ```
    Check: `curl -s localhost:8000/api/health` → `"serial_connected":true`. The base station's screen shows **BASE STATION ready**.
 4. **Dashboard**: open `http://localhost:8000/` full-screen on the projector. Top bar shows WebSocket ● and serial ● connected.
-5. **Field node** → power bank (or wall adapter). Screen shows **READY · 0 sent**, `Wi-Fi: CivicMesh-SOS`, `192.168.4.1`. Place it where the judge stands; base station at the laptop.
+5. **Field node** → power bank (or wall adapter). Screen shows **READY · 0 sent**, `Wi-Fi: RescuNote`, `192.168.4.1`. Place it where the judge stands; base station at the laptop.
 6. **Smoke test** with a backup link (§5 below, link 2 or 3 — not link 1, keep that fresh): pin appears on the dashboard within ~1 s. Remove it from the dashboard afterwards.
-7. **Phones**: open the website **online** → wait for **"Ready offline ✓"** → **Airplane Mode on** → **Wi-Fi on** → join **CivicMesh-SOS** → when iOS/Android warns "No Internet Connection", choose **stay connected / use without internet**. Reload the website once in Airplane Mode to prove it is cached.
+7. **Phones**: open the website **online** → wait for **"Ready offline ✓"** → **Airplane Mode on** → **Wi-Fi on** → join **RescuNote** → when iOS/Android warns "No Internet Connection", choose **stay connected / use without internet**. Reload the website once in Airplane Mode to prove it is cached.
 
 ## 3. During the demo — what to point at
 
@@ -90,19 +90,19 @@ Order matters: the bridge must be listening before any frame is sent, and openin
 |---|---|---|
 | Phone shows "Sent ✓" but no pin | Bridge not running / not on the base station's port | `curl -s localhost:8000/api/health`; restart the bridge (§2.3). Check the base station screen: if it shows the frame, the radio worked and the problem is on the laptop |
 | Base station screen didn't change either | Radio link | Antennas screwed on? Both boards on the same firmware (SF7)? Press RST on both. Move the boards closer |
-| Phone can't load `192.168.4.1` | Phone not on `CivicMesh-SOS`, or the phone silently fell back to cellular / another Wi-Fi | Settings → Wi-Fi → `CivicMesh-SOS`, "stay connected". Airplane Mode keeps cellular off. Type `http://` explicitly; never `https://` |
-| `CivicMesh-SOS` network missing | Field node unpowered or crashed | Check its screen; replug the power bank / press RST. Some power banks sleep — wake it or use the wall adapter |
+| Phone can't load `192.168.4.1` | Phone not on `RescuNote`, or the phone silently fell back to cellular / another Wi-Fi | Settings → Wi-Fi → `RescuNote`, "stay connected". Airplane Mode keeps cellular off. Type `http://` explicitly; never `https://` |
+| `RescuNote` network missing | Field node unpowered or crashed | Check its screen; replug the power bank / press RST. Some power banks sleep — wake it or use the wall adapter |
 | "Report not recognised" page | Malformed link (hand-typed backup link with a typo) | Re-type it; it must be exactly 36 hex characters |
 | "Not sent yet" page | Radio transmit failed twice | Wait 2 s, tap Send / reload once more; press RST on the field node |
 | Dashboard says "Reconnecting…" | Bridge restarted or crashed | Restart the bridge; the dashboard reconnects by itself and reloads the pins from the database |
 | `serial_connected: false` | Base station cable/port | Replug; `ls /dev/cu.usb*` — the port name can change after replugging; restart the bridge with the new `--port` |
 | Pin appears but no new pin on a repeat | Working as designed: same device + seq within 10 min = same report, "heard" count goes up | Use a different backup link, or send from the website (it increments seq) |
-| Website broken on the judge's phone | PWA / model issue | Use the second phone. Last resort: type a backup link (§5) on any phone joined to `CivicMesh-SOS` |
+| Website broken on the judge's phone | PWA / model issue | Use the second phone. Last resort: type a backup link (§5) on any phone joined to `RescuNote` |
 | Everything broken | — | Play the backup screen recording, then explain the 18-byte frame from the dashboard drawer of an earlier pin |
 
 ## 5. Backup links (no website needed)
 
-Type on any phone joined to `CivicMesh-SOS`. Each has its own device id and seq, so each makes a **new** pin (once per fresh database / per 10 minutes). Pins land a few hundred metres apart around the simulator's default center (30.2672, −97.7431); regenerate them around the venue once Track 3 sets the demo center in `docs/INTEGRATION.md`.
+Type on any phone joined to `RescuNote`. Each has its own device id and seq, so each makes a **new** pin (once per fresh database / per 10 minutes). Pins land a few hundred metres apart around the simulator's default center (30.2672, −97.7431); regenerate them around the venue once Track 3 sets the demo center in `docs/INTEGRATION.md`.
 
 | # | Shows | Link |
 |---|---|---|

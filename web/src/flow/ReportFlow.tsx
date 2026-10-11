@@ -180,7 +180,7 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
           <Choice selected={draft.thirdParty} onClick={()=>patch({thirdParty:true})}>No, it’s someone else</Choice></div>
           {draft.locationText&&<p className="small">You mentioned “{draft.locationText}”. Your phone’s GPS shows where <em>you</em> are.</p>}
         </fieldset>
-        <div className="wifi-hint mt-4"><Wifi aria-hidden="true" size={22}/><p><strong>To send:</strong> keep Airplane Mode on, turn on Wi-Fi, and join <strong>CivicMesh-SOS</strong>.</p></div>
+        <div className="wifi-hint mt-4"><Wifi aria-hidden="true" size={22}/><p><strong>To send:</strong> keep Airplane Mode on, turn on Wi-Fi, and join <strong>RescuNote</strong>.</p></div>
         {error&&<p role="alert" className="notice">{error}</p>}{storageNote}
         <Button className="primary full-width send-button mt-4" onClick={send}><Send aria-hidden="true" size={22}/>{gpsWaiting?'Send now (location still loading)':'Send'}</Button>
         <Link to="/" className="text-link"><ArrowLeft aria-hidden="true" size={18}/>Back to your message</Link>

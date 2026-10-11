@@ -3,7 +3,7 @@
 | Sketch | Board | Role |
 |---|---|---|
 | `radio_test/` | both | Appendix B link test. `ROLE_SENDER` 1 = field node, 0 = base station |
-| `field_node/` | field node | Wi-Fi AP `CivicMesh-SOS` → `GET /sos?d=<hex>` → LoRa |
+| `field_node/` | field node | Wi-Fi AP `RescuNote` → `GET /sos?d=<hex>` → LoRa |
 | `base_station/` | base station | LoRa → serial `FRAME <hex> <rssi> <snr>` for the bridge |
 
 **Attach the antenna before powering a board.** Transmitting without one can damage the SX1262.
@@ -30,7 +30,7 @@ If an upload hangs at "Connecting…": hold PRG, tap RST, release PRG. If the bo
 
 ## Field-node checks
 
-From a laptop joined to `CivicMesh-SOS`:
+From a laptop joined to `RescuNote`:
 
 ```bash
 curl "http://192.168.4.1/sos?d=861200012B0BF3BA7E6A68E77800BEEF0050"   # → "Sent ✓" page, pin on the dashboard
