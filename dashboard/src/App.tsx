@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import { BottomDock } from "./components/BottomDock";
 import { DetailDrawer } from "./components/DetailDrawer";
 import { IncidentSidebar } from "./components/IncidentSidebar";
-import { OperationsMap } from "./components/OperationsMap";
+import { OperationsMap, type BasemapTheme } from "./components/OperationsMap";
 import { ToastRegion, type DashboardToast } from "./components/ToastRegion";
-import { TopBar } from "./components/TopBar";
+import { TopBar, type PriorityFilter } from "./components/TopBar";
 import { useBridgeSocket } from "./hooks/useBridgeSocket";
 import { mockIncidents } from "./mocks/incidents";
 import {
@@ -31,6 +32,19 @@ function upsertIncident(current: Incident[], incoming: Incident): Incident[] {
   );
 }
 
+const THEME_KEY = "civicmesh-dashboard-theme";
+
+/** The operator's last choice, else the system's light/dark setting. */
+function initialTheme(): BasemapTheme {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (saved === "light" || saved === "dark") return saved;
+  } catch {
+    // Storage unavailable: fall through to the system setting.
+  }
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
 function App() {
   const [incidents, setIncidents] = useState<Incident[]>(mockIncidents);
   const [health, setHealth] = useState<BridgeHealth | null>(null);
@@ -38,8 +52,16 @@ function App() {
   const [pulseIncidentId, setPulseIncidentId] = useState<string | null>(null);
   const [pendingRemovalId, setPendingRemovalId] = useState<string | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(false);
+  const [theme, setTheme] = useState<BasemapTheme>(initialTheme);
+  const [filter, setFilter] = useState<PriorityFilter>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [toast, setToast] = useState<DashboardToast | null>(null);
   const toastId = useRef(0);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   const showToast = useCallback(
     (
@@ -181,38 +203,67 @@ function App() {
     });
   }, []);
 
+  const handleToggleTheme = useCallback(() => {
+    setTheme((current) => {
+      const next = current === "light" ? "dark" : "light";
+      try {
+        localStorage.setItem(THEME_KEY, next);
+      } catch {
+        // Storage unavailable (private window): the choice lasts for this session only.
+      }
+      return next;
+    });
+  }, []);
+
   return (
-    <div className="app-shell">
-      <TopBar
-        connectionState={connectionState}
-        counts={counts}
-        health={health}
-        onToggleSound={handleToggleSound}
-        retryCount={retryCount}
-        soundEnabled={soundEnabled}
-      />
-      <main className="workspace">
+    <div className="app-shell" data-theme={theme}>
+      {/* Permanent Edge-to-Edge Full-Screen Map */}
+      <main className="map-fullscreen-container">
         <OperationsMap
+          filterPriority={filter}
           incidents={incidents}
           onSelect={handleSelect}
           pendingRemovalId={pendingRemovalId}
           pulseIncidentId={pulseIncidentId}
           selectedId={selectedId}
-        />
-        <IncidentSidebar
-          incidents={incidents}
-          onSelect={handleSelect}
-          pendingRemovalId={pendingRemovalId}
-          selectedId={selectedId}
+          theme={theme}
         />
       </main>
-      <footer className="app-footer">
-        <span>
-          {connectionState === "connected" ? "Live bridge" : "Mock cache"}
-          {" · "}Contract K3
-        </span>
-        <code>{incidents.length} frames loaded</code>
-      </footer>
+
+      {/* Floating Modern UI Overlays (Google / Apple Maps Aesthetic) */}
+      <div className="floating-ui-layer">
+        <TopBar
+          isSidebarOpen={isSidebarOpen}
+          onSearchChange={setSearchQuery}
+          onToggleSidebar={() => setIsSidebarOpen((v) => !v)}
+          onToggleSound={handleToggleSound}
+          onToggleTheme={handleToggleTheme}
+          searchQuery={searchQuery}
+          soundEnabled={soundEnabled}
+          theme={theme}
+        />
+
+        {isSidebarOpen && (
+          <IncidentSidebar
+            filter={filter}
+            incidents={incidents}
+            onSelect={handleSelect}
+            pendingRemovalId={pendingRemovalId}
+            searchQuery={searchQuery}
+            selectedId={selectedId}
+          />
+        )}
+
+        <BottomDock
+          connectionState={connectionState}
+          counts={counts}
+          filter={filter}
+          health={health}
+          incidents={incidents}
+          onSelectFilter={setFilter}
+          retryCount={retryCount}
+        />
+      </div>
 
       <DetailDrawer
         incident={selectedIncident}

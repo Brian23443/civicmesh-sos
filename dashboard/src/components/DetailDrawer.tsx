@@ -288,7 +288,7 @@ export function DetailDrawer({
           </section>
 
           <section className="drawer-section frame-section">
-            <h3>18-byte radio frame</h3>
+            <h3>Compressed message (18-byte radio frame)</h3>
             <code className="frame-hex">{incident.frame_hex}</code>
             <div className="frame-table-wrap">
               <table className="frame-table">
@@ -317,8 +317,10 @@ export function DetailDrawer({
               </table>
             </div>
             <p className="privacy-note">
-              Only these 18 bytes traveled over the radio; the survivor&apos;s
-              original text is never transmitted.
+              Only these 18 bit-packed bytes traveled over the LoRa radio; the
+              survivor&apos;s free-text distress message is analyzed and compressed
+              on-device into structured triage fields to minimize radio airtime and
+              protect privacy.
             </p>
           </section>
         </div>

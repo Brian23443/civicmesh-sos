@@ -85,12 +85,12 @@ test("renders the live operator dashboard without browser errors", async ({
     page.getByRole("heading", { name: "CivicMesh-SOS Operator Dashboard" }),
   ).toBeVisible();
   await expect(page.getByText("WS connected")).toBeVisible();
-  await expect(page.getByLabel("Incident queue")).toBeVisible();
+  await expect(
+    page.getByRole("complementary", { name: "Incident queue" }),
+  ).toBeVisible();
   await expect(page.locator(".incident-card")).toHaveCount(9);
   await expect(page.getByRole("heading", { name: "No location" })).toBeVisible();
-  await expect(page.locator(".map-mode")).toContainText(
-    /Offline canvas|Grid fallback/,
-  );
+  await expect(page.getByLabel("Triage legend")).toContainText("Immediate");
   await expect(
     page.locator(".maplibregl-canvas, .fallback-grid").first(),
   ).toBeVisible();
@@ -111,9 +111,7 @@ test("opens the detail drawer and decodes every frame field", async ({
   await expect(drawer.locator(".frame-table tbody tr")).toHaveCount(9);
   await expect(drawer.getByText("Priority / Hazard / Status")).toBeVisible();
   await expect(
-    drawer.getByText(
-      "Only these 18 bytes traveled over the radio; the survivor's original text is never transmitted.",
-    ),
+    drawer.getByText(/Only these 18 bit-packed bytes traveled over the LoRa radio/),
   ).toBeVisible();
 
   await page.keyboard.press("Escape");
@@ -135,4 +133,41 @@ test("removes a pin and restores it from the Undo toast", async ({ page }) => {
   await toast.getByRole("button", { name: "Undo" }).click();
   await expect(toast).toBeHidden();
   await expect(page.locator(".incident-card")).toHaveCount(9);
+});
+
+test("loads everything from the local machine (no internet requests)", async ({
+  page,
+}) => {
+  const remote: string[] = [];
+  page.on("request", (request) => {
+    const { hostname, protocol } = new URL(request.url());
+    if (
+      (protocol === "http:" || protocol === "https:" || protocol === "ws:") &&
+      !["127.0.0.1", "localhost"].includes(hostname)
+    ) {
+      remote.push(request.url());
+    }
+  });
+
+  await page.goto("/");
+  await expect(
+    page.locator(".maplibregl-canvas, .fallback-grid").first(),
+  ).toBeVisible();
+  await page.waitForTimeout(2_000); // let tiles, glyphs and sprites load
+
+  expect(remote).toEqual([]);
+});
+
+test("starts in the operator's system theme and remembers a toggle", async ({
+  page,
+}) => {
+  await page.emulateMedia({ colorScheme: "dark" });
+  await page.goto("/");
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
+
+  await page.getByRole("button", { name: "Switch to light mode" }).click();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+
+  await page.reload();
+  await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
 });

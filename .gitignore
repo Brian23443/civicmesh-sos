@@ -31,6 +31,10 @@ bridge/*.db-journal
 # --- Offline basemap extract (large; copy to the demo laptop by hand) ---
 dashboard/public/*.pmtiles
 
+# --- Playwright output ---
+dashboard/test-results/
+dashboard/playwright-report/
+
 # --- Arduino build output ---
 firmware/**/build/
 
