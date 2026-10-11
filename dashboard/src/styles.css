@@ -650,9 +650,11 @@ code, .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
   border-color: var(--border-strong);
   box-shadow: var(--card-shadow);
 }
+/* Selection takes the card's own priority colour (a blue ring clashed with red/yellow cards). */
 .incident-card.is-selected {
-  border-color: var(--cyan);
-  box-shadow: 0 0 0 2px var(--cyan-glow), var(--card-shadow);
+  border-color: var(--priority);
+  background: color-mix(in srgb, var(--priority) 9%, var(--surface-raised));
+  box-shadow: 0 0 0 1px var(--priority), var(--card-shadow);
 }
 .incident-card.is-removing {
   opacity: 0.25;
@@ -699,7 +701,9 @@ code, .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
 }
 .incident-card__heading time {
   color: var(--text-muted);
-  font: 11px "JetBrains Mono", monospace;
+  font-size: 11.5px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
   flex-shrink: 0;
 }
 
