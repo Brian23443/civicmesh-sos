@@ -142,3 +142,7 @@ html { overscroll-behavior-y:none; }
 .hero--compact .voice-toggle { left:auto; right:104px; }
 .voice-debug { position:fixed; z-index:60; left:8px; right:8px; top:max(8px, env(safe-area-inset-top)); margin:0; padding:6px 8px; border-radius:8px;
   background:rgb(0 0 0 / .78); color:#7CFC9A; font:11px/1.35 ui-monospace,monospace; white-space:pre-wrap; pointer-events:none; }
+/* Home Screen app: anchor to the large viewport (= the physical screen there; see main.tsx).
+   bottom = dvh − lvh is 0 when iOS lays out correctly and −62 pt when it lays out short. */
+html.standalone .bottom-nav { bottom:calc(100dvh - 100lvh); }
+html.standalone .app-shell.is-home { height:100lvh; }

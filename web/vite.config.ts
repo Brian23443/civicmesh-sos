@@ -7,6 +7,7 @@ import { MAX_PRECACHE_BYTES, PRECACHE_PATTERNS, PRECACHE_IGNORES } from './src/o
 
 export default defineConfig({
   base: process.env.VITE_BASE_PATH || '/',
+  define: { __BUILD_TIME__: JSON.stringify(new Date().toISOString().slice(0, 16)) },
   plugins: [react(), tailwindcss(), offlineInventory(), VitePWA({
     registerType: 'autoUpdate', strategies: 'generateSW',
     includeAssets: ['favicon.png', 'apple-touch-icon.png'],

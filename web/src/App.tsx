@@ -52,6 +52,26 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
   // places the tab bar identically everywhere.
   const isHome = location.pathname === '/';
   const voiceOn = useVoiceEnabled();
+  // Hidden layout diagnostics: tap the tagline 5 times (works inside the Home Screen app, where
+  // URL flags can't be passed). Shows the build and what iOS reports about the viewport.
+  const [diag, setDiag] = useState('');
+  const tagTaps = useRef<number[]>([]);
+  const onTagTap = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const now = Date.now(); tagTaps.current = [...tagTaps.current.filter(t => now - t < 2500), now];
+    if (tagTaps.current.length < 5) return;
+    tagTaps.current = [];
+    if (diag) { setDiag(''); return; }
+    const probe = (css: string) => { const d = document.createElement('div'); d.style.cssText = `position:fixed;left:0;width:1px;visibility:hidden;${css}`; document.body.append(d); const r = d.getBoundingClientRect(); d.remove(); return r; };
+    const nav = document.querySelector('.bottom-nav')?.getBoundingClientRect();
+    const vv = window.visualViewport;
+    setDiag([`build ${__BUILD_TIME__}  standalone ${(navigator as unknown as { standalone?: boolean }).standalone}`,
+      `screen ${screen.width}x${screen.height}  inner ${window.innerWidth}x${window.innerHeight}  client ${document.documentElement.clientHeight}`,
+      `vv ${Math.round(vv?.height ?? 0)} top ${Math.round(vv?.offsetTop ?? 0)}  scrollY ${window.scrollY}`,
+      `fixed inset0 ${Math.round(probe('top:0;bottom:0').height)}  100dvh ${Math.round(probe('top:0;height:100dvh').height)}  100lvh ${Math.round(probe('top:0;height:100lvh').height)}`,
+      `safe top ${Math.round(probe('top:0;height:env(safe-area-inset-top)').height)} bottom ${Math.round(probe('top:0;height:env(safe-area-inset-bottom)').height)}`,
+      `nav bottom ${Math.round(nav?.bottom ?? 0)}`].join('\n'));
+  };
   useEffect(() => installVoiceLifecycle(isVoiceEnabled), []);
   const [voiceLog, setVoiceLog] = useState<string[]>([]);
   useEffect(() => {
@@ -95,7 +115,7 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
         <NavLink to="/" aria-label="RescuNote home" className="hero-brand">
           <span aria-hidden="true" className="brand-logo hero-logo" style={{ maskImage:`url(${logoMark})`, WebkitMaskImage:`url(${logoMark})` }}/>
           <Odometer text="RescuNote" className="hero-name"/>
-          <span className="hero-tag">Offline emergency reporting</span>
+          <span className="hero-tag" onClick={onTagTap}>Offline emergency reporting</span>
         </NavLink>
       </header>
       <div className="status-row">
@@ -115,6 +135,7 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
         <ReportFlow classifier={classifier} store={store} relayNavigate={relayNavigate} onGpsStatus={setGpsLabel} analysisReady={!!suppliedClassifier||modelActive}/>
 
       </main>
+      {diag && <pre className="voice-debug" aria-hidden="true">{diag}</pre>}
       {voiceDebugEnabled && <pre className="voice-debug" aria-hidden="true">{voiceLog.join('\n') || 'voice debug'}</pre>}
       <nav aria-label="Main navigation" className="bottom-nav"><NavLink to="/" end><CrossIcon size={20}/>Get help</NavLink><NavLink to="/reports"><FileText aria-hidden="true" size={20}/>My reports</NavLink></nav>
     </div>
