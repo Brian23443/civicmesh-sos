@@ -272,9 +272,14 @@ code, .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
   -webkit-backdrop-filter: blur(20px);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
-.floating-search-bar:focus-within {
-  border-color: var(--cyan);
-  box-shadow: 0 8px 32px var(--cyan-glow), var(--floating-shadow);
+.floating-search-bar,
+.floating-search-bar * {
+  -webkit-tap-highlight-color: transparent;
+}
+.floating-search-bar :focus,
+.floating-search-bar :focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 .search-icon {
   color: var(--text-muted);
