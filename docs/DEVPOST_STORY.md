@@ -15,7 +15,7 @@ We asked: *what's the smallest message that still tells a rescuer everything the
 3. The report is packed into an **18-byte frame** and handed to a nearby **LoRa radio relay** over its local Wi-Fi network. The relay transmits it by long-range radio.
 4. A **base station** at the command post receives it, and a pin appears on a live **operator dashboard** with a "what to bring" list for the crew (insulin kit, water-rescue gear, pediatric care…).
 
-The survivor's words never leave their phone; only the coded summary does. There are no accounts, analytics or tracking ([privacy notice](https://brian23443.github.io/rescunote/privacy.html)).
+The survivor's words never leave their phone; only the coded summary does. There are no accounts, analytics or tracking ([privacy notice](https://rescunote.tech/privacy.html)).
 
 ## How we built it
 

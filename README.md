@@ -4,7 +4,7 @@
 
 A survivor types (or dictates) what's happening on a phone in Airplane Mode → an on-device model fills in a triage report → they confirm → an 18-byte frame goes over local Wi-Fi to a LoRa field node → 915 MHz LoRa → base station → a pin on the operator dashboard. No internet or cell service anywhere in the chain.
 
-- **Try the survivor app:** https://brian23443.github.io/rescunote/ (works offline after one visit) · [Privacy](https://brian23443.github.io/rescunote/privacy.html)
+- **Try the survivor app:** https://rescunote.tech/ (works offline after one visit) · [Privacy](https://rescunote.tech/privacy.html)
 - Project story: [docs/DEVPOST_STORY.md](docs/DEVPOST_STORY.md) · Full specification: [MASTER_PROMPT.md](MASTER_PROMPT.md) · Live integration values: [docs/INTEGRATION.md](docs/INTEGRATION.md)
 
 | Part | Folder | Stack |
@@ -62,7 +62,7 @@ Details and command-line flashing: [firmware/README.md](firmware/README.md).
 
 ### 4. Send a report from a phone
 
-1. While online, open https://brian23443.github.io/rescunote/ and wait for **Ready offline ✓** (optionally Share → *Add to Home Screen*, then open it once online).
+1. While online, open https://rescunote.tech/ and wait for **Ready offline ✓** (optionally Share → *Add to Home Screen*, then open it once online).
 2. Turn on **Airplane Mode**, turn **Wi-Fi** back on, and join **RescuNote** (stay connected when iOS warns there's no internet).
 3. Type what's happening → **Send for help** → check the summary → **Send**. The relay shows *Report sent*, and a pin appears on the dashboard within about a second.
 

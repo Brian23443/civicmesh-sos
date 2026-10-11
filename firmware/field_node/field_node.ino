@@ -18,7 +18,7 @@
 // Hosted survivor website (docs/INTEGRATION.md). Set it here, not with a -D compile flag:
 // shell quoting through arduino-cli leaves literal quote marks in the string, which makes the
 // "Back to RescuNote" href empty — a tap then reloads /sos and re-transmits the report.
-#define APP_URL "https://brian23443.github.io/rescunote/"
+#define APP_URL "https://rescunote.tech/"
 static_assert(APP_URL[0] == 'h', "APP_URL must be a bare URL string, without embedded quote marks");
 
 #define AP_SSID "RescuNote"
