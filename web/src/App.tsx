@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useOfflineStatus } from './offline/useOfflineStatus';
 import { FileText, HelpCircle, Moon, Sun, Volume2, VolumeX, WifiOff } from 'lucide-react';
-import { installVoiceLifecycle, say, stopSpeaking, unlockAudio } from './voice/speech';
+import { installVoiceLifecycle, say, stopSpeaking, unlockAudio, voiceDebugEnabled } from './voice/speech';
 import { isVoiceEnabled, setVoiceEnabled, useVoiceEnabled } from './voice/voiceSetting';
 import { CrossIcon } from './components/CrossIcon';
 import logoMark from './assets/logo-mark.png';
@@ -53,6 +53,12 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
   const isHome = location.pathname === '/';
   const voiceOn = useVoiceEnabled();
   useEffect(() => installVoiceLifecycle(isVoiceEnabled), []);
+  const [voiceLog, setVoiceLog] = useState<string[]>([]);
+  useEffect(() => {
+    if (!voiceDebugEnabled) return;
+    const on = (e: Event) => setVoiceLog(l => [...l.slice(-7), (e as CustomEvent<string>).detail]);
+    window.addEventListener('voicedebug', on); return () => window.removeEventListener('voicedebug', on);
+  }, []);
   // Turning voice on is a tap, so it also unlocks audio for later playback on iOS.
   const toggleVoice = () => {
     const next = !voiceOn;
@@ -109,6 +115,7 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
         <ReportFlow classifier={classifier} store={store} relayNavigate={relayNavigate} onGpsStatus={setGpsLabel} analysisReady={!!suppliedClassifier||modelActive}/>
 
       </main>
+      {voiceDebugEnabled && <pre className="voice-debug" aria-hidden="true">{voiceLog.join('\n') || 'voice debug'}</pre>}
       <nav aria-label="Main navigation" className="bottom-nav"><NavLink to="/" end><CrossIcon size={20}/>Get help</NavLink><NavLink to="/reports"><FileText aria-hidden="true" size={20}/>My reports</NavLink></nav>
     </div>
     <Sheet open={help} onClose={() => setHelp(false)} title="About RescuNote" variant="center">

@@ -22,31 +22,30 @@ describe('spoken read-back', () => {
   });
 });
 
-describe('voice after returning to the app (iOS suspends audio in the background)', () => {
-  it('holds speech while audio is suspended and plays it on the next tap', async () => {
+describe('voice after returning to the app (iOS refuses playback until a tap)', () => {
+  it('holds speech iOS refused and plays it on the next tap', async () => {
     const { vi } = await import('vitest');
-    const started: number[] = [];
-    let state: AudioContextState = 'suspended';
-    class FakeContext {
-      get state() { return state; }
-      currentTime = 0; destination = {};
-      resume() { return new Promise<void>(() => {}); }          // iOS: never settles without a tap
-      close() { return Promise.resolve(); }
-      decodeAudioData() { return Promise.resolve({ duration: 0.5, length: 22050 }); }
-      createBuffer() { return { duration: 0, length: 1 }; }
-      createBufferSource() { return { buffer: null as { length: number } | null, connect() {}, stop() {}, start() { if (this.buffer && this.buffer.length > 1) started.push(1); } }; }
-    }
-    vi.stubGlobal('AudioContext', FakeContext);
-    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(8) })));
+    let allowed = false;
+    const played: string[] = [];
+    vi.stubGlobal('fetch', vi.fn(async (url: string) => ({ ok: true, blob: async () => new Blob([url]) })));
+    vi.stubGlobal('URL', Object.assign(URL, { createObjectURL: (b: Blob) => `blob:${(b as Blob).size}:${Math.random()}` }));
+    const play = vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function (this: HTMLMediaElement) {
+      if (!allowed) return Promise.reject(new DOMException('not allowed', 'NotAllowedError'));
+      played.push(this.src);
+      setTimeout(() => this.onended?.(new Event('ended')), 0);
+      return Promise.resolve();
+    });
+    vi.spyOn(HTMLMediaElement.prototype, 'pause').mockImplementation(() => {});
     vi.resetModules();
     const speech = await import('./speech');
 
     await speech.say(['sent']);
-    expect(started).toHaveLength(0);                            // blocked: nothing played, held for later
+    expect(played).toHaveLength(0);                  // refused: held for the next tap
 
-    state = 'running';                                          // the user taps → iOS allows audio
+    allowed = true;                                  // the user taps → iOS allows playback
     speech.unlockAudio();
-    await vi.waitFor(() => expect(started).toHaveLength(1));    // the held line plays
-    vi.unstubAllGlobals();
+    await vi.waitFor(() => expect(played.filter(s => !s.includes(':44')).length).toBeGreaterThanOrEqual(1));
+    expect(play).toHaveBeenCalled();
+    vi.restoreAllMocks(); vi.unstubAllGlobals();
   });
 });

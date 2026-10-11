@@ -140,3 +140,5 @@ html { overscroll-behavior-y:none; }
   background:var(--surface); box-shadow:0 1px 2px rgb(0 0 0 / .06); color:var(--text); }
 .voice-toggle[aria-pressed="true"] { background:var(--accent); color:var(--accent-text); }
 .hero--compact .voice-toggle { left:auto; right:104px; }
+.voice-debug { position:fixed; z-index:60; left:8px; right:8px; top:max(8px, env(safe-area-inset-top)); margin:0; padding:6px 8px; border-radius:8px;
+  background:rgb(0 0 0 / .78); color:#7CFC9A; font:11px/1.35 ui-monospace,monospace; white-space:pre-wrap; pointer-events:none; }

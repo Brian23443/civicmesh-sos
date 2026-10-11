@@ -3,62 +3,78 @@
  * public/voice/<lang>/ — the phone never contacts ElevenLabs. Phrases are stitched together with short
  * pauses; a missing clip falls back to the phone's built-in voice.
  *
- * iOS rules this handles: audio may only start inside a tap (unlock() from the tap handler, then later
- * playback is allowed), and the silent switch mutes web audio unless the session is "playback".
+ * Playback uses ONE <audio> element, because that is what iOS reliably allows:
+ *  - once a tap has played something through an element, iOS lets that element play later (e.g. the
+ *    read-back that starts after analysis), including after the app was backgrounded;
+ *  - media elements play through the ring/silent switch.
+ * (Web Audio was tried first: after leaving and returning to the app iOS kept it silent.)
+ * Clips are fetched (from the offline cache) and played from blob: URLs — Safari's media loader makes
+ * Range requests that a service-worker cache can't answer, so direct URLs could fail offline.
  */
 import phrases from './phrases.en.json';
 import type { FrameFields } from '../protocol/types';
 
 const TEXT = phrases as Record<string, string>;
-const GAP_S = 0.14;   // pause between phrases
+const GAP_MS = 140;   // pause between phrases
 const BASE = `${import.meta.env.BASE_URL}voice/en/`;
-
-type Ctx = AudioContext;
-let ctx: Ctx | null = null;
-const decoded = new Map<string, Promise<AudioBuffer | null>>();
-let run = 0;
-let playing: AudioBufferSourceNode[] = [];
-/** Speech that iOS blocked (audio suspended since the app was last in the background), played on the next tap. */
-let pending: { keys: string[]; at: number } | null = null;
 const PENDING_MS = 15_000;
 
-function context(): Ctx | null {
-  if (ctx && ctx.state !== 'closed') return ctx;
-  const Ctor = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!Ctor) return null;
-  try {
-    // Safari 17+: play through the ring/silent switch like media does.
-    const session = (navigator as unknown as { audioSession?: { type: string } }).audioSession;
-    if (session) session.type = 'playback';
-  } catch { /* unsupported */ }
-  ctx = new Ctor();
-  return ctx;
+let player: HTMLAudioElement | null = null;
+const urls = new Map<string, Promise<string | null>>();
+let run = 0;
+/** Speech iOS blocked (no tap yet since the app came back), played on the next tap. */
+let pending: { keys: string[]; at: number } | null = null;
+let silence: string | null = null;
+
+/** Hidden diagnostics (open the app with ?voicedebug=1): what iOS allowed, shown on screen. */
+const DEBUG = typeof location !== 'undefined' && new URLSearchParams(location.search).has('voicedebug');
+export const voiceDebugEnabled = DEBUG;
+function log(msg: string) {
+  if (!DEBUG) return;
+  const line = `${new Date().toLocaleTimeString()} ${msg}`;
+  window.dispatchEvent(new CustomEvent('voicedebug', { detail: line }));
+}
+
+function audio(): HTMLAudioElement | null {
+  if (player) return player;
+  if (typeof Audio === 'undefined') return null;
+  player = new Audio();
+  player.preload = 'auto';
+  player.setAttribute('playsinline', '');
+  return player;
+}
+
+/** 50 ms of silent 8 kHz mono WAV, built in memory — used to "prime" the element inside a tap. */
+function silentUrl(): string {
+  if (silence) return silence;
+  const samples = 400, bytes = 44 + samples;
+  const v = new DataView(new ArrayBuffer(bytes));
+  const str = (o: number, t: string) => [...t].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
+  str(0, 'RIFF'); v.setUint32(4, bytes - 8, true); str(8, 'WAVEfmt '); v.setUint32(16, 16, true);
+  v.setUint16(20, 1, true); v.setUint16(22, 1, true); v.setUint32(24, 8000, true); v.setUint32(28, 8000, true);
+  v.setUint16(32, 1, true); v.setUint16(34, 8, true); str(36, 'data'); v.setUint32(40, samples, true);
+  for (let i = 0; i < samples; i++) v.setUint8(44 + i, 128);
+  silence = URL.createObjectURL(new Blob([v.buffer], { type: 'audio/wav' }));
+  return silence;
 }
 
 /** Call from inside a tap handler: lets later (async) playback start on iOS. */
 export function unlockAudio(): void {
-  let c = context();
-  if (!c) return;
-  // iOS marks the context "interrupted" after the app was backgrounded (or a call/Siri); a fresh one
-  // is the reliable way back. Decoded clips are kept — AudioBuffers aren't tied to a context.
-  if ((c.state as string) === 'interrupted') { void c.close().catch(() => {}); ctx = null; c = context(); if (!c) return; }
-  void c.resume().catch(() => {});
-  try { // a one-sample silent buffer completes the unlock on older iOS
-    const src = c.createBufferSource(); src.buffer = c.createBuffer(1, 1, 22050); src.connect(c.destination); src.start(0);
-  } catch { /* ignore */ }
-  if (pending) {
-    const { keys, at } = pending; pending = null;
-    if (Date.now() - at < PENDING_MS) void say(keys);
-  }
+  const el = audio();
+  if (!el) return;
+  const held = pending; pending = null;
+  // Prime the element synchronously, inside the tap — that grants it permission to play later.
+  if (el.paused) { el.src = silentUrl(); el.play().then(() => log('prime ok'), e => log(`prime refused: ${e?.name}`)); }
+  if (held && Date.now() - held.at < PENDING_MS) void say(held.keys); // something was blocked: play it now
 }
 
 /**
- * Keeps voice working across leaving and returning to the app: any tap re-unlocks audio while voice
- * guidance is on (iOS suspends it in the background), and speech stops when the app is hidden.
+ * Keeps voice working across leaving and returning to the app: any tap re-primes the player while voice
+ * guidance is on, and speech stops when the app is hidden.
  */
 export function installVoiceLifecycle(isOn: () => boolean): () => void {
   const onTap = () => { if (isOn()) unlockAudio(); };
-  const onVisibility = () => { if (document.visibilityState === 'hidden') stopSpeaking(); };
+  const onVisibility = () => { log(`visibility ${document.visibilityState}`); if (document.visibilityState === 'hidden') stopSpeaking(); };
   for (const type of ['touchend', 'click'] as const) document.addEventListener(type, onTap, { capture: true, passive: true });
   document.addEventListener('visibilitychange', onVisibility);
   return () => {
@@ -67,48 +83,50 @@ export function installVoiceLifecycle(isOn: () => boolean): () => void {
   };
 }
 
-/** resume() can stay pending forever when iOS won't allow audio yet — don't wait on it. */
-function resumeQuickly(c: Ctx): Promise<void> {
-  return Promise.race([c.resume().catch(() => {}), new Promise<void>(r => setTimeout(r, 300))]);
-}
-
-function clip(key: string): Promise<AudioBuffer | null> {
-  let p = decoded.get(key);
+function clip(key: string): Promise<string | null> {
+  let p = urls.get(key);
   if (!p) {
-    const c = context();
-    p = !c ? Promise.resolve(null) : fetch(BASE + key + '.mp3')
-      .then(r => (r.ok ? r.arrayBuffer() : Promise.reject(new Error(String(r.status)))))
-      .then(data => c.decodeAudioData(data))
+    p = fetch(BASE + key + '.mp3')
+      .then(r => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
+      .then(blob => URL.createObjectURL(blob))
       .catch(() => null);
-    decoded.set(key, p);
+    urls.set(key, p);
   }
   return p;
 }
 
 export function stopSpeaking(): void {
   run++; pending = null;
-  for (const s of playing) { try { s.stop(); } catch { /* already ended */ } }
-  playing = [];
+  if (player) { player.pause(); player.onended = null; }
   try { window.speechSynthesis?.cancel(); } catch { /* unsupported */ }
+}
+
+/** Play one clip to the end. false = iOS refused (no tap yet). */
+function playOne(el: HTMLAudioElement, src: string, mine: number): Promise<boolean> {
+  return new Promise(resolve => {
+    if (mine !== run) return resolve(true);
+    el.onended = () => resolve(true);
+    el.src = src;
+    el.play().then(() => log(`play ${src.slice(-6)} ok`), e => { log(`play refused: ${e?.name}`); resolve(false); });
+  });
 }
 
 /** Speak phrases in order (stops anything already playing). Resolves when finished or interrupted. */
 export async function say(keys: string[]): Promise<void> {
   stopSpeaking();
+  log(`say ${keys[0]}… (${keys.length})`);
   const mine = run;
-  const c = context();
-  const buffers = await Promise.all(keys.map(clip));
+  const el = audio();
+  const sources = await Promise.all(keys.map(clip));
   if (mine !== run) return;
-  if (!c || buffers.some(b => !b)) return fallback(keys, mine);
-  await resumeQuickly(c);
-  if (mine !== run) return;
-  if (c.state !== 'running') { pending = { keys, at: Date.now() }; return; } // plays on the next tap
-  let t = c.currentTime + 0.05;
-  for (const b of buffers as AudioBuffer[]) {
-    const src = c.createBufferSource(); src.buffer = b; src.connect(c.destination); src.start(t);
-    playing.push(src); t += b.duration + GAP_S;
+  if (!el || sources.some(s => !s)) return fallback(keys, mine);
+  for (let i = 0; i < sources.length; i++) {
+    const ok = await playOne(el, sources[i]!, mine);
+    if (mine !== run) return;
+    if (!ok) { pending = { keys: keys.slice(i), at: Date.now() }; return; } // plays on the next tap
+    if (i < sources.length - 1) await new Promise(r => setTimeout(r, GAP_MS));
   }
-  await new Promise(resolve => setTimeout(resolve, (t - c.currentTime) * 1000));
+  el.onended = null;
 }
 
 /** The phone's own voice, for anything the clip pack can't play. */
