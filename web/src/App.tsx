@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { useOfflineStatus } from './offline/useOfflineStatus';
 import { FileText, HelpCircle, Moon, Send, Sun, WifiOff } from 'lucide-react';
 import logoMark from './assets/logo-mark.png';
+import { Odometer } from './components/Odometer';
 import { useTheme } from './components/ThemeProvider';
 import { Button, Sheet, Status } from './components/ui';
 import { ReportFlow } from './flow/ReportFlow';
@@ -51,11 +52,16 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
   return <>
     <a className="skip-link" href="#main" onClick={event=>{event.preventDefault();main.current?.focus();}}>Skip to main content</a>
     <div className="app-shell">
-      <header className="flex items-center justify-between gap-3">
-        <NavLink to="/" aria-label="RescuNote home" className="brand"><span aria-hidden="true" className="brand-logo" style={{ maskImage:`url(${logoMark})`, WebkitMaskImage:`url(${logoMark})` }}/><span>RescuNote<span className="brand-sub">OFFLINE EMERGENCY REPORTING</span></span></NavLink>
-        <Button aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} onClick={toggle}>{theme === 'dark' ? <Sun aria-hidden="true" size={22}/> : <Moon aria-hidden="true" size={22}/>}</Button>
+      {/* Big, centred brand with the odometer name on the home screen; compact elsewhere. */}
+      <header className={`hero ${location.pathname==='/'?'':'hero--compact'}`}>
+        <Button className="theme-toggle" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} onClick={toggle}>{theme === 'dark' ? <Sun aria-hidden="true" size={20}/> : <Moon aria-hidden="true" size={20}/>}</Button>
+        <NavLink to="/" aria-label="RescuNote home" className="hero-brand">
+          <span aria-hidden="true" className="brand-logo hero-logo" style={{ maskImage:`url(${logoMark})`, WebkitMaskImage:`url(${logoMark})` }}/>
+          <Odometer text="RescuNote" className="hero-name"/>
+          <span className="hero-tag">Offline emergency reporting</span>
+        </NavLink>
       </header>
-      <div className="flex flex-wrap gap-2 mt-4 mb-2">
+      <div className="status-row">
         {/* Quiet when all is well: offline status always, the model only while it isn't ready.
             Location status sits under the Send button. */}
         <Status><WifiOff aria-hidden="true" size={16}/>{offline.state==='ready'?'Ready offline ✓':offline.state==='development'?'Offline available in production preview':offline.state==='unavailable'?'Offline copy unavailable':'Saving for offline use…'}</Status>

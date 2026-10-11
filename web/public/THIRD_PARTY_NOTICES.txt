@@ -1,4 +1,4 @@
-CivicMesh-SOS survivor website — third-party components
+RescuNote survivor website — third-party components
 
 Model weights (one is served, depending on web/public/model/model.json):
 - BAAI/bge-small-en-v1.5 (Stage 1 embedder) — MIT License, Beijing Academy of Artificial Intelligence.
@@ -13,4 +13,5 @@ Runtime:
 
 Fonts and icons:
 - Inter (@fontsource/inter) — SIL Open Font License 1.1.
+- Poppins (@fontsource/poppins) — SIL Open Font License 1.1, Copyright 2020 The Poppins Project Authors.
 - Lucide icons (lucide-react) — ISC License.
