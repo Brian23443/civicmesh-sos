@@ -49,6 +49,19 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
   // No html/body overflow lock: home stays in the same scrolling mode as every other screen, so iOS
   // places the tab bar identically everywhere.
   const isHome = location.pathname === '/';
+  // iOS scrolls the page up to keep the message box above the keyboard and doesn't always scroll back
+  // when the keyboard closes, leaving the home screen (and its tab bar) shifted. Home never scrolls,
+  // so once the keyboard is gone, put it back at the top.
+  useEffect(() => {
+    if (!isHome) return;
+    const vv = window.visualViewport;
+    const timers: number[] = [];
+    const resetSoon = () => { for (const ms of [60, 350]) timers.push(window.setTimeout(() => { if (window.scrollY !== 0) window.scrollTo(0, 0); }, ms)); };
+    const onResize = () => { if (vv && vv.height >= window.innerHeight * 0.9) resetSoon(); };
+    document.addEventListener('focusout', resetSoon);
+    vv?.addEventListener('resize', onResize);
+    return () => { document.removeEventListener('focusout', resetSoon); vv?.removeEventListener('resize', onResize); timers.forEach(clearTimeout); };
+  }, [isHome]);
   useEffect(() => {
     const titles: Record<string,string> = { '/':'Get help', '/analyze':'Reading your message', '/review':'Check and send', '/send':'Sent', '/reports':'My reports' };
     document.title = `${titles[location.pathname] ?? 'RescuNote'} · RescuNote`;
