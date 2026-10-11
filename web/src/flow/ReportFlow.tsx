@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ChevronRight, FileText, LoaderCircle, MapPin, Minus, Plus, Radio, Wifi, Plane } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, FileText, ListChecks, LoaderCircle, MapPin, Minus, Plus, Send, Wifi } from 'lucide-react';
 import type { Classifier } from '../inference/types';
 import { resolveReport } from '../resolvers';
 import { finalizeReport } from '../inference/finalize';
@@ -20,6 +20,9 @@ const MANUAL: Draft = { priority:1,hazard:0,status:3,adults:1,children:0,medical
 type Editor = 'priority'|'hazard'|'status'|'people'|'medical'|'location'|null;
 interface Props { classifier:Classifier; store:ReportStore; relayNavigate:(hex:string)=>void; onGpsStatus:(status:string)=>void; analysisReady?:boolean }
 
+/** One tap adds a phrase, for someone who is hurt, shaking or panicking and can't type much. */
+const QUICK_PHRASES = ['I’m trapped', 'Someone is badly hurt', 'Fire or smoke', 'Water is rising', 'Need medicine', 'Children with me'];
+
 function Stepper({ label, value, onChange }: {label:string;value:number;onChange:(n:number)=>void}) {
   return <div className="stepper"><span>{label}</span><div className="flex items-center gap-3">
     <Button aria-label={`Decrease ${label.toLowerCase()}`} disabled={value===0} onClick={()=>onChange(value-1)}><Minus aria-hidden="true" size={18}/></Button>
@@ -37,11 +40,16 @@ function Field({ label, value, open, icon, onEdit }: {label:string;value:string;
     </Button>;
   }
 
-/** "RED · Life-threatening · Flood · 2 people · seq 4" from the 18 bytes that were sent. */
+const people = (adults:number, children:number) => {
+  const total=adults+children;
+  return `${total} ${total===1?'person':'people'}${children?` (${adults} adult${adults===1?'':'s'}, ${children} child${children===1?'':'ren'})`:''}`;
+};
+
+/** "RED · Life-threatening · Flood · 2 people" from the 18 bytes that were sent. */
 function receiptSummary(receipt: SentReport): string {
   try {
     const f = unpackFrame(fromHex(receipt.hex));
-    return `${priorityLabels[f.priority]} · ${hazardLabels[f.hazard]} · ${f.adults + f.children} ${f.adults + f.children === 1 ? 'person' : 'people'} · seq ${f.seq}`;
+    return `${priorityLabels[f.priority]} · ${hazardLabels[f.hazard]} · ${people(f.adults, f.children)}`;
   } catch { return 'Report saved'; }
 }
 
@@ -49,12 +57,13 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
   const navigate=useNavigate(); const route=useLocation();
   const [message,setMessage]=useState(''); const [draft,setDraft]=useState<Draft|null>(null);
   const [busy,setBusy]=useState(false); const [error,setError]=useState('');
-  const [prepared,setPrepared]=useState<FrameFields|null>(null); const [receipt,setReceipt]=useState<SentReport|null>(null);
+  const [receipt,setReceipt]=useState<SentReport|null>(null);
   const [editor,setEditor]=useState<Editor>(null); const [snapshot,setSnapshot]=useState(()=>store.snapshot());
   const analyzeRun=useRef(0); const gpsRun=useRef(0); const sending=useRef(false); const mounted=useRef(true);
   useEffect(()=>{ mounted.current=true; return ()=>{mounted.current=false; analyzeRun.current++;gpsRun.current++;}; },[]);
   useEffect(()=>{
-    if(route.pathname!=='/analyze'){analyzeRun.current++;setBusy(false);setError('');}
+    if(route.pathname!=='/analyze'){analyzeRun.current++;setBusy(false);}
+    if(route.pathname!=='/send') setError('');
     setEditor(null);
   },[route.pathname]);
   const [gpsUpdate,setGpsUpdate]=useState<GpsUpdate|null>(null);
@@ -72,30 +81,40 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
     const run=++gpsRun.current;
     cancelGps.current=acquireGps(navigator.geolocation,update=>{if(mounted.current && run===gpsRun.current) setGpsUpdate(update);});
   },[]);
+  // Location starts by itself: someone in crisis shouldn't have to find a button, and a cold GPS
+  // start can take a minute — by the time they've typed, the fix is usually there.
+  useEffect(()=>{ requestGps(); },[requestGps]);
+  const retryGpsIfStopped=()=>{ if(!gpsUpdate || ['timeout','unavailable'].includes(gpsUpdate.phase)) requestGps(); };
+
   /** Ready for the next report. The model stays loaded (the relay's Back restores this page). */
   function newReport() {
-    setReceipt(null); setPrepared(null); setDraft(null); setMessage(''); setError(''); navigate('/');
+    setReceipt(null); setDraft(null); setMessage(''); setError(''); navigate('/');
+    if(!fix || gpsUpdate?.phase!=='ready') requestGps();
   }
   function patch(fields: Partial<Draft>) { setDraft(current=>current ? {...current,...fields}:current); }
+  function addPhrase(phrase:string) {
+    setMessage(current=>{ const t=current.trim(); return t ? `${t.replace(/[.!]?$/,'.')} ${phrase}.` : `${phrase}.`; });
+  }
   async function analyze() {
     if(busy||!analysisReady||!message.trim()) return;
-    if(!gpsUpdate || gpsUpdate.phase==='timeout' || gpsUpdate.phase==='unavailable') requestGps();
-    const run=++analyzeRun.current; const text=message; setDraft(null);setBusy(true);setError('');setReceipt(null);setPrepared(null);navigate('/analyze');
+    retryGpsIfStopped();
+    const run=++analyzeRun.current; const text=message; setDraft(null);setBusy(true);setError('');setReceipt(null);navigate('/analyze');
     try {
       const result=await classifier.classify(text);
       if(!mounted.current||run!==analyzeRun.current) return;
       // Model + §5.4 resolvers, combined exactly like Python's to_slots (finalize.ts).
       setDraft({...finalizeReport(result,resolveReport(text),classifier.settings),mode:'model'});
       navigate('/review');
-    } catch {if(mounted.current && run===analyzeRun.current) setError('Analysis is unavailable. You can fill in every field manually.');}
+    } catch {if(mounted.current && run===analyzeRun.current) setError('Couldn’t read the message on this phone. Choose the details from a list instead.');}
     finally {if(mounted.current && run===analyzeRun.current) setBusy(false);}
   }
   function manual() {
-    analyzeRun.current++;setBusy(false);setError('');setPrepared(null);setReceipt(null);
+    analyzeRun.current++;setBusy(false);setError('');setReceipt(null);retryGpsIfStopped();
     const fields=resolveReport(message);
     setDraft({...MANUAL,adults:fields.adults,children:fields.children,medicalFlags:fields.medicalFlags,
       thirdParty:fields.suggestedThirdParty,locationType:fields.location.type,locationText:fields.location.text}); navigate('/review');
   }
+  /** The frame as it would go out now — the newest GPS fix and timestamp at the moment of Send. */
   function packet():FrameFields {
     if(!draft) throw Error('No report');
     const identity=store.snapshot();
@@ -104,87 +123,85 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
       lat:gps.bucket===0?0:gps.lat,lon:gps.bucket===0?0:gps.lon,gpsAccuracy:gps.bucket,
       timestamp:Math.floor(Date.now()/1000),deviceId:identity.deviceId,seq:identity.seq};
   }
-  function continueToSend() {try {setPrepared(packet());setReceipt(null);sending.current=false;navigate('/send');}catch{setError('Check the report fields before continuing.');}}
   function send() {
-    if(!prepared || sending.current) return;
+    if(!draft || sending.current) return;
     sending.current=true;setError('');
     let report:SentReport;
-    try {report=store.handoff(prepared);setSnapshot(store.snapshot());setReceipt(report);setPrepared(null);setDraft(null);setMessage('');}
-    catch(e){sending.current=false;setError(e instanceof Error?e.message:'Could not prepare report. Return to review.');return;}
+    try {report=store.handoff(packet());setSnapshot(store.snapshot());setReceipt(report);setDraft(null);setMessage('');navigate('/send');}
+    catch(e){sending.current=false;setError(e instanceof Error?e.message:'Could not prepare the report. Check the details and try again.');return;}
+    sending.current=false;
     // Everything required to survive navigation is committed before this call.
-    try {relayNavigate(report.hex);} catch {setError('Report saved. Navigation was blocked; use the relay link below to retry the same frame.');}
+    try {relayNavigate(report.hex);} catch {setError('Report saved. The relay page didn’t open — use the link below to try again (same report).');}
   }
-  const titles={priority:'Edit priority',hazard:'Edit hazard',status:'Edit rescue status',people:'Edit people',medical:'Edit medical needs',location:'Edit location'};
+  const titles={priority:'How urgent is it?',hazard:'What kind of emergency?',status:'What’s your situation?',people:'How many people?',medical:'Medical needs',location:'Location'};
   let preview=''; if(draft) {try {preview=pack(packet());}catch {/* Send validation supplies the actionable message. */}}
   const HazardIcon=hazardIcons[draft?.hazard??0];
   const storageNote=!store.persistent ? <p role="status" className="notice">Storage is unavailable. Reports stay in memory for this session; sending still works.</p>:null;
+  const gpsWaiting=gps.bucket===0 && gps.state==='loading';
+  const gpsLine=<p className="gps-line" aria-live="polite"><MapPin aria-hidden="true" size={18}/><span>{gps.bucket===0
+    ? (gps.state==='loading'?'Finding your location…':gpsText)
+    : `Location found · ±${Math.ceil(gps.accuracy!)} m`}</span>
+    {gps.state==='failed'&&gpsUpdate?.phase!=='denied'&&gpsUpdate?.phase!=='unsupported'&&<Button className="small-button" onClick={requestGps}>Try again</Button>}</p>;
   return <>
     <Routes>
-      <Route path="/" element={<section><p className="eyebrow">HELP STARTS HERE</p><h1>What’s happening?</h1><p>Tell us who needs help. You can check and change every field before sending.</p>
-        <form className="card mt-6" onSubmit={e=>{e.preventDefault();void analyze();}}>
-          <label htmlFor="message">What’s happening? Who needs help?</label>
-          <textarea id="message" value={message} onChange={e=>setMessage(e.target.value)} disabled={busy} rows={6} placeholder="For example: Three people need help near the library."/>
-          <p className="small">Your original message is never transmitted.</p>
-          <Button type="submit" className="primary full-width" disabled={busy||!analysisReady||!message.trim()} aria-busy={busy}>{busy?<><LoaderCircle className="spinner" aria-hidden="true" size={20}/>Analyzing…</>:<>Analyze <ArrowRight aria-hidden="true" size={20}/></>}</Button>
-          <Button className="full-width mt-3" onClick={manual}>Fill in manually</Button>
+      <Route path="/" element={<section>
+        <h1>What’s happening?</h1>
+        <p className="lead">Who needs help, and what’s wrong? Your words stay on this phone.</p>
+        <form className="report-form" onSubmit={e=>{e.preventDefault();void analyze();}}>
+          <label htmlFor="message" className="sr-only">What’s happening? Who needs help?</label>
+          <textarea id="message" value={message} onChange={e=>setMessage(e.target.value)} disabled={busy} rows={4} placeholder="For example: Water is rising, 3 of us on the roof, my dad needs insulin."/>
+          <div className="quick-phrases" role="group" aria-label="Tap to add">
+            {QUICK_PHRASES.map(phrase=><Button key={phrase} className="phrase" disabled={busy} onClick={()=>addPhrase(phrase)}><Plus aria-hidden="true" size={16}/>{phrase}</Button>)}
+          </div>
+          <Button type="submit" className="primary full-width send-button" disabled={busy||!analysisReady||!message.trim()} aria-busy={busy}>{busy?<><LoaderCircle className="spinner" aria-hidden="true" size={22}/>Reading your message…</>:<><Send aria-hidden="true" size={22}/>Send for help</>}</Button>
+          {gpsLine}
         </form>
         {error&&<p role="alert" className="notice">{error}</p>}
-        <div className="flex items-center justify-between gap-3 mt-6"><span aria-live="polite">{gpsText}</span><Button onClick={requestGps} disabled={gps.state==='loading'}><MapPin aria-hidden="true" size={18}/>Get location</Button></div>
-        <Link className="text-link" to="/reports">My reports <ArrowRight aria-hidden="true" size={18}/></Link>{storageNote}
+        <Button className="full-width mt-4" onClick={manual}><ListChecks aria-hidden="true" size={20}/>Can’t type? Choose from a list</Button>
+        {storageNote}
       </section>}/>
       <Route path="/analyze" element={busy||error?<section aria-busy={busy}>
-        <p className="eyebrow">ANALYZE</p><h1>{busy?'Analyzing your report':'Analysis unavailable'}</h1>
-        {busy?<div className="card mt-6" role="status" aria-live="polite"><LoaderCircle className="spinner" aria-hidden="true" size={32}/><h2>Processing your message…</h2><p>Analyzing on this device — nothing is sent yet.</p><p>You’ll be able to correct every suggestion on the next screen.</p></div>:<p role="alert" className="notice">{error}</p>}
-        <Button className="full-width mt-6" onClick={manual}>Fill in manually</Button>
-        <Link to="/" className="text-link"><ArrowLeft aria-hidden="true" size={18}/>Back to report</Link>
+        <h1>{busy?'Reading your message':'Couldn’t read the message'}</h1>
+        {busy?<div className="card mt-6" role="status" aria-live="polite"><LoaderCircle className="spinner" aria-hidden="true" size={32}/><h2>Reading your message…</h2><p>This happens on your phone and takes a second. Nothing is sent yet.</p></div>:<p role="alert" className="notice">{error}</p>}
+        <Button className="full-width mt-6" onClick={manual}><ListChecks aria-hidden="true" size={20}/>Choose from a list</Button>
+        <Link to="/" className="text-link"><ArrowLeft aria-hidden="true" size={18}/>Back to your message</Link>
       </section>:<Navigate to={draft?'/review':'/'} replace/>}/>
-      <Route path="/review" element={draft?<section><p className="eyebrow">CHECK BEFORE SENDING</p><h1>Review your report</h1>
-        <p>{draft.mode==='model'?'Suggested from your message — check every field.':'Manual report — choose every field.'}</p>
+      <Route path="/review" element={draft?<section><p className="eyebrow">CHECK, THEN SEND</p><h1>Ready to send</h1>
+        <p>{draft.mode==='model'?'We filled this in from your message. Tap anything that’s wrong.':'Tap each item to set it.'}</p>
         <Button className={`triage triage-${draft.priority}`} aria-label="Edit priority" onClick={()=>setEditor('priority')}><span>{priorityLabels[draft.priority]}</span><ChevronRight aria-hidden="true"/></Button>
-        <div className="review-fields mt-6"><Field onEdit={setEditor} label="Hazard" value={hazardLabels[draft.hazard]} open="hazard" icon={<HazardIcon aria-hidden="true" size={24}/>}/>
-          <Field onEdit={setEditor} label="Rescue status" value={statusLabels[draft.status]} open="status"/>
-          <Field onEdit={setEditor} label="Adults" value={String(draft.adults)} open="people"/>
-          <Field onEdit={setEditor} label="Children" value={String(draft.children)} open="people"/>
-          <Field onEdit={setEditor} label="Medical needs" value={medicalLabels.filter((_,i)=>draft.medicalFlags&(1<<i)).join(', ')||'None selected'} open="medical"/>
-          <Field onEdit={setEditor} label="Location confidence" value={locationLabels[draft.locationType]} open="location" icon={<MapPin aria-hidden="true" size={24}/>}/></div>
-        <p aria-live="polite"><strong>Third-party status:</strong> {draft.thirdParty?"Reporting for someone else":"At the emergency"}</p>
-        <fieldset className="card mt-6"><legend>Are you at the emergency?</legend><div className="choice-list">
-          <Choice selected={!draft.thirdParty} onClick={()=>patch({thirdParty:false})}>Yes, I’m at the emergency</Choice>
-          <Choice selected={draft.thirdParty} onClick={()=>patch({thirdParty:true})}>No, I’m reporting for someone else</Choice></div>
-          {draft.locationText&&<p className="small">You mentioned “{draft.locationText}” — GPS shows where you are, not necessarily the emergency. Your answer above always wins.</p>}
+        <div className="review-fields mt-4"><Field onEdit={setEditor} label="Emergency" value={hazardLabels[draft.hazard]} open="hazard" icon={<HazardIcon aria-hidden="true" size={24}/>}/>
+          <Field onEdit={setEditor} label="Situation" value={statusLabels[draft.status]} open="status"/>
+          <Field onEdit={setEditor} label="People" value={people(draft.adults,draft.children)} open="people"/>
+          <Field onEdit={setEditor} label="Medical needs" value={medicalLabels.filter((_,i)=>draft.medicalFlags&(1<<i)).join(', ')||'None'} open="medical"/>
+          <Field onEdit={setEditor} label="Location" value={[gps.bucket===0?(gpsWaiting?'Finding your location…':'No GPS location'):`GPS ±${Math.ceil(gps.accuracy!)} m`,
+            draft.locationType?locationLabels[draft.locationType]:null].filter(Boolean).join(' · ')} open="location" icon={<MapPin aria-hidden="true" size={24}/>}/></div>
+        <fieldset className="here-toggle mt-4"><legend>Are you at the emergency?</legend><div className="segmented">
+          <Choice selected={!draft.thirdParty} onClick={()=>patch({thirdParty:false})}>Yes, I’m here</Choice>
+          <Choice selected={draft.thirdParty} onClick={()=>patch({thirdParty:true})}>No, it’s someone else</Choice></div>
+          {draft.locationText&&<p className="small">You mentioned “{draft.locationText}”. Your phone’s GPS shows where <em>you</em> are.</p>}
         </fieldset>
-        <p className="small">{gps.bucket===0?'No GPS fix — this report will have no map location.':`${gps.lat.toFixed(6)}, ${gps.lon.toFixed(6)} · ±${Math.ceil(gps.accuracy!)} m`}</p>
-        <details className="card mt-6"><summary>18 bytes</summary><code className="hex">{preview}</code><p className="small">Only structured fields and phone coordinates are sent. Your message and mentioned place text stay on your phone. The timestamp is finalized when you continue.</p></details>
+        <div className="wifi-hint mt-4"><Wifi aria-hidden="true" size={22}/><p><strong>To send:</strong> keep Airplane Mode on, turn on Wi-Fi, and join <strong>CivicMesh-SOS</strong>.</p></div>
         {error&&<p role="alert" className="notice">{error}</p>}{storageNote}
-        <Button className="primary full-width mt-6" onClick={continueToSend}>Continue to send <ArrowRight aria-hidden="true" size={20}/></Button>
-        <Link to="/" className="text-link"><ArrowLeft aria-hidden="true" size={18}/>Back to report</Link>
-      </section>:<Navigate to="/" replace/>}/>
-      <Route path="/send" element={receipt?<section><p className="eyebrow">SAVED ON THIS DEVICE</p><h1>Sent to the relay</h1>
+        <Button className="primary full-width send-button mt-4" onClick={send}><Send aria-hidden="true" size={22}/>{gpsWaiting?'Send now (location still loading)':'Send'}</Button>
+        <Link to="/" className="text-link"><ArrowLeft aria-hidden="true" size={18}/>Back to your message</Link>
+        <details className="tech-details"><summary>What gets sent (18 bytes)</summary><code className="hex">{preview}</code><p className="small">Only these coded details and your phone’s GPS are sent. Your message and any place names stay on your phone.</p></details>
+      </section>:<Navigate to={receipt?'/send':'/'} replace/>}/>
+      <Route path="/send" element={receipt?<section className="receipt"><CheckCircle2 aria-hidden="true" className="receipt-icon" size={56}/><h1>Sent to the relay</h1>
         <p><strong>{receiptSummary(receipt)}</strong></p>
-        <p>If the relay showed “Sent ✓”, your report is on the rescue network. Stay where you are if it is safe.</p>
+        <p>If the relay page said “Sent ✓”, your report is on the rescue radio network. <strong>Stay where you are if it’s safe.</strong> Send an update if things change.</p>
         {error&&<p role="alert" className="notice">{error}</p>}
-        <Button className="primary full-width" onClick={newReport}>Start a new report <ArrowRight aria-hidden="true" size={20}/></Button>
-        <Link className="button full-width mt-6" to="/reports">My reports</Link>
+        <Button className="primary full-width" onClick={newReport}>Send an update or new report <ArrowRight aria-hidden="true" size={20}/></Button>
+        <Link className="button full-width mt-4" to="/reports">My reports</Link>
         <p className="small mt-6">Relay page didn’t load? <a href={RELAY_URL+receipt.hex}>Open the relay again (same report)</a> — it won’t be counted twice.</p>{storageNote}
-      </section>:prepared?<section><p className="eyebrow">CONNECT TO THE RELAY</p><h1>Send your report</h1>
-        <ol className="send-steps"><li><Plane aria-hidden="true"/><div><strong>Keep Airplane Mode on</strong><p>Turn on Wi-Fi.</p></div></li>
-          <li><Wifi aria-hidden="true"/><div><strong>Join CivicMesh-SOS</strong><p>Open Wi-Fi settings and select the network.</p></div></li>
-          <li><Radio aria-hidden="true"/><div><strong>Tap Send</strong><p>The relay opens and shows its reply.</p></div></li></ol>
-        <div className={`triage triage-${prepared.priority}`}>{priorityLabels[prepared.priority]}</div>
-        <p>{hazardLabels[prepared.hazard]} · {prepared.adults+prepared.children} people · seq {prepared.seq}</p>
-        <details className="card"><summary>18 bytes</summary><code className="hex">{pack(prepared)}</code><p className="small">This exact frame will be handed to the relay.</p></details>
-        {error&&<p role="alert" className="notice">{error}</p>}{storageNote}
-        <Button className="primary full-width mt-6" onClick={send}>Send <ArrowRight aria-hidden="true" size={20}/></Button>
-        <Link className="text-link" to="/review"><ArrowLeft aria-hidden="true" size={18}/>Back to review</Link>
       </section>:<Navigate to={draft?'/review':'/'} replace/>}/>
-      <Route path="/reports" element={<section><p className="eyebrow">ON THIS DEVICE</p><h1>My reports</h1>{storageNote}
-        {snapshot.reports.length===0?<div className="card mt-6"><FileText aria-hidden="true" size={32}/><h2>No reports yet</h2><p>Reports appear here when you hand them to the relay.</p></div>:<ul className="report-list">{snapshot.reports.map(report=>{
+      <Route path="/reports" element={<section><p className="eyebrow">ON THIS PHONE</p><h1>My reports</h1>{storageNote}
+        {snapshot.reports.length===0?<div className="card mt-6"><FileText aria-hidden="true" size={32}/><h2>No reports yet</h2><p>Reports appear here after you send them.</p></div>:<ul className="report-list">{snapshot.reports.map(report=>{
           const fields=unpackFrame(fromHex(report.hex)); const Icon=hazardIcons[fields.hazard];
           return <li className="card" key={report.id}><div className={`triage triage-${fields.priority}`}>{priorityLabels[fields.priority]}</div>
             <h2 className="flex items-center gap-3"><Icon aria-hidden="true" size={22}/>{hazardLabels[fields.hazard]}</h2>
-            <p>{fields.adults} adults · {fields.children} children · seq {fields.seq}</p>
+            <p>{people(fields.adults,fields.children)}</p>
             <time dateTime={new Date(report.handedAt*1000).toISOString()}>{new Date(report.handedAt*1000).toLocaleString()}</time>
-            <Status>{report.status}</Status><details><summary>18-byte frame</summary><code className="hex">{report.hex}</code></details></li>;
+            <Status>{report.status}</Status><details className="tech-details"><summary>18-byte frame · seq {fields.seq}</summary><code className="hex">{report.hex}</code></details></li>;
         })}</ul>}
         <Link to="/" className="button primary full-width mt-6">New report <ArrowRight aria-hidden="true" size={20}/></Link>
       </section>}/>
@@ -199,7 +216,7 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
         {editor==='medical'&&<div className="medical-grid">{medicalLabels.map((label,i)=>{const Icon=medicalIcons[i];return <Choice key={label} selected={Boolean(draft.medicalFlags&(1<<i))} onClick={()=>patch({medicalFlags:draft.medicalFlags^(1<<i)})}><Icon aria-hidden="true" size={22}/>{label}</Choice>;})}</div>}
         {editor==='location'&&<><p>{gpsText}</p>{gps.bucket!==0&&<p className="hex">{gps.lat.toFixed(6)}, {gps.lon.toFixed(6)}</p>}
           <Button onClick={requestGps} disabled={gps.state==='loading'}>Refresh GPS</Button>
-          <p>GPS describes the reporter’s phone. Choose how the emergency location was described.</p>
+          <p>GPS shows where your phone is. How did you describe the emergency’s location?</p>
           <div className="choice-list">{locationLabels.map((label,value)=><Choice key={value} selected={draft.locationType===value} onClick={()=>patch({locationType:value as Draft['locationType']})}>{label}</Choice>)}</div>
         </>}
         {(editor==='people'||editor==='medical'||editor==='location')&&<Button className="primary full-width mt-6" onClick={()=>setEditor(null)}>Done</Button>}

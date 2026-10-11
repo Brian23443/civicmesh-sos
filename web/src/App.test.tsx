@@ -21,7 +21,7 @@ it('navigates, moves focus, changes theme, and restores focus after the sheet cl
   await user.click(screen.getAllByRole('link', { name: 'My reports' })[0]);
   expect(screen.getByRole('heading', { name: 'My reports' })).toBeInTheDocument();
   expect(screen.getByRole('main')).toHaveFocus();
-  const opener = screen.getByRole('button', { name: 'Open CivicMesh information' });
+  const opener = screen.getByRole('button', { name: 'Open RescuNote information' });
   await user.click(opener); expect(screen.getByRole('dialog')).toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Got it' }));
   await waitFor(() => expect(opener).toHaveFocus());
@@ -31,10 +31,10 @@ it('automatically loads the local model and analyzes with it',async()=>{
   const classify=vi.fn(async()=>({priority:1,hazard:2,status:2,medicalProbs:null,thirdPartyProb:null,scores:{priority:[0,1,0,0],hazard:new Array(16).fill(null),status:[0,0,1,null]}}));
   loadModel.mockResolvedValueOnce({classifier:{classify},config:{kind:'prototype'},downloadBytes:0,loadMs:0});
   const user=userEvent.setup();render(<MemoryRouter><ThemeProvider><App/></ThemeProvider></MemoryRouter>);
-  expect(await screen.findByText('Model ready')).toBeInTheDocument();
+  await waitFor(() => expect(screen.queryByText('Loading on-device reading…')).not.toBeInTheDocument());
   await user.type(screen.getByLabelText('What’s happening? Who needs help?'),'Example smoke report');
-  await user.click(screen.getByRole('button',{name:'Analyze'}));
-  expect(await screen.findByText('Suggested from your message — check every field.')).toBeInTheDocument();
+  await user.click(screen.getByRole('button',{name:'Send for help'}));
+  expect(await screen.findByText('We filled this in from your message. Tap anything that’s wrong.')).toBeInTheDocument();
   expect(classify).toHaveBeenCalledWith('Example smoke report');
   expect(loadModel).toHaveBeenCalled();
 });
@@ -43,15 +43,15 @@ it('keeps manual entry available after model failure and allows retry',async()=>
   const user=userEvent.setup();render(<MemoryRouter><ThemeProvider><App/></ThemeProvider></MemoryRouter>);
   expect(await screen.findByRole('alert')).toHaveTextContent('could not start');
   expect(screen.getByRole('button',{name:'Retry model loading'})).toBeEnabled();
-  await user.click(screen.getByRole('button',{name:'Fill in manually'}));
-  expect(await screen.findByText('Manual report — choose every field.')).toBeInTheDocument();
+  await user.click(screen.getByRole('button',{name:'Can’t type? Choose from a list'}));
+  expect(await screen.findByText('Tap each item to set it.')).toBeInTheDocument();
 });
 
 it('disables analysis while the model loads but permits manual reports',async()=>{
   loadModel.mockImplementationOnce(()=>new Promise(()=>{}));
   const user=userEvent.setup();render(<MemoryRouter><ThemeProvider><App/></ThemeProvider></MemoryRouter>);
   await user.type(screen.getByLabelText('What’s happening? Who needs help?'),'Help');
-  expect(screen.getByRole('button',{name:'Analyze'})).toBeDisabled();
-  await user.click(screen.getByRole('button',{name:'Fill in manually'}));
-  expect(await screen.findByText('Manual report — choose every field.')).toBeInTheDocument();
+  expect(screen.getByRole('button',{name:'Send for help'})).toBeDisabled();
+  await user.click(screen.getByRole('button',{name:'Can’t type? Choose from a list'}));
+  expect(await screen.findByText('Tap each item to set it.')).toBeInTheDocument();
 });

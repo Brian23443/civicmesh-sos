@@ -43,3 +43,6 @@ firmware/**/build/
 .idea/
 .vscode/
 *.swp
+
+# --- TypeScript incremental build cache ---
+*.tsbuildinfo

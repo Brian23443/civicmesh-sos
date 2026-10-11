@@ -1,4 +1,4 @@
-import { cleanup, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeAll, afterEach, expect, it, vi } from 'vitest';
@@ -30,20 +30,18 @@ it('analyzes, edits review, preserves user choice, saves before navigation, and 
   const {user,store,relay,data,draw}=setup();
   const message='Four people including one child need oxygen near the library.';
   await user.type(screen.getByLabelText('What’s happening? Who needs help?'),message);
-  await user.click(screen.getByRole('button',{name:/^Analyze/}));
-  expect(await screen.findByRole('heading',{name:'Review your report'})).toBeInTheDocument();
+  await user.click(screen.getByRole('button',{name:/^Send for help/}));
+  expect(await screen.findByRole('heading',{name:'Ready to send'})).toBeInTheDocument();
   expect(screen.getByRole('main')).toHaveFocus();
-  expect(screen.getByRole('button',{name:'No, I’m reporting for someone else'})).toHaveAttribute('aria-pressed','true');
-  await user.click(screen.getByRole('button',{name:'Yes, I’m at the emergency'}));
+  expect(screen.getByRole('button',{name:'No, it’s someone else'})).toHaveAttribute('aria-pressed','true');
+  await user.click(screen.getByRole('button',{name:'Yes, I’m here'}));
   await user.click(screen.getByRole('button',{name:'Edit priority'}));
   await user.click(within(screen.getByRole('dialog')).getByRole('button',{name:'YELLOW · Serious but stable'}));
-  await user.click(screen.getByRole('button',{name:'Edit hazard'}));
+  await user.click(screen.getByRole('button',{name:'Edit emergency'}));
   await user.click(within(screen.getByRole('dialog')).getByRole('button',{name:'Flood'}));
-  await user.click(screen.getByRole('button',{name:'Edit adults'}));
+  await user.click(screen.getByRole('button',{name:'Edit people'}));
   await user.click(screen.getByRole('button',{name:'Increase adults'}));
   await user.click(screen.getByRole('button',{name:'Done'}));
-  await user.click(screen.getByRole('button',{name:/Continue to send/}));
-  expect(await screen.findByRole('heading',{name:'Send your report'})).toBeInTheDocument();
   await user.click(screen.getByRole('button',{name:'Send'}));
   expect(relay).toHaveBeenCalledOnce();const hex=relay.mock.calls[0][0];
   expect(hex).toMatch(/^[A-F0-9]{36}$/);
@@ -53,7 +51,7 @@ it('analyzes, edits review, preserves user choice, saves before navigation, and 
   expect(store.snapshot().seq).toBe(1);
   expect(screen.getByRole('link',{name:'Open the relay again (same report)'})).toHaveAttribute('href',RELAY_URL+hex);
   expect(screen.getByRole('heading',{name:'Sent to the relay'})).toBeInTheDocument();
-  expect(screen.getByText(/· seq \d+$/)).toBeInTheDocument();
+  expect(screen.getByText(/· Flood · 5 people \(4 adults, 1 child\)$/)).toBeInTheDocument();
   await user.click(screen.getAllByRole('link',{name:'My reports'})[0]);
   expect(await screen.findByRole('heading',{name:'My reports'})).toBeInTheDocument();
   expect(screen.getByText('handed to relay')).toBeInTheDocument();
@@ -63,20 +61,19 @@ it('analyzes, edits review, preserves user choice, saves before navigation, and 
 it('offers manual mode on analysis failure and supports empty manual entry',async()=>{
   const {user}=setup({classify:async()=>{throw Error('failed');}});
   await user.type(screen.getByLabelText('What’s happening? Who needs help?'),'Help');
-  await user.click(screen.getByRole('button',{name:/^Analyze/}));
-  expect(await screen.findByRole('alert')).toHaveTextContent('Analysis is unavailable');
-  await user.click(screen.getByRole('button',{name:'Fill in manually'}));
-  expect(await screen.findByRole('heading',{name:'Review your report'})).toBeInTheDocument();
-  expect(screen.getByText('Manual report — choose every field.')).toBeInTheDocument();
+  await user.click(screen.getByRole('button',{name:/^Send for help/}));
+  expect(await screen.findByRole('alert')).toHaveTextContent('Couldn’t read the message');
+  await user.click(screen.getByRole('button',{name:'Choose from a list'}));
+  expect(await screen.findByRole('heading',{name:'Ready to send'})).toBeInTheDocument();
+  expect(screen.getByText('Tap each item to set it.')).toBeInTheDocument();
 });
 it('requests high-accuracy GPS and includes its bucket and coordinates',async()=>{
   const getCurrentPosition=vi.fn((success:PositionCallback)=>success({coords:{latitude:30.2672,longitude:-97.7431,accuracy:8}} as GeolocationPosition));
   Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition},configurable:true});
   const {user,relay}=setup();
-  await user.click(screen.getByRole('button',{name:'Get location'}));
+  // Starts by itself on opening the app — no button to find.
   expect(getCurrentPosition).toHaveBeenCalledWith(expect.any(Function),expect.any(Function),{enableHighAccuracy:true,timeout:10000});
-  await user.click(screen.getByRole('button',{name:'Fill in manually'}));
-  await user.click(screen.getByRole('button',{name:/Continue to send/}));
+  await user.click(screen.getByRole('button',{name:'Can’t type? Choose from a list'}));
   await user.click(screen.getByRole('button',{name:'Send'}));
   const decoded=unpackFrame(fromHex(relay.mock.calls[0][0]));
   expect(decoded.gpsAccuracy).toBe(2);expect(decoded.lat).toBeCloseTo(30.2672,4);expect(decoded.lon).toBeCloseTo(-97.7431,4);
@@ -84,9 +81,9 @@ it('requests high-accuracy GPS and includes its bucket and coordinates',async()=
 it('clears location on GPS failure and still sends without a fix',async()=>{
   const getCurrentPosition=vi.fn((_:PositionCallback,error:PositionErrorCallback)=>error({code:1} as GeolocationPositionError));
   Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition},configurable:true});
-  const {user,relay}=setup();await user.click(screen.getByRole('button',{name:'Get location'}));
-  await user.click(screen.getByRole('button',{name:'Fill in manually'}));
-  await user.click(screen.getByRole('button',{name:/Continue to send/}));await user.click(screen.getByRole('button',{name:'Send'}));
+  const {user,relay}=setup();
+  await user.click(screen.getByRole('button',{name:'Can’t type? Choose from a list'}));
+  await user.click(screen.getByRole('button',{name:'Send'}));
   expect(unpackFrame(fromHex(relay.mock.calls[0][0]))).toMatchObject({gpsAccuracy:0,lat:0,lon:0});
 });
 it('does not complete stale analysis after leaving Report',async()=>{
@@ -94,7 +91,7 @@ it('does not complete stale analysis after leaving Report',async()=>{
   const task=new Promise<Awaited<ReturnType<Classifier['classify']>>>(resolve=>{finish=resolve;});
   const {user}=setup({classify:()=>task});
   await user.type(screen.getByLabelText('What’s happening? Who needs help?'),'test');
-  await user.click(screen.getByRole('button',{name:/^Analyze/}));
+  await user.click(screen.getByRole('button',{name:/^Send for help/}));
   await user.click(screen.getAllByRole('link',{name:'My reports'})[0]);
   finish(await new MockClassifier({delayMs:0}).classify('test'));
   await waitFor(()=>expect(screen.getByRole('heading',{name:'My reports'})).toBeInTheDocument());
@@ -105,11 +102,10 @@ it.each(['/analyze','/review','/send'])('redirects a refreshed %s route without 
 it('guards repeated Send clicks and allows retry without consuming another sequence',async()=>{
   const {user,relay,store}=setup();
   relay.mockImplementation(()=>{throw Error('blocked');});
-  await user.click(screen.getByRole('button',{name:'Fill in manually'}));
-  await user.click(screen.getByRole('button',{name:/Continue to send/}));
+  await user.click(screen.getByRole('button',{name:'Can’t type? Choose from a list'}));
   await user.dblClick(screen.getByRole('button',{name:'Send'}));
   expect(relay).toHaveBeenCalledOnce();expect(store.snapshot().seq).toBe(1);expect(store.snapshot().reports).toHaveLength(1);
-  expect(screen.getByRole('alert')).toHaveTextContent('Navigation was blocked');
+  expect(screen.getByRole('alert')).toHaveTextContent('The relay page didn’t open');
   expect(screen.getByRole('link',{name:'Open the relay again (same report)'})).toHaveAttribute('href',RELAY_URL+store.snapshot().reports[0].hex);
 });
 it('keeps sending available when localStorage is blocked',async()=>{
@@ -117,8 +113,7 @@ it('keeps sending available when localStorage is blocked',async()=>{
   const store=createReportStore(safe,()=>4);const relay=vi.fn();const user=userEvent.setup();
   render(<MemoryRouter><ThemeProvider><App classifier={new MockClassifier({delayMs:0})} store={store} relayNavigate={relay}/></ThemeProvider></MemoryRouter>);
   expect(screen.getByText(/Storage is unavailable/)).toBeInTheDocument();
-  await user.click(screen.getByRole('button',{name:'Fill in manually'}));
-  await user.click(screen.getByRole('button',{name:/Continue to send/}));
+  await user.click(screen.getByRole('button',{name:'Can’t type? Choose from a list'}));
   await user.click(screen.getByRole('button',{name:'Send'}));
   expect(relay).toHaveBeenCalledOnce();expect(store.snapshot().seq).toBe(1);expect(store.snapshot().reports).toHaveLength(1);
 });
@@ -127,78 +122,84 @@ it('shows the processing screen until classification completes',async()=>{
   const pending=new Promise<Awaited<ReturnType<Classifier['classify']>>>(resolve=>{finish=resolve;});
   const {user}=setup({classify:()=>pending});
   await user.type(screen.getByLabelText('What’s happening? Who needs help?'),'People need help');
-  await user.click(screen.getByRole('button',{name:/^Analyze/}));
-  expect(await screen.findByRole('heading',{name:'Analyzing your report'})).toBeInTheDocument();
-  expect(screen.getByRole('heading',{name:'Processing your message…'})).toBeInTheDocument();
+  await user.click(screen.getByRole('button',{name:/^Send for help/}));
+  expect(await screen.findByRole('heading',{name:'Reading your message'})).toBeInTheDocument();
+  expect(screen.getByRole('heading',{name:'Reading your message…'})).toBeInTheDocument();
   finish(await new MockClassifier({delayMs:0}).classify('test'));
-  expect(await screen.findByRole('heading',{name:'Review your report'})).toBeInTheDocument();
+  expect(await screen.findByRole('heading',{name:'Ready to send'})).toBeInTheDocument();
 });
 it('retains corrections to rescue status, children, medical needs, and location confidence in the sent frame',async()=>{
   const {user,relay}=setup();
-  await user.click(screen.getByRole('button',{name:'Fill in manually'}));
-  expect(screen.getByRole('button',{name:'Edit adults'})).toBeInTheDocument();
-  expect(screen.getByRole('button',{name:'Edit children'})).toBeInTheDocument();
-  await user.click(screen.getByRole('button',{name:'Edit rescue status'}));
+  await user.click(screen.getByRole('button',{name:'Can’t type? Choose from a list'}));
+  await user.click(screen.getByRole('button',{name:'Edit situation'}));
   await user.click(within(screen.getByRole('dialog')).getByRole('button',{name:'Exposed'}));
-  await user.click(screen.getByRole('button',{name:'Edit children'}));
+  await user.click(screen.getByRole('button',{name:'Edit people'}));
   await user.click(screen.getByRole('button',{name:'Increase children'}));
   await user.click(screen.getByRole('button',{name:'Done'}));
   await user.click(screen.getByRole('button',{name:'Edit medical needs'}));
   await user.click(screen.getByRole('button',{name:'Insulin'}));
   await user.click(screen.getByRole('button',{name:'Done'}));
-  await user.click(screen.getByRole('button',{name:'Edit location confidence'}));
+  await user.click(screen.getByRole('button',{name:'Edit location'}));
   await user.click(screen.getByRole('button',{name:'Street address'}));
   await user.click(screen.getByRole('button',{name:'Done'}));
-  await user.click(screen.getByRole('button',{name:'No, I’m reporting for someone else'}));
-  expect(screen.getByText('Reporting for someone else')).toBeInTheDocument();
-  await user.click(screen.getByRole('button',{name:/Continue to send/}));
-  await user.click(screen.getByRole('link',{name:'Back to review'}));
-  expect(screen.getByRole('button',{name:'Edit rescue status'})).toHaveTextContent('Exposed');
-  expect(screen.getByRole('button',{name:'Edit children'})).toHaveTextContent('1');
+  await user.click(screen.getByRole('button',{name:'No, it’s someone else'}));
+  expect(screen.getByRole('button',{name:'No, it’s someone else'})).toHaveAttribute('aria-pressed','true');
+  expect(screen.getByRole('button',{name:'Edit situation'})).toHaveTextContent('Exposed');
+  expect(screen.getByRole('button',{name:'Edit people'})).toHaveTextContent('2 people (1 adult, 1 child)');
   expect(screen.getByRole('button',{name:'Edit medical needs'})).toHaveTextContent('Insulin');
-  expect(screen.getByRole('button',{name:'Edit location confidence'})).toHaveTextContent('Street address');
-  await user.click(screen.getByRole('button',{name:/Continue to send/}));
+  expect(screen.getByRole('button',{name:'Edit location'})).toHaveTextContent('Street address');
   await user.click(screen.getByRole('button',{name:'Send'}));
   expect(unpackFrame(fromHex(relay.mock.calls[0][0]))).toMatchObject({status:1,adults:1,children:1,
     medicalFlags:0x1901,thirdParty:true,locationType:3});
 });
 
-
-it('shows collapsed 18-byte sections and uppercase hex on Review and Send',async()=>{
+it('shows a collapsed 18-byte section with uppercase hex on the send screen',async()=>{
   const {user}=setup();
-  await user.click(screen.getByRole('button',{name:'Fill in manually'}));
-  const reviewSummary=screen.getByText('18 bytes',{selector:'summary'});
-  const reviewDetails=reviewSummary.closest('details')!;
-  expect(reviewDetails).not.toHaveAttribute('open');
-  await user.click(reviewSummary);
-  expect(reviewDetails).toHaveAttribute('open');
-  const reviewHex=reviewDetails.querySelector('code')!.textContent!;
-  expect(reviewHex).toMatch(/^[0-9A-F]{36}$/);expect(fromHex(reviewHex)).toHaveLength(18);
-  await user.click(screen.getByRole('button',{name:/Continue to send/}));
-  const sendSummary=screen.getByText('18 bytes',{selector:'summary'});
-  const sendDetails=sendSummary.closest('details')!;
-  expect(sendDetails).not.toHaveAttribute('open');
-  await user.click(sendSummary);
-  expect(sendDetails).toHaveAttribute('open');
-  const sendHex=sendDetails.querySelector('code')!.textContent!;
-  expect(sendHex).toMatch(/^[0-9A-F]{36}$/);expect(fromHex(sendHex)).toHaveLength(18);
+  await user.click(screen.getByRole('button',{name:'Can’t type? Choose from a list'}));
+  const summary=screen.getByText('What gets sent (18 bytes)',{selector:'summary'});
+  const details=summary.closest('details')!;
+  expect(details).not.toHaveAttribute('open');
+  await user.click(summary);
+  expect(details).toHaveAttribute('open');
+  const hex=details.querySelector('code')!.textContent!;
+  expect(hex).toMatch(/^[0-9A-F]{36}$/);expect(fromHex(hex)).toHaveLength(18);
 });
 
 it('starts an empty manual report with one adult (the writer, §5.4 rule 5) and no children',async()=>{
   const {user}=setup();
-  await user.click(screen.getByRole('button',{name:'Fill in manually'}));
-  expect(screen.getByRole('button',{name:'Edit adults'})).toHaveTextContent('1');
-  expect(screen.getByRole('button',{name:'Edit children'})).toHaveTextContent('0');
+  await user.click(screen.getByRole('button',{name:'Can’t type? Choose from a list'}));
+  expect(screen.getByRole('button',{name:'Edit people'})).toHaveTextContent(/1 person$/);
 });
 
-it('starts a fresh report from the receipt without leaving the app',async()=>{
+it('sends in two taps: message → Send for help → Send',async()=>{
   const {user,relay}=setup();
   await user.type(screen.getByLabelText('What’s happening? Who needs help?'),'water in the attic, 2 of us');
-  await user.click(screen.getByRole('button',{name:'Analyze'}));
-  await user.click(await screen.findByRole('button',{name:/Continue to send/}));
+  await user.click(screen.getByRole('button',{name:'Send for help'}));
+  await screen.findByRole('heading',{name:'Ready to send'});
   await user.click(screen.getByRole('button',{name:'Send'}));
   expect(relay).toHaveBeenCalledOnce();
-  await user.click(screen.getByRole('button',{name:/Start a new report/}));
+  expect(screen.getByRole('heading',{name:'Sent to the relay'})).toBeInTheDocument();
+  await user.click(screen.getByRole('button',{name:/Send an update or new report/}));
   expect(await screen.findByLabelText('What’s happening? Who needs help?')).toHaveValue('');
   expect(screen.queryByRole('heading',{name:'Sent to the relay'})).not.toBeInTheDocument();
+});
+
+it('adds quick phrases to the message for people who can’t type much',async()=>{
+  const {user}=setup();
+  const box=screen.getByLabelText('What’s happening? Who needs help?');
+  await user.click(screen.getByRole('button',{name:'I’m trapped'}));
+  await user.click(screen.getByRole('button',{name:'Children with me'}));
+  expect(box).toHaveValue('I’m trapped. Children with me.');
+});
+
+it('sends with the newest GPS fix even if it arrives after Send for help',async()=>{
+  let report!:PositionCallback;
+  const getCurrentPosition=vi.fn((success:PositionCallback)=>{report=success;});
+  Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition,watchPosition:vi.fn(()=>1),clearWatch:vi.fn()},configurable:true});
+  const {user,relay}=setup();
+  await user.click(screen.getByRole('button',{name:'Can’t type? Choose from a list'}));
+  expect(screen.getByRole('button',{name:'Send now (location still loading)'})).toBeInTheDocument();
+  act(()=>report({coords:{latitude:40.5,longitude:-74.45,accuracy:9}} as GeolocationPosition));
+  await user.click(await screen.findByRole('button',{name:'Send'}));
+  expect(unpackFrame(fromHex(relay.mock.calls[0][0]))).toMatchObject({gpsAccuracy:2});
 });

@@ -9,13 +9,12 @@ export default defineConfig({
   base: process.env.VITE_BASE_PATH || '/',
   plugins: [react(), tailwindcss(), offlineInventory(), VitePWA({
     registerType: 'autoUpdate', strategies: 'generateSW',
-    includeAssets: ['icon.svg'],
+    includeAssets: ['favicon.png', 'apple-touch-icon.png'],
     manifest: {
-      name: 'CivicMesh-SOS', short_name: 'CivicMesh', description: 'Offline survivor emergency reporting',
+      name: 'RescuNote', short_name: 'RescuNote', description: 'Offline emergency reporting',
       theme_color: '#101820', background_color: '#101820', display: 'standalone',
       start_url: './', scope: './',
-      icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-        { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
+      icons: [{ src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
         { src: 'icon-512.png', sizes: '512x512', type: 'image/png' }],
     },
     workbox: { globPatterns: PRECACHE_PATTERNS,
