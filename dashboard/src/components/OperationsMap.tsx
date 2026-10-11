@@ -457,6 +457,7 @@ export function OperationsMap({
 
     let map: maplibregl.Map;
     let animationFrame = 0;
+    let disposed = false;
     try {
       map = new maplibregl.Map({
         container: containerRef.current,
@@ -493,8 +494,19 @@ export function OperationsMap({
         setMode("fallback");
       }
     };
+    const loadingTimeout = window.setTimeout(handleError, 10000);
     map.on("error", handleError);
-    map.on("load", () => {
+    map.on("load", async () => {
+      // A style can load even when Vite returns HTML for a missing PMTiles file.
+      // Validate the archive before considering the basemap ready.
+      try {
+        await p.getHeader();
+      } catch {
+        if (!disposed) handleError();
+        return;
+      }
+      window.clearTimeout(loadingTimeout);
+      if (disposed || modeRef.current === "fallback") return;
       map.resize();
 
       const sources = incidentSources(dataRef.current, accuracyRef.current);
@@ -579,6 +591,8 @@ export function OperationsMap({
     });
 
     return () => {
+      disposed = true;
+      window.clearTimeout(loadingTimeout);
       resizeObserver.disconnect();
       window.cancelAnimationFrame(animationFrame);
       map.off("error", handleError);
