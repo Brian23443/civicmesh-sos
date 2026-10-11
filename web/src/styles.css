@@ -33,3 +33,11 @@ label, legend { font-weight:600; } textarea { display:block; width:100%; min-hei
 .quick-phrases::-webkit-scrollbar { display:none; }
 .phrase { flex-shrink:0; white-space:nowrap; }
 @media(max-width:360px) { .quick-phrases { margin:0 -16px 16px; padding:0 16px 4px; } }
+/* After Send: a quiet confirmation on the fresh home screen (the relay already showed "Report sent"). */
+.sent-banner { display:flex; gap:12px; align-items:flex-start; margin:8px 0 4px; padding:14px 8px 14px 16px; border:1px solid var(--accent); border-radius:16px; background:var(--surface); }
+.sent-banner > svg { flex-shrink:0; color:var(--accent); margin-top:2px; }
+.sent-banner div { display:grid; gap:2px; min-width:0; flex:1; }
+.sent-banner strong { color:var(--text); }
+.sent-banner span { color:var(--muted); font-size:15px; }
+.sent-banner a { color:var(--accent); text-decoration:underline; font-size:14px; margin-top:4px; }
+.banner-close { min-height:40px; min-width:40px; padding:0; border:0; background:transparent; }

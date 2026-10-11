@@ -59,7 +59,8 @@ p{margin:0 0 24px;color:var(--muted)}
 .mark circle{fill:none;stroke:var(--accent);stroke-width:5;stroke-dasharray:283;stroke-dashoffset:283;animation:draw .6s ease-out .1s forwards}
 .mark path{fill:none;stroke:var(--accent);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:60;animation:draw .35s ease-out .6s forwards}
 .bar{height:4px;border-radius:2px;background:var(--surface);overflow:hidden;margin:0 auto 20px;max-width:220px}
-.bar i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(0);animation:fill 2.4s linear .2s forwards}
+.bar i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(0);animation:fill 10s linear forwards}
+.small{font-size:15px;margin:0 0 12px}
 .alert{width:72px;height:72px;margin:0 auto;border-radius:50%;border:4px solid var(--muted);display:grid;place-items:center;font-size:40px;font-weight:700;color:var(--muted)}
 a.btn{display:block;min-height:52px;padding:14px 20px;border-radius:14px;background:var(--accent);color:var(--accent-text);font-weight:600;text-decoration:none}
 a.quiet{color:var(--muted);font-size:15px;text-decoration:underline}
@@ -179,7 +180,7 @@ static void handleSos() {
   redirectToSent(frame);
 }
 
-// Success: show it clearly, then return to the app by itself (~2.6 s) — no tap needed.
+// Success: show it clearly for 10 s, then return to the app by itself — no tap needed.
 static void handleSent() {
   String body = String(
       "<svg class=\"mark\" viewBox=\"0 0 100 100\" aria-hidden=\"true\"><circle cx=\"50\" cy=\"50\" r=\"45\"/>"
@@ -187,8 +188,9 @@ static void handleSent() {
       "<h1 role=\"status\">Report sent</h1>"
       "<p>It&rsquo;s on the rescue radio network. Stay where you are if it&rsquo;s safe.</p>"
       "<div class=\"bar\" aria-hidden=\"true\"><i></i></div>") +
-      backLink("quiet", "Returning to RescuNote&hellip;") +
-      "<script>var t=setTimeout(goHome,2600);addEventListener('pagehide',function(){clearTimeout(t)});</script>";
+      "<p class=\"small\" id=\"cd\">Returning to RescuNote in 10&nbsp;s</p>" +
+      backLink("quiet", "Back to RescuNote now") +
+      "<script>var n=10,t=setInterval(function(){n--;document.getElementById('cd').textContent='Returning to RescuNote in '+n+'\u00a0s';if(n<=0){clearInterval(t);goHome();}},1000);addEventListener('pagehide',function(){clearInterval(t)});</script>";
   sendNoCache(200, "text/html; charset=utf-8", page(body));
 }
 

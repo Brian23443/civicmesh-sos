@@ -49,8 +49,8 @@ it('analyzes, edits review, preserves user choice, saves before navigation, and 
     medicalFlags:0x1402,locationType:2,gpsAccuracy:0,lat:0,lon:0,seq:0});
   expect(JSON.stringify([...data.values()])).not.toContain(message);
   expect(store.snapshot().seq).toBe(1);
-  expect(screen.getByRole('link',{name:'Open the relay again (same report)'})).toHaveAttribute('href',RELAY_URL+hex);
-  expect(screen.getByRole('heading',{name:'Sent to the relay'})).toBeInTheDocument();
+  expect(screen.getByRole('link',{name:'Didn’t see “Report sent”? Send again (same report)'})).toHaveAttribute('href',RELAY_URL+hex);
+  expect(screen.getByText('Report handed to the relay')).toBeInTheDocument();
   expect(screen.getByText(/· Flood · 5 people \(4 adults, 1 child\)$/)).toBeInTheDocument();
   await user.click(screen.getAllByRole('link',{name:'My reports'})[0]);
   expect(await screen.findByRole('heading',{name:'My reports'})).toBeInTheDocument();
@@ -105,8 +105,8 @@ it('guards repeated Send clicks and allows retry without consuming another seque
   await user.click(screen.getByRole('button',{name:'Can’t type? Choose from a list'}));
   await user.dblClick(screen.getByRole('button',{name:'Send'}));
   expect(relay).toHaveBeenCalledOnce();expect(store.snapshot().seq).toBe(1);expect(store.snapshot().reports).toHaveLength(1);
-  expect(screen.getByRole('alert')).toHaveTextContent('The relay page didn’t open');
-  expect(screen.getByRole('link',{name:'Open the relay again (same report)'})).toHaveAttribute('href',RELAY_URL+store.snapshot().reports[0].hex);
+  expect(screen.getByText('Report saved — the relay didn’t open')).toBeInTheDocument();
+  expect(screen.getByRole('link',{name:'Didn’t see “Report sent”? Send again (same report)'})).toHaveAttribute('href',RELAY_URL+store.snapshot().reports[0].hex);
 });
 it('keeps sending available when localStorage is blocked',async()=>{
   const safe=createStorage(()=>{throw Error('storage blocked');});
@@ -178,10 +178,12 @@ it('sends in two taps: message → Send for help → Send',async()=>{
   await screen.findByRole('heading',{name:'Ready to send'});
   await user.click(screen.getByRole('button',{name:'Send'}));
   expect(relay).toHaveBeenCalledOnce();
-  expect(screen.getByRole('heading',{name:'Sent to the relay'})).toBeInTheDocument();
-  await user.click(screen.getByRole('button',{name:/Send an update or new report/}));
-  expect(await screen.findByLabelText('What’s happening? Who needs help?')).toHaveValue('');
-  expect(screen.queryByRole('heading',{name:'Sent to the relay'})).not.toBeInTheDocument();
+  // Back on a fresh home screen, ready for an update; a banner confirms what went out.
+  expect(screen.getByText('Report handed to the relay')).toBeInTheDocument();
+  expect(screen.getByLabelText('What’s happening? Who needs help?')).toHaveValue('');
+  expect(screen.getByRole('heading',{name:'Anything else?'})).toBeInTheDocument();
+  await user.click(screen.getByRole('button',{name:'Dismiss'}));
+  expect(screen.queryByText('Report handed to the relay')).not.toBeInTheDocument();
 });
 
 it('adds quick phrases to the message for people who can’t type much',async()=>{

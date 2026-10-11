@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, FileText, ListChecks, LoaderCircle, MapPin, Minus, Plus, Send, Wifi } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, X, FileText, ListChecks, LoaderCircle, MapPin, Minus, Plus, Send, Wifi } from 'lucide-react';
 import type { Classifier } from '../inference/types';
 import { resolveReport } from '../resolvers';
 import { finalizeReport } from '../inference/finalize';
@@ -57,13 +57,13 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
   const navigate=useNavigate(); const route=useLocation();
   const [message,setMessage]=useState(''); const [draft,setDraft]=useState<Draft|null>(null);
   const [busy,setBusy]=useState(false); const [error,setError]=useState('');
-  const [receipt,setReceipt]=useState<SentReport|null>(null);
+  const [receipt,setReceipt]=useState<SentReport|null>(null); const [relayBlocked,setRelayBlocked]=useState(false);
   const [editor,setEditor]=useState<Editor>(null); const [snapshot,setSnapshot]=useState(()=>store.snapshot());
   const analyzeRun=useRef(0); const gpsRun=useRef(0); const sending=useRef(false); const mounted=useRef(true);
   useEffect(()=>{ mounted.current=true; return ()=>{mounted.current=false; analyzeRun.current++;gpsRun.current++;}; },[]);
   useEffect(()=>{
     if(route.pathname!=='/analyze'){analyzeRun.current++;setBusy(false);}
-    if(route.pathname!=='/send') setError('');
+    setError('');
     setEditor(null);
   },[route.pathname]);
   const [gpsUpdate,setGpsUpdate]=useState<GpsUpdate|null>(null);
@@ -86,11 +86,6 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
   useEffect(()=>{ requestGps(); },[requestGps]);
   const retryGpsIfStopped=()=>{ if(!gpsUpdate || ['timeout','unavailable'].includes(gpsUpdate.phase)) requestGps(); };
 
-  /** Ready for the next report. The model stays loaded (the relay's Back restores this page). */
-  function newReport() {
-    setReceipt(null); setDraft(null); setMessage(''); setError(''); navigate('/');
-    if(!fix || gpsUpdate?.phase!=='ready') requestGps();
-  }
   function patch(fields: Partial<Draft>) { setDraft(current=>current ? {...current,...fields}:current); }
   function addPhrase(phrase:string) {
     setMessage(current=>{ const t=current.trim(); return t ? `${t.replace(/[.!]?$/,'.')} ${phrase}.` : `${phrase}.`; });
@@ -127,11 +122,14 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
     if(!draft || sending.current) return;
     sending.current=true;setError('');
     let report:SentReport;
-    try {report=store.handoff(packet());setSnapshot(store.snapshot());setReceipt(report);setDraft(null);setMessage('');navigate('/send');}
+    // Straight back to a fresh home screen: the relay shows "Report sent" for 10 s, then returns here
+    // (history.back, model still loaded). A small banner keeps the retry link in case the relay page
+    // never loaded — e.g. the phone wasn't on the RescuNote Wi-Fi.
+    try {report=store.handoff(packet());setSnapshot(store.snapshot());setReceipt(report);setRelayBlocked(false);setDraft(null);setMessage('');navigate('/');}
     catch(e){sending.current=false;setError(e instanceof Error?e.message:'Could not prepare the report. Check the details and try again.');return;}
     sending.current=false;
     // Everything required to survive navigation is committed before this call.
-    try {relayNavigate(report.hex);} catch {setError('Report saved. The relay page didn’t open — use the link below to try again (same report).');}
+    try {relayNavigate(report.hex);} catch {setRelayBlocked(true);}
   }
   const titles={priority:'How urgent is it?',hazard:'What kind of emergency?',status:'What’s your situation?',people:'How many people?',medical:'Medical needs',location:'Location'};
   let preview=''; if(draft) {try {preview=pack(packet());}catch {/* Send validation supplies the actionable message. */}}
@@ -145,7 +143,12 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
   return <>
     <Routes>
       <Route path="/" element={<section>
-        <h1>What’s happening?</h1>
+        {receipt&&<div className="sent-banner" role="status"><CheckCircle2 aria-hidden="true" size={24}/><div>
+          <strong>{relayBlocked?'Report saved — the relay didn’t open':'Report handed to the relay'}</strong>
+          <span>{receiptSummary(receipt)}</span>
+          <a href={RELAY_URL+receipt.hex}>Didn’t see “Report sent”? Send again (same report)</a>
+        </div><Button aria-label="Dismiss" className="banner-close" onClick={()=>setReceipt(null)}><X aria-hidden="true" size={18}/></Button></div>}
+        <h1>{receipt?'Anything else?':'What’s happening?'}</h1>
         <p className="lead">Who needs help, and what’s wrong? Your words stay on this phone.</p>
         <form className="report-form" onSubmit={e=>{e.preventDefault();void analyze();}}>
           <label htmlFor="message" className="sr-only">What’s happening? Who needs help?</label>
@@ -185,15 +188,8 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
         <Button className="primary full-width send-button mt-4" onClick={send}><Send aria-hidden="true" size={22}/>{gpsWaiting?'Send now (location still loading)':'Send'}</Button>
         <Link to="/" className="text-link"><ArrowLeft aria-hidden="true" size={18}/>Back to your message</Link>
         <details className="tech-details"><summary>What gets sent (18 bytes)</summary><code className="hex">{preview}</code><p className="small">Only these coded details and your phone’s GPS are sent. Your message and any place names stay on your phone.</p></details>
-      </section>:<Navigate to={receipt?'/send':'/'} replace/>}/>
-      <Route path="/send" element={receipt?<section className="receipt"><CheckCircle2 aria-hidden="true" className="receipt-icon" size={56}/><h1>Sent to the relay</h1>
-        <p><strong>{receiptSummary(receipt)}</strong></p>
-        <p>If the relay showed “Report sent”, it’s on the rescue radio network. <strong>Stay where you are if it’s safe.</strong> Send an update if things change.</p>
-        {error&&<p role="alert" className="notice">{error}</p>}
-        <Button className="primary full-width" onClick={newReport}>Send an update or new report <ArrowRight aria-hidden="true" size={20}/></Button>
-        <Link className="button full-width mt-4" to="/reports">My reports</Link>
-        <p className="small mt-6">Relay page didn’t load? <a href={RELAY_URL+receipt.hex}>Open the relay again (same report)</a> — it won’t be counted twice.</p>{storageNote}
-      </section>:<Navigate to={draft?'/review':'/'} replace/>}/>
+      </section>:<Navigate to="/" replace/>}/>
+      <Route path="/send" element={<Navigate to="/" replace/>}/>
       <Route path="/reports" element={<section><p className="eyebrow">ON THIS PHONE</p><h1>My reports</h1>{storageNote}
         {snapshot.reports.length===0?<div className="card mt-6"><FileText aria-hidden="true" size={32}/><h2>No reports yet</h2><p>Reports appear here after you send them.</p></div>:<ul className="report-list">{snapshot.reports.map(report=>{
           const fields=unpackFrame(fromHex(report.hex)); const Icon=hazardIcons[fields.hazard];
