@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, X, FileText, ListChecks, LoaderCircle, MapPin, Minus, Plus, Send, Wifi } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, ChevronRight, Volume2, X, FileText, ListChecks, LoaderCircle, MapPin, Minus, Plus, Send, Wifi } from 'lucide-react';
 import type { Classifier } from '../inference/types';
 import { resolveReport } from '../resolvers';
 import { finalizeReport } from '../inference/finalize';
@@ -12,6 +12,8 @@ import { fromHex } from '../protocol/hex';
 import { Button, Sheet, Status } from '../components/ui';
 import { hazardIcons, hazardLabels, locationLabels, medicalLabels, medicalIcons, priorityLabels, statusLabels } from '../lib/presentation';
 import { RELAY_URL, type ReportStore, type SentReport } from '../lib/reports';
+import { readbackKeys, say, stopSpeaking, unlockAudio } from '../voice/speech';
+import { isVoiceEnabled, useVoiceEnabled } from '../voice/voiceSetting';
 
 type Draft = Pick<FrameFields,'priority'|'hazard'|'status'|'adults'|'children'|'medicalFlags'|'thirdParty'|'locationType'> & { locationText: string | null; mode:'model'|'manual' };
 type Gps = { lat:number; lon:number; accuracy:number | null; bucket:FrameFields['gpsAccuracy']; state:'idle'|'loading'|'ready'|'failed' };
@@ -75,6 +77,23 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
     ? {lat:fix.lat,lon:fix.lon,accuracy:fix.accuracy,bucket:gpsBucket(fix.accuracy),state:gpsUpdate!.phase==='searching'?'loading':'ready'}
     : {...NO_GPS,state:gpsUpdate?.phase==='searching'?'loading':gpsUpdate?'failed':'idle'};
   const gpsText=gpsLabel(gpsUpdate);
+  // Voice guidance: read the report back once when "Ready to send" opens (not again on every edit),
+  // and say "Report handed to the relay" when the relay page returns us here.
+  const voiceOn=useVoiceEnabled();
+  const draftSerial=useRef(0); const spokenFor=useRef(-1);
+  const locationWord = gps.bucket!==0 ? 'found' : gps.state==='loading' ? 'searching' : 'none';
+  const readBack=()=>{ if(draft) void say(readbackKeys(draft, locationWord)); };
+  useEffect(()=>{
+    if(route.pathname!=='/review'||!draft||!voiceOn||spokenFor.current===draftSerial.current) return;
+    spokenFor.current=draftSerial.current; readBack();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[route.pathname,draft,voiceOn]);
+  const receiptRef=useRef(receipt); receiptRef.current=receipt;
+  useEffect(()=>{
+    const onShow=(e:PageTransitionEvent)=>{ if(e.persisted&&receiptRef.current&&isVoiceEnabled()) void say(['sent']); };
+    window.addEventListener('pageshow',onShow); return ()=>window.removeEventListener('pageshow',onShow);
+  },[]);
+  useEffect(()=>()=>stopSpeaking(),[]);
   useEffect(()=>onGpsStatus(gpsText),[gpsText,onGpsStatus]);
   const requestGps=useCallback(()=>{
     cancelGps.current?.();
@@ -92,6 +111,8 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
   }
   async function analyze() {
     if(busy||!analysisReady||!message.trim()) return;
+    if(isVoiceEnabled()) unlockAudio(); // still inside the tap: lets the read-back play once analysis finishes
+    draftSerial.current++;
     retryGpsIfStopped();
     const run=++analyzeRun.current; const text=message; setDraft(null);setBusy(true);setError('');setReceipt(null);navigate('/analyze');
     try {
@@ -104,6 +125,8 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
     finally {if(mounted.current && run===analyzeRun.current) setBusy(false);}
   }
   function manual() {
+    if(isVoiceEnabled()) unlockAudio();
+    draftSerial.current++;
     analyzeRun.current++;setBusy(false);setError('');setReceipt(null);retryGpsIfStopped();
     const fields=resolveReport(message);
     setDraft({...MANUAL,adults:fields.adults,children:fields.children,medicalFlags:fields.medicalFlags,
@@ -120,6 +143,7 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
   }
   function send() {
     if(!draft || sending.current) return;
+    stopSpeaking();
     sending.current=true;setError('');
     let report:SentReport;
     // Straight back to a fresh home screen: the relay shows "Report sent" for 10 s, then returns here
@@ -185,6 +209,7 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
         <div className="wifi-hint mt-4"><Wifi aria-hidden="true" size={22}/><p><strong>To send:</strong> keep Airplane Mode on, turn on Wi-Fi, and join <strong>RescuNote</strong>.</p></div>
         {error&&<p role="alert" className="notice">{error}</p>}{storageNote}
         <Button className="primary full-width send-button mt-4" onClick={send}><Send aria-hidden="true" size={22}/>{gpsWaiting?'Send now (location still loading)':'Send'}</Button>
+        {voiceOn&&<Button className="full-width mt-4" onClick={()=>{unlockAudio();readBack();}}><Volume2 aria-hidden="true" size={20}/>Hear it again</Button>}
         <Link to="/" className="text-link"><ArrowLeft aria-hidden="true" size={18}/>Back to your message</Link>
         <details className="tech-details"><summary>What gets sent (18 bytes)</summary><code className="hex">{preview}</code><p className="small">Only these coded details and your phone’s GPS are sent. Your message and any place names stay on your phone.</p></details>
       </section>:<Navigate to="/" replace/>}/>

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useOfflineStatus } from './offline/useOfflineStatus';
-import { FileText, HelpCircle, Moon, Sun, WifiOff } from 'lucide-react';
+import { FileText, HelpCircle, Moon, Sun, Volume2, VolumeX, WifiOff } from 'lucide-react';
+import { say, stopSpeaking, unlockAudio } from './voice/speech';
+import { setVoiceEnabled, useVoiceEnabled } from './voice/voiceSetting';
 import { CrossIcon } from './components/CrossIcon';
 import logoMark from './assets/logo-mark.png';
 import { Odometer } from './components/Odometer';
@@ -49,6 +51,13 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
   // No html/body overflow lock: home stays in the same scrolling mode as every other screen, so iOS
   // places the tab bar identically everywhere.
   const isHome = location.pathname === '/';
+  const voiceOn = useVoiceEnabled();
+  // Turning voice on is a tap, so it also unlocks audio for later playback on iOS.
+  const toggleVoice = () => {
+    const next = !voiceOn;
+    setVoiceEnabled(next);
+    if (next) { unlockAudio(); void say(['welcome']); } else stopSpeaking();
+  };
   // iOS scrolls the page up to keep the message box above the keyboard and doesn't always scroll back
   // when the keyboard closes, leaving the home screen (and its tab bar) shifted. Home never scrolls,
   // so once the keyboard is gone, put it back at the top.
@@ -73,6 +82,8 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
       {/* Big, centred brand with the odometer name on the home screen; compact elsewhere. */}
       <header className={`hero ${location.pathname==='/'?'':'hero--compact'}`}>
         <Button className="help-toggle" aria-label="Open RescuNote information" onClick={() => setHelp(true)}><HelpCircle aria-hidden="true" size={20}/></Button>
+        <Button className="voice-toggle" aria-pressed={voiceOn} aria-label={voiceOn ? 'Turn off voice guidance' : 'Turn on voice guidance'}
+          title={voiceOn ? 'Voice guidance on' : 'Voice guidance off'} onClick={toggleVoice}>{voiceOn ? <Volume2 aria-hidden="true" size={20}/> : <VolumeX aria-hidden="true" size={20}/>}</Button>
         <Button className="theme-toggle" aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`} onClick={toggle}>{theme === 'dark' ? <Sun aria-hidden="true" size={20}/> : <Moon aria-hidden="true" size={20}/>}</Button>
         <NavLink to="/" aria-label="RescuNote home" className="hero-brand">
           <span aria-hidden="true" className="brand-logo hero-logo" style={{ maskImage:`url(${logoMark})`, WebkitMaskImage:`url(${logoMark})` }}/>

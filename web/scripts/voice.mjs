@@ -5,7 +5,7 @@
  *
  *   node scripts/voice.mjs voices                       list the voices on your account
  *   node scripts/voice.mjs audition [--ids a,b,c]       sample read-back per voice → voice-audition/index.html
- *   node scripts/voice.mjs generate --voice <id> [--lang en] [--force]
+ *   node scripts/voice.mjs generate --voice <id> [--lang en] [--model eleven_v4] [--force]
  *                                                       all phrases → public/voice/<lang>/*.mp3 + manifest.json
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url';
 
 const WEB = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const API = 'https://api.elevenlabs.io/v1';
-const MODEL = 'eleven_multilingual_v2'; // natural, and the same model covers Spanish later
+const MODEL = process.argv.includes('--model') ? process.argv[process.argv.indexOf('--model') + 1] : 'eleven_v4'; // 94 languages, incl. Spanish
 const FORMAT = 'mp3_44100_64';          // small files, clear speech
 // Calm and steady rather than expressive: this is read to someone in an emergency.
 const SETTINGS = { stability: 0.6, similarity_boost: 0.75, style: 0, use_speaker_boost: true };
@@ -60,7 +60,9 @@ const escape = (s) => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&
 async function audition() {
   const all = await listVoices();
   const wanted = arg('ids')?.split(',').map(s => s.trim());
-  const voices = wanted ? all.filter(v => wanted.includes(v.id)) : all.filter(v => v.category === 'premade').slice(0, 12);
+  // Voices outside the account list (e.g. from the Voice Library) still work by id.
+  const voices = wanted ? wanted.map(id => all.find(v => v.id === id) ?? { id, name: id, labels: '' })
+    : all.filter(v => v.category === 'premade').slice(0, 12);
   const out = join(WEB, 'voice-audition');
   mkdirSync(out, { recursive: true });
   const rows = [];

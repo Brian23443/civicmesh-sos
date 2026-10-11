@@ -15,3 +15,7 @@ Fonts and icons:
 - Inter (@fontsource/inter) — SIL Open Font License 1.1.
 - Poppins (@fontsource/poppins) — SIL Open Font License 1.1, Copyright 2020 The Poppins Project Authors.
 - Lucide icons (lucide-react) — ISC License.
+
+Voice guidance:
+- Spoken phrases in public/voice/ were generated with ElevenLabs (https://elevenlabs.io), voice "Stephen", model eleven_v4,
+  and ship as static audio; the app never contacts ElevenLabs.
