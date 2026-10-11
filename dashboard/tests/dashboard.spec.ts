@@ -92,7 +92,7 @@ test("renders the live operator dashboard without browser errors", async ({
   await expect(page.getByRole("heading", { name: "No location" })).toBeVisible();
   await expect(page.getByLabel("Triage legend")).toContainText("Immediate");
   await expect(
-    page.locator(".maplibregl-canvas, .fallback-grid").first(),
+    page.locator(".maplibregl-canvas:visible, .fallback-grid:visible").first(),
   ).toBeVisible();
 
   expect(browserErrors).toEqual([]);
@@ -156,11 +156,29 @@ test("loads everything from the local machine (no internet requests)", async ({
 
   await page.goto("/");
   await expect(
-    page.locator(".maplibregl-canvas, .fallback-grid").first(),
+    page.locator(".maplibregl-canvas:visible, .fallback-grid:visible").first(),
   ).toBeVisible();
   await page.waitForTimeout(2_000); // let tiles, glyphs and sprites load
 
   expect(remote).toEqual([]);
+});
+
+test("keeps incident pins usable when the offline archive is missing", async ({ page }) => {
+  await page.route("**/demo.pmtiles", (route) => route.fulfill({
+    contentType: "text/html",
+    body: "<!doctype html><html><body>Missing archive</body></html>",
+  }));
+  const pageErrors: string[] = [];
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+
+  await page.goto("/");
+  const fallback = page.locator(".fallback-grid");
+  await expect(fallback).toBeVisible();
+  await expect(page.locator(".maplibregl-canvas")).toBeHidden();
+  await expect(fallback.locator(".fallback-pin")).toHaveCount(7);
+  await fallback.locator(".fallback-pin").first().click();
+  await expect(page.getByRole("dialog")).toBeVisible();
+  expect(pageErrors).toEqual([]);
 });
 
 test("starts in the operator's system theme and remembers a toggle", async ({
