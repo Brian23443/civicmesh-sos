@@ -17,7 +17,7 @@
 
 // Hosted survivor website (docs/INTEGRATION.md). Set it here, not with a -D compile flag:
 // shell quoting through arduino-cli leaves literal quote marks in the string, which makes the
-// "Back to CivicMesh" href empty — a tap then reloads /sos and re-transmits the report.
+// "Back to RescuNote" href empty — a tap then reloads /sos and re-transmits the report.
 #define APP_URL "https://brian23443.github.io/rescunote/"
 static_assert(APP_URL[0] == 'h', "APP_URL must be a bare URL string, without embedded quote marks");
 
@@ -37,51 +37,68 @@ uint32_t lastFrameAt = 0;
 bool haveLastFrame = false;
 
 // ---------------------------------------------------------------------------
-// HTML (self-contained, inline CSS, no external fonts). Colors are placeholders
-// until Track 4's design tokens land in design/REFERENCES.md — change only :root.
+// HTML (self-contained, inline CSS/JS, no external fonts). Colours are the RescuNote app's dark tokens
+// (web/src/styles.css) so the hop to the relay and back feels like one app.
 // ---------------------------------------------------------------------------
 static const char PAGE_HEAD[] PROGMEM = R"HTML(<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CivicMesh relay</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101820">
+<title>RescuNote relay</title>
 <style>
-:root{--bg:#0b0f14;--surface:#141a22;--text:#e8edf2;--muted:#9aa7b4;--accent:#5aa9ff;--ok:#3ecf8e;--radius:16px}
+:root{--bg:#101820;--surface:#19252F;--text:#F4F7FA;--muted:#BAC9D5;--accent:#A9C7FF;--accent-text:#101820;--border:#435666}
 *{box-sizing:border-box}
-body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:16px;
-background:var(--bg);color:var(--text);font:17px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-.card{width:100%;max-width:420px;background:var(--surface);border-radius:var(--radius);padding:28px 24px;text-align:center}
-.icon{font-size:56px;line-height:1;margin-bottom:12px}
-.ok{color:var(--ok)}
-h1{font-size:26px;margin:0 0 8px}
-p{margin:0 0 20px;color:var(--muted)}
-a.btn{display:block;min-height:48px;padding:13px 20px;border-radius:12px;background:var(--accent);color:#06121f;
-font-weight:600;text-decoration:none}
-a.btn:focus-visible{outline:3px solid var(--text);outline-offset:3px}
-.meta{margin-top:16px;font:13px ui-monospace,Menlo,monospace;color:var(--muted)}
-</style></head><body><main class="card">
+html,body{height:100%}
+body{margin:0;display:flex;align-items:center;justify-content:center;padding:24px;background:var(--bg);color:var(--text);
+font:17px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;transition:opacity .35s ease}
+body.leaving{opacity:0}
+main{width:100%;max-width:380px;text-align:center;animation:rise .45s ease-out both}
+h1{font-size:28px;font-weight:600;letter-spacing:-.02em;margin:20px 0 6px}
+p{margin:0 0 24px;color:var(--muted)}
+.mark{width:96px;height:96px;margin:0 auto}
+.mark circle{fill:none;stroke:var(--accent);stroke-width:5;stroke-dasharray:283;stroke-dashoffset:283;animation:draw .6s ease-out .1s forwards}
+.mark path{fill:none;stroke:var(--accent);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:60;stroke-dashoffset:60;animation:draw .35s ease-out .6s forwards}
+.bar{height:4px;border-radius:2px;background:var(--surface);overflow:hidden;margin:0 auto 20px;max-width:220px}
+.bar i{display:block;height:100%;width:100%;background:var(--accent);transform-origin:left;transform:scaleX(0);animation:fill 2.4s linear .2s forwards}
+.alert{width:72px;height:72px;margin:0 auto;border-radius:50%;border:4px solid var(--muted);display:grid;place-items:center;font-size:40px;font-weight:700;color:var(--muted)}
+a.btn{display:block;min-height:52px;padding:14px 20px;border-radius:14px;background:var(--accent);color:var(--accent-text);font-weight:600;text-decoration:none}
+a.quiet{color:var(--muted);font-size:15px;text-decoration:underline}
+a:focus-visible{outline:3px solid var(--text);outline-offset:3px}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes fill{to{transform:scaleX(1)}}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+@media(prefers-reduced-motion:reduce){main,.mark circle,.mark path,.bar i{animation:none;stroke-dashoffset:0;transform:none}body{transition:none}}
+</style></head><body><main>
 )HTML";
 
 static const char PAGE_TAIL[] PROGMEM = R"HTML(
 </main></body></html>
 )HTML";
 
-static String page(const String& body) {
+// Goes *back* to the app when we came from it: iOS restores the app page from its back/forward cache
+// with the on-device model still loaded. Opening APP_URL instead would reload the app and load the
+// ~35 MB model again; iOS doesn't free that memory between reloads, so after a few reports the model
+// could no longer start. Without history (page opened directly) it opens APP_URL.
+static const char GO_HOME_JS[] PROGMEM = R"JS(<script>
+function goHome(){document.body.classList.add('leaving');setTimeout(function(){
+if(history.length>1){history.back();setTimeout(function(){location.replace(APP)},1500);}else{location.replace(APP);}},350);return false;}
+</script>)JS";
+
+static String page(const String& body, bool withScript = true) {
   String html;
-  html.reserve(2200);
+  html.reserve(4096);
   html += FPSTR(PAGE_HEAD);
+  if (withScript) {  // before the body: the sent page's auto-return timer calls goHome()
+    html += "<script>var APP='" APP_URL "';</script>";
+    html += FPSTR(GO_HOME_JS);
+  }
   html += body;
   html += FPSTR(PAGE_TAIL);
   return html;
 }
 
-// Goes *back* to the app when we came from it: iOS restores the app page from its back/forward cache
-// with the on-device model still loaded. Opening APP_URL instead would reload the app and load the
-// ~35 MB model again; iOS doesn't free that memory between reloads, so after a few reports the model
-// could no longer start. Without history (page opened directly) the link opens APP_URL as before.
-static String backLink() {
-  return String("<a class=\"btn\" href=\"") + APP_URL +
-         "\" onclick=\"if(history.length>1){history.back();return false;}\" aria-label=\"Back to CivicMesh\">"
-         "Back to CivicMesh</a>";
+static String backLink(const char* cls = "btn", const char* label = "Back to RescuNote") {
+  return String("<a class=\"") + cls + "\" href=\"" APP_URL "\" onclick=\"return goHome()\">" + label + "</a>";
 }
 
 // ---------------------------------------------------------------------------
@@ -104,7 +121,7 @@ static void sendNoCache(int code, const char* type, const String& content) {
 }
 
 static void sendError(int code, const String& title, const String& detail) {
-  String body = "<div class=\"icon\" aria-hidden=\"true\">!</div><h1>" + title + "</h1><p>" + detail + "</p>" +
+  String body = "<div class=\"alert\" aria-hidden=\"true\">!</div><h1>" + title + "</h1><p>" + detail + "</p>" +
                 backLink();
   sendNoCache(code, "text/html; charset=utf-8", page(body));
 }
@@ -121,8 +138,8 @@ static void handleSos() {
   if (parsed != 0) {
     Serial.printf("Rejected /sos d=%s (code %d)\n", hex.c_str(), parsed);
     sendError(400, "Report not recognised",
-              parsed == 2 ? "This report was made by a different app version. Open CivicMesh and try again."
-                          : "The report link is incomplete. Go back to CivicMesh and tap Send again.");
+              parsed == 2 ? "This report was made by a different app version. Open RescuNote and try again."
+                          : "The report link is incomplete. Go back to RescuNote and tap Send again.");
     return;
   }
 
@@ -162,23 +179,27 @@ static void handleSos() {
   redirectToSent(frame);
 }
 
+// Success: show it clearly, then return to the app by itself (~2.6 s) — no tap needed.
 static void handleSent() {
-  long seq = server.hasArg("seq") ? server.arg("seq").toInt() : -1;
-  String body = String("<div class=\"icon ok\" aria-hidden=\"true\">&#10003;</div>") +
-                "<h1>Sent &#10003;</h1>" +
-                "<p>Your report is on the rescue network. Stay where you are if it is safe.</p>" + backLink() +
-                (seq >= 0 && seq <= 255 ? "<div class=\"meta\">seq " + String(seq) + "</div>" : String(""));
+  String body = String(
+      "<svg class=\"mark\" viewBox=\"0 0 100 100\" aria-hidden=\"true\"><circle cx=\"50\" cy=\"50\" r=\"45\"/>"
+      "<path d=\"M30 52 L44 66 L71 37\"/></svg>"
+      "<h1 role=\"status\">Report sent</h1>"
+      "<p>It&rsquo;s on the rescue radio network. Stay where you are if it&rsquo;s safe.</p>"
+      "<div class=\"bar\" aria-hidden=\"true\"><i></i></div>") +
+      backLink("quiet", "Returning to RescuNote&hellip;") +
+      "<script>var t=setTimeout(goHome,2600);addEventListener('pagehide',function(){clearTimeout(t)});</script>";
   sendNoCache(200, "text/html; charset=utf-8", page(body));
 }
 
 static void handleRoot() {
-  String body = String("<div class=\"icon\" aria-hidden=\"true\">&#128225;</div><h1>CivicMesh relay</h1>") +
-                "<p>Open the CivicMesh website to send a report.</p>" + backLink();
+  String body = String("<div class=\"alert\" aria-hidden=\"true\">i</div><h1>RescuNote relay</h1>") +
+                "<p>Open RescuNote to send a report. This relay passes it on by radio.</p>" + backLink("btn", "Open RescuNote");
   sendNoCache(200, "text/html; charset=utf-8", page(body));
 }
 
 static void handleNotFound() {
-  sendNoCache(404, "text/plain; charset=utf-8", "Not found. Open the CivicMesh website to send a report.");
+  sendNoCache(404, "text/plain; charset=utf-8", "Not found. Open RescuNote to send a report.");
 }
 
 // ---------------------------------------------------------------------------

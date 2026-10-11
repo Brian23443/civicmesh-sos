@@ -188,7 +188,7 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
       </section>:<Navigate to={receipt?'/send':'/'} replace/>}/>
       <Route path="/send" element={receipt?<section className="receipt"><CheckCircle2 aria-hidden="true" className="receipt-icon" size={56}/><h1>Sent to the relay</h1>
         <p><strong>{receiptSummary(receipt)}</strong></p>
-        <p>If the relay page said “Sent ✓”, your report is on the rescue radio network. <strong>Stay where you are if it’s safe.</strong> Send an update if things change.</p>
+        <p>If the relay showed “Report sent”, it’s on the rescue radio network. <strong>Stay where you are if it’s safe.</strong> Send an update if things change.</p>
         {error&&<p role="alert" className="notice">{error}</p>}
         <Button className="primary full-width" onClick={newReport}>Send an update or new report <ArrowRight aria-hidden="true" size={20}/></Button>
         <Link className="button full-width mt-4" to="/reports">My reports</Link>
