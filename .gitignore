@@ -46,3 +46,6 @@ firmware/**/build/
 
 # --- TypeScript incremental build cache ---
 *.tsbuildinfo
+
+# --- ElevenLabs voice audition samples (not shipped) ---
+web/voice-audition/

@@ -18,7 +18,8 @@
     "copy:ort": "node scripts/copy-ort.mjs",
     "predev": "node scripts/copy-ort.mjs",
     "prebuild": "node scripts/copy-ort.mjs",
-    "pretest": "node scripts/copy-ort.mjs"
+    "pretest": "node scripts/copy-ort.mjs",
+    "voice": "node scripts/voice.mjs"
   },
   "dependencies": {
     "@fontsource/inter": "^5.1.0",
