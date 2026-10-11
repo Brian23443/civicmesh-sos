@@ -82,7 +82,9 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
         <ReportFlow classifier={classifier} store={store} relayNavigate={relayNavigate} onGpsStatus={setGpsLabel} analysisReady={!!suppliedClassifier||modelActive}/>
 
       </main>
-      <nav aria-label="Main navigation" className="bottom-nav"><NavLink to="/" end><Send aria-hidden="true" size={20}/>Get help</NavLink><NavLink to="/reports"><FileText aria-hidden="true" size={20}/>My reports</NavLink></nav>
+      {/* No tab bar on the fixed home screen: it can't scroll, so Safari keeps its full toolbar and a
+          bottom bar would float above it. Home links to My reports itself. */}
+      {!isHome && <nav aria-label="Main navigation" className="bottom-nav"><NavLink to="/" end><Send aria-hidden="true" size={20}/>Get help</NavLink><NavLink to="/reports"><FileText aria-hidden="true" size={20}/>My reports</NavLink></nav>}
     </div>
     <Sheet open={help} onClose={() => setHelp(false)} title="About RescuNote" variant="center">
       <p>RescuNote sends short emergency reports by radio through a nearby relay. No cell service or internet needed.</p>

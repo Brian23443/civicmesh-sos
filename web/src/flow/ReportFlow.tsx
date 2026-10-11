@@ -160,6 +160,7 @@ export function ReportFlow({ classifier, store, relayNavigate, onGpsStatus, anal
         </form>
         {error&&<p role="alert" className="notice">{error}</p>}
         <Button className="full-width mt-4" onClick={manual}><ListChecks aria-hidden="true" size={20}/>Can’t type? Choose from a list</Button>
+        <Link className="home-reports" to="/reports"><FileText aria-hidden="true" size={18}/>My reports{snapshot.reports.length?` (${snapshot.reports.length})`:''}</Link>
         {storageNote}
       </section>}/>
       <Route path="/analyze" element={busy||error?<section aria-busy={busy}>
