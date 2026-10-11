@@ -44,9 +44,10 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
   // §12: ask the browser to keep the offline copy (iOS can otherwise evict it).
   useEffect(() => { try { void navigator.storage?.persist?.().catch(() => {}); } catch { /* unsupported */ } }, []);
   const offline=useOfflineStatus();
-  // The home screen is one fixed screen — no page scroll (the message box flexes to fit instead).
+  // The home screen is exactly one screen tall (the message box flexes to fit), so it never scrolls.
+  // No html/body overflow lock: home stays in the same scrolling mode as every other screen, so iOS
+  // places the tab bar identically everywhere.
   const isHome = location.pathname === '/';
-  useEffect(() => { document.documentElement.classList.toggle('lock-scroll', isHome); return () => document.documentElement.classList.remove('lock-scroll'); }, [isHome]);
   useEffect(() => {
     const titles: Record<string,string> = { '/':'Get help', '/analyze':'Reading your message', '/review':'Check and send', '/send':'Sent', '/reports':'My reports' };
     document.title = `${titles[location.pathname] ?? 'RescuNote'} · RescuNote`;
@@ -82,9 +83,7 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
         <ReportFlow classifier={classifier} store={store} relayNavigate={relayNavigate} onGpsStatus={setGpsLabel} analysisReady={!!suppliedClassifier||modelActive}/>
 
       </main>
-      {/* No tab bar on the fixed home screen: it can't scroll, so Safari keeps its full toolbar and a
-          bottom bar would float above it. Home links to My reports itself. */}
-      {!isHome && <nav aria-label="Main navigation" className="bottom-nav"><NavLink to="/" end><Send aria-hidden="true" size={20}/>Get help</NavLink><NavLink to="/reports"><FileText aria-hidden="true" size={20}/>My reports</NavLink></nav>}
+      <nav aria-label="Main navigation" className="bottom-nav"><NavLink to="/" end><Send aria-hidden="true" size={20}/>Get help</NavLink><NavLink to="/reports"><FileText aria-hidden="true" size={20}/>My reports</NavLink></nav>
     </div>
     <Sheet open={help} onClose={() => setHelp(false)} title="About RescuNote" variant="center">
       <p>RescuNote sends short emergency reports by radio through a nearby relay. No cell service or internet needed.</p>

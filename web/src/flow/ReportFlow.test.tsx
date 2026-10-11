@@ -52,7 +52,7 @@ it('analyzes, edits review, preserves user choice, saves before navigation, and 
   expect(screen.getByRole('link',{name:'Didn’t see “Report sent”? Send again (same report)'})).toHaveAttribute('href',RELAY_URL+hex);
   expect(screen.getByText('Report handed to the relay')).toBeInTheDocument();
   expect(screen.getByText(/· Flood · 5 people \(4 adults, 1 child\)$/)).toBeInTheDocument();
-  await user.click(screen.getAllByRole('link',{name:/^My reports/})[0]);
+  await user.click(screen.getAllByRole('link',{name:'My reports'})[0]);
   expect(await screen.findByRole('heading',{name:'My reports'})).toBeInTheDocument();
   expect(screen.getByText('handed to relay')).toBeInTheDocument();
   expect(screen.getByRole('heading',{name:'Flood'})).toBeInTheDocument();
@@ -92,7 +92,7 @@ it('does not complete stale analysis after leaving Report',async()=>{
   const {user}=setup({classify:()=>task});
   await user.type(screen.getByLabelText('What’s happening? Who needs help?'),'test');
   await user.click(screen.getByRole('button',{name:/^Send for help/}));
-  await user.click(screen.getAllByRole('link',{name:/^My reports/})[0]);
+  await user.click(screen.getAllByRole('link',{name:'My reports'})[0]);
   finish(await new MockClassifier({delayMs:0}).classify('test'));
   await waitFor(()=>expect(screen.getByRole('heading',{name:'My reports'})).toBeInTheDocument());
 });

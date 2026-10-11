@@ -108,7 +108,7 @@ textarea:focus { outline:2px solid var(--accent); outline-offset:0; }
 
 /* Home = exactly one screen. The shell is the viewport height; the message box takes whatever room is left,
    so nothing scrolls on any phone (it shrinks to a 3-line minimum on small ones). */
-html.lock-scroll, html.lock-scroll body { height:100%; overflow:hidden; overscroll-behavior:none; }
+html { overscroll-behavior-y:none; }
 .app-shell.is-home { height:100dvh; display:flex; flex-direction:column; overflow:hidden;
   padding-top:max(16px, env(safe-area-inset-top)); padding-bottom:calc(84px + env(safe-area-inset-bottom)); }
 .is-home main { flex:1; min-height:0; display:flex; flex-direction:column; }
@@ -130,7 +130,3 @@ html.lock-scroll, html.lock-scroll body { height:100%; overflow:hidden; overscro
   max-height:calc(100dvh - 32px); border-radius:24px; padding:24px; overflow:auto; }
 .sheet--center p { margin:10px 0; font-size:16px; }
 .sheet--center h2 { margin:0; }
-/* Home has no tab bar (see App.tsx), so it only needs room for the home indicator. */
-.app-shell.is-home { padding-bottom:max(12px, env(safe-area-inset-bottom)); }
-.home-reports { flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:8px; min-height:44px; margin-top:6px;
-  color:var(--muted); font-size:15px; font-weight:500; }

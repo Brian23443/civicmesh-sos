@@ -18,7 +18,7 @@ it('navigates, moves focus, changes theme, and restores focus after the sheet cl
   expect(screen.getByText('Test classifier')).toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Switch to light theme' }));
   expect(document.documentElement.dataset.theme).toBe('light');
-  await user.click(screen.getAllByRole('link', { name: /^My reports/ })[0]);
+  await user.click(screen.getAllByRole('link', { name: 'My reports' })[0]);
   expect(screen.getByRole('heading', { name: 'My reports' })).toBeInTheDocument();
   expect(screen.getByRole('main')).toHaveFocus();
   const opener = screen.getByRole('button', { name: 'Open RescuNote information' });
