@@ -22,7 +22,7 @@ CLI="/Applications/Arduino IDE.app/Contents/Resources/app/lib/backend/resources/
 ```
 
 The hosted website URL for the field node's "Back to CivicMesh" link is the `APP_URL` `#define` at the top of
-`field_node/field_node.ino` (currently https://brian23443.github.io/civicmesh-sos-app/). Edit it there — **don't** pass
+`field_node/field_node.ino` (currently https://brian23443.github.io/rescunote/). Edit it there — **don't** pass
 it as a `-D` compile flag: arduino-cli's quoting leaves literal quote marks in the string, the link's `href` becomes
 empty, and tapping it reloads `/sos` (a `static_assert` now rejects that).
 

@@ -4,7 +4,7 @@ Update a row when its value changes, and announce it in team chat.
 
 | Value | Owner | Current value | Used by |
 |---|---|---|---|
-| `APP_URL` (hosted survivor website, HTTPS) | T4 | **https://brian23443.github.io/civicmesh-sos-app/** — built files only, public repo `Brian23443/civicmesh-sos-app` (GitHub Pages); currently the Stage 2 build (rollback: previous commit of the site repo = Stage 1) | T2 field node `#define APP_URL` |
+| `APP_URL` (hosted survivor website, HTTPS) | T4 | **https://brian23443.github.io/rescunote/** — built files only, public repo `Brian23443/rescunote` (GitHub Pages); RescuNote build (renamed from civicmesh-sos-app on 2026-10-10; build with `VITE_BASE_PATH=/rescunote/`) | T2 field node `#define APP_URL` |
 | Bridge URL | T2 | `http://localhost:8000` | T3 dashboard (Vite proxy) |
 | Dashboard dev server | T3 | `http://localhost:5174` | — |
 | Survivor PWA dev server | T4 | `http://localhost:5173` | — |
