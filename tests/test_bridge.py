@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 
 from bridge import frame_codec
 from bridge.frame_codec import decode_frame, hex_to_frame
-from bridge.server import IncidentStore, create_app, parse_frame_line, random_frame
+from bridge.server import IncidentStore, board_role, create_app, parse_frame_line, random_frame
 
 VECTOR_1 = "861200012B0BF3BA7E6A68E77800BEEF0050"
 VECTOR_2 = "9E0119002B0BF3BA7E6A68E7780000000040"
@@ -67,6 +67,14 @@ def test_decode_rejects_bad_length_and_version():
     bad_version[17] = (bad_version[17] & 0x3F) | (2 << 6)
     with pytest.raises(ValueError):
         decode_frame(bytes(bad_version))
+
+
+def test_board_role_tells_the_two_heltec_boards_apart():
+    assert board_role("ESP-ROM:esp32s3\r\nBASE STATION ready (SF7)\r\n") == "base"
+    assert board_role(f"noise\nFRAME {VECTOR_1} -41.0 9.75\n") == "base"
+    assert board_role("FIELD NODE ready: SSID RescuNote, http://192.168.4.1/ (SF7)") == "field"
+    assert board_role("Relayed 0A1B (RED, 3 ppl, seq 4)") == "field"
+    assert board_role("ESP-ROM:esp32s3 rst:0x1") is None
 
 
 def test_parse_frame_line():

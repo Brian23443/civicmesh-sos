@@ -252,9 +252,51 @@ class Bridge:
 # ---------------------------------------------------------------------------
 
 
+PROBE_S = 4.0
+
+
+def board_role(text: str) -> str | None:
+    """'base' or 'field' from a board's serial output (boot banner or traffic), None if it can't tell."""
+    if "BASE STATION ready" in text or any(FRAME_LINE.match(line.strip()) for line in text.splitlines()):
+        return "base"
+    if "FIELD NODE ready" in text or "Relayed " in text:
+        return "field"
+    return None
+
+
+def probe_port(port: str) -> str | None:
+    """Reset the board on `port` (EN via RTS) and read its boot banner to learn which board it is."""
+    import serial  # noqa: PLC0415 — only needed with hardware
+
+    try:
+        with serial.Serial(port, SERIAL_BAUD, timeout=0.2) as ser:
+            ser.dtr = False
+            ser.rts = True
+            time.sleep(0.15)
+            ser.rts = False
+            text, deadline = "", time.monotonic() + PROBE_S
+            while time.monotonic() < deadline:
+                text += ser.read(512).decode("utf-8", errors="replace")
+                if role := board_role(text):
+                    return role
+    except (serial.SerialException, OSError):
+        pass
+    return None
+
+
 def detect_port() -> str | None:
+    """The base station's port. With both Heltec boards plugged in they look identical by name, so each
+    candidate is asked who it is; the field node is never picked."""
     ports = sorted(glob.glob("/dev/cu.usbserial*") + glob.glob("/dev/cu.usbmodem*"))
-    return ports[0] if ports else None
+    if len(ports) <= 1:
+        return ports[0] if ports else None
+    roles = {port: probe_port(port) for port in ports}
+    log.info("serial ports: %s", ", ".join(f"{p} = {r or 'unknown'}" for p, r in roles.items()))
+    for wanted in ("base", None):
+        for port, role in roles.items():
+            if role == wanted:
+                return port
+    return None
 
 
 def parse_frame_line(line: str) -> tuple[bytes, float, float] | None:
