@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { useOfflineStatus } from './offline/useOfflineStatus';
-import { FileText, HelpCircle, Moon, Send, Sun, WifiOff } from 'lucide-react';
+import { FileText, HelpCircle, LifeBuoy, Moon, Sun, WifiOff } from 'lucide-react';
 import logoMark from './assets/logo-mark.png';
 import { Odometer } from './components/Odometer';
 import { useTheme } from './components/ThemeProvider';
@@ -83,7 +83,7 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
         <ReportFlow classifier={classifier} store={store} relayNavigate={relayNavigate} onGpsStatus={setGpsLabel} analysisReady={!!suppliedClassifier||modelActive}/>
 
       </main>
-      <nav aria-label="Main navigation" className="bottom-nav"><NavLink to="/" end><Send aria-hidden="true" size={20}/>Get help</NavLink><NavLink to="/reports"><FileText aria-hidden="true" size={20}/>My reports</NavLink></nav>
+      <nav aria-label="Main navigation" className="bottom-nav"><NavLink to="/" end><LifeBuoy aria-hidden="true" size={20}/>Get help</NavLink><NavLink to="/reports"><FileText aria-hidden="true" size={20}/>My reports</NavLink></nav>
     </div>
     <Sheet open={help} onClose={() => setHelp(false)} title="About RescuNote" variant="center">
       <p>RescuNote sends short emergency reports by radio through a nearby relay. No cell service or internet needed.</p>
