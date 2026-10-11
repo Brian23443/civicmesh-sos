@@ -67,8 +67,9 @@ export function App({ classifier: suppliedClassifier, store = reportStore, relay
         <Status><WifiOff aria-hidden="true" size={16}/>{offline.state==='ready'?'Ready offline ✓':offline.state==='development'?'Offline available in production preview':offline.state==='unavailable'?'Offline copy unavailable':'Saving for offline use…'}</Status>
         {!modelActive && <Status>{suppliedClassifier?'Test classifier':modelState==='error'?'Message reading unavailable · choose from a list':'Loading on-device reading…'}</Status>}
       </div>
-      {!suppliedClassifier && location.pathname==='/' && (modelMessage || modelState==='error') && <div className="notice">
-        {modelMessage && <p role={modelState==='error'?'alert':'status'}>{modelMessage}</p>}
+      {/* Only a failure gets a block; while loading, the status pills say so (and the hero stays clean). */}
+      {!suppliedClassifier && location.pathname==='/' && modelState==='error' && <div className="notice">
+        {modelMessage && <p role="alert">{modelMessage}</p>}
         {modelState==='error' && modelError && <p className="small">Details: {modelError}</p>}
         {/* Retry with a fresh page: an in-page retry would load a second model on top of the first. */}
         {modelState==='error' && <Button onClick={() => window.location.reload()}>Retry model loading</Button>}
