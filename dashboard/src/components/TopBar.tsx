@@ -37,7 +37,7 @@ export function TopBar({
   return (
     <header className="floating-topbar" aria-label="Dashboard controls">
       {/* Accessible visually-hidden header for screen readers */}
-      <h1 className="sr-only">CivicMesh-SOS Operator Dashboard</h1>
+      <h1 className="sr-only">RescuNote Operator Dashboard</h1>
 
       {/* Top Left: Floating Search Bar matching Google Maps search bar */}
       <div className="floating-search-bar" role="search">

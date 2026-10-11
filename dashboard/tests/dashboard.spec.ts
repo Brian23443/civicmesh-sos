@@ -82,7 +82,7 @@ test("renders the live operator dashboard without browser errors", async ({
   await page.goto("/");
 
   await expect(
-    page.getByRole("heading", { name: "CivicMesh-SOS Operator Dashboard" }),
+    page.getByRole("heading", { name: "RescuNote Operator Dashboard" }),
   ).toBeVisible();
   await expect(page.getByText(/Radio link OK/)).toBeVisible();
   await expect(
